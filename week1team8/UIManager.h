@@ -7,10 +7,13 @@
 #include <dwrite.h>
 #include <vector>
 #include <string>
+#include <set>
 #include "TotalManager.h"
 
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
+
+using namespace std;
 
 struct FFloatingText
 {
@@ -49,6 +52,11 @@ public:
 	void SpawnFloatingText(const wchar_t* text, float screenX, float screenY, D2D1_COLOR_F color = D2D1::ColorF(D2D1::ColorF::Gold));
 	void Release();
 
+	set<int, int> CalDistance(int x, int y) //
+	{
+
+	}
+
 private:
 	ID2D1Factory* D2DFactory = nullptr;
 	IDWriteFactory* DWriteFactory = nullptr;
@@ -59,6 +67,11 @@ private:
 
 	int TargetScore = 0;
 	float DisplayScore = 0.0f;
-	std::vector<FFloatingText> FloatingTexts;
+	vector<FFloatingText> FloatingTexts;
 	bool bInitialized = false;
+
+	vector<set<int, int>> floatingPositions; //새와 부딪혔을 때 점수 뜨는 위치
+	
+	
+
 };
