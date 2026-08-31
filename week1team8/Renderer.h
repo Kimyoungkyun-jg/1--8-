@@ -70,6 +70,7 @@ public:
 	void Prepare();
 	void PrepareShader();
 
+	void UpdateConstant(FVector Offset, float Rotation, FVector Scale);
 	void UpdateConstant(FVector Offset, FVector Scale);
 	void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices);
 	void SwapBuffer();
