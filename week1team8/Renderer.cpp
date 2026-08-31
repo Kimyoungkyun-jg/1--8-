@@ -1,4 +1,4 @@
-﻿#include <DirectXMath.h>
+#include <DirectXMath.h>
 
 #include "Renderer.h"
 
@@ -248,7 +248,7 @@ void URenderer::UpdateConstant(FVector Offset, float Rotation, FVector Scale)
 		FConstants* constants = (FConstants*)constantbufferMSR.pData;
 		{
 			constants->Offset = Offset;
-			constants->Rotation = DirectX::XMConvertToRadians(Rotation);
+			constants->Rotation = DirectX::XMConvertToRadians(Rotation); // Radians
 			constants->Scale = Scale;
 		}
 		DeviceContext->Unmap(ConstantBuffer, 0);
