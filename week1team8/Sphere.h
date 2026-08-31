@@ -1,8 +1,6 @@
-struct FVertexSimple
-{
-	float x, y, z;    // Position
-	float r, g, b, a; // Color
-};
+#pragma once
+
+#include "VertexSimple.h"
 
 FVertexSimple triangle_vertices[] =
 {

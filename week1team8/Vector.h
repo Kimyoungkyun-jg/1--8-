@@ -1,3 +1,5 @@
+#pragma once
+
 struct FVector
 {
 	float x, y, z;
