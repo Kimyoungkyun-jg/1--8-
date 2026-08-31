@@ -9,10 +9,17 @@
 #include "ImGui/imgui_impl_dx11.h"		
 #include "ImGui/imgui_impl_win32.h"		
 
+#include <vector>
+
+using namespace std;
+
 // FVertexSimple, triangle_vertices, cube_vertices, sphere_vertices
 #include "Sphere.h"	
 #include "Vector.h"
 #include "Renderer.h"
+#include "UObject.h"
+
+
 
 // 화면 경계 (NDC)
 const float leftBorder = -1.0f;
@@ -23,6 +30,9 @@ const float bottomBorder = -1.0f;
 // 중력
 const FVector G(0.0f, -9.8f, 0.0f);
 bool bUseGravity = true;
+
+//모든 객체를 담을 배열 변수
+vector<UObject*> AllObjects;
 
 // 클래스 이름 외에는 자유롭게 수정하세요.
 class UPrimitive
