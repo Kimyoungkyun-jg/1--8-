@@ -10,6 +10,10 @@
 #include "ImGui/imgui_impl_dx11.h"		
 #include "ImGui/imgui_impl_win32.h"		
 
+#include <vector>
+
+using namespace std;
+
 // FVertexSimple, triangle_vertices, cube_vertices, sphere_vertices
 #include "Sphere.h"	
 #include "Vector.h"

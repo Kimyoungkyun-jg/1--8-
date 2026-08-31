@@ -14,9 +14,9 @@ class URenderer
 	struct FConstants
 	{
 		FVector Offset;
-		float Pad1;		// 16 byte pad
+		float Rotation;	// degree (반시계 회전)
 		FVector Scale;	// (width, height, depth)
-		float Pad2;
+		float Pad;
 	};
 
 public:
