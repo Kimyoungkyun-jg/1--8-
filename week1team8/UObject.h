@@ -1,42 +1,8 @@
 ﻿#pragma once
+#include <d3d11.h>
+#include "Renderer.h"
 
-class FVector2
-{
-	float x, y;
-	FVector2(float _x = 0, float _y = 0) : x(_x), y(_y) {}
-
-	float LengthSquared() const
-	{
-		return x * x + y * y;
-	}
-
-	FVector2 operator+(const FVector2& other) const
-	{
-		return FVector2(x + other.x, y + other.y);
-	}
-
-	FVector2 operator-(const FVector2& other) const
-	{
-		return FVector2(x - other.x, y - other.y);
-	}
-
-
-	FVector2& operator+=(const FVector2& other)
-	{
-		x += other.x;
-		y += other.y;
-		return *this;
-	}
-
-	FVector2& operator-=(const FVector2& other)
-	{
-		x -= other.x;
-		y -= other.y;
-		return *this;
-	}
-};
-
-enum EPrimitive
+enum class EPrimitive
 {
 	Circle,
 	Rectangle
@@ -45,33 +11,59 @@ enum EPrimitive
 class UObject
 {
 public:
-	UObject();
-	virtual ~UObject();
+	UObject()
+	{
+		++TotalUObject;
+	}
+	virtual ~UObject()
+	{
+		--TotalUObject;
+	}
+
+	static int TotalUObject;
+	ID3D11Buffer* VertexBuffer;
+	UINT NumVertices;
 };
 
 class AActor : public UObject
 {
 public:
-	AActor();
-	virtual ~AActor();
+	AActor() {};
+	virtual ~AActor() {};
+	virtual void Draw(URenderer& renderer);				// 화면에 그리기
 
-private:
-	FVector2 Transform;
-	EPrimitive Primitive;
+protected:
+	FVector Location = FVector(0, 0, 0);										// 위치
+	EPrimitive Primitive = EPrimitive::Circle;
+	float Radius = 10.f;
 };
 
 class AColider : public AActor
 {
 public:
-	AColider();
-	virtual ~AColider();
+	AColider()
+	{
+	}
+	virtual ~AColider()
+	{
+	}
+	virtual void Move(float t, bool bUseGravity);		// t 시간동안 이동
+	virtual bool CheckCollision(UObject* Other);
+	virtual void ResolveCollision(UObject* Other);	// 충돌 해결 (속도 변화, 겹침 해결)
+
+protected:
+	FVector Velocity;			// 속도
+	float Mass;					// 질량
 
 };
+
 class ABird : public AColider
 {
 public:
-	ABird();
-	virtual ~ABird();
+	ABird() {}
+	virtual ~ABird() {}
+
+	virtual void Draw(URenderer& renderer);
 };
 
 class AObstacle : public AColider
@@ -79,8 +71,8 @@ class AObstacle : public AColider
 public:
 	AObstacle(float _hp = 1) : hp(_hp)
 	{
-	};
-	virtual ~AObstacle()
+	}
+	virtual ~AObstacle(){}
 
 private:
 	float hp;
@@ -89,11 +81,11 @@ private:
 class APig : public AObstacle
 {
 	APig(){}
-	~APig();
+	~APig(){}
 };
 
 class ABlock : public AObstacle
 {
-	ABlock();
+	ABlock(){}
 	~ABlock(){}
 };
