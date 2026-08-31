@@ -28,11 +28,41 @@ public:
 
 	bool IsCollide(AColider* a, AColider* b)
 	{
+		if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
+		{
 
+		}
+		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Rectangle)
+		{
+
+		}
+		else if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Rectangle)
+		{
+
+		}
+		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Circle)
+		{
+
+		}
 	}
 
 	void ResolveCollision(AColider* a, AColider* b)
 	{
+		if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
+		{
 
+		}
+		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Rectangle)
+		{
+
+		}
+		else if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Rectangle)
+		{
+
+		}
+		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Circle)
+		{
+
+		}
 	}
 };

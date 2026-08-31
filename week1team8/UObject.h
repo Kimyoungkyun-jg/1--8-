@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <d3d11.h>
 #include "Renderer.h"
 
@@ -31,6 +31,10 @@ public:
 	AActor() {};
 	virtual ~AActor() {};
 	virtual void Draw(URenderer& renderer);				// 화면에 그리기
+	EPrimitive GetPrimitive()
+	{
+		return Primitive;
+	}
 
 protected:
 	FVector Location = FVector(0, 0, 0);										// 위치
