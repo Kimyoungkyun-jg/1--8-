@@ -40,8 +40,16 @@ public:
 	void SetLocation(const FVector& loc) { Location = loc; }
 	void SetRadius ( const float _Radius ) { Radius = _Radius; }
 
+	void SetRotation ( const float _Rotation ) { Rotation = _Rotation; }
+	void SetWidthHeight ( const float _Width, const float _Height ) { Width = _Width, Height = _Height; }
+	float GetRotation () const { return Rotation; }
+	float GetWidth ( ) const { return Width; }
+	float GetHeight ( ) const { return Height; }
+
 protected:
 	FVector Location = FVector(0, 0, 0);				// 위치
+	float Rotation;
+	float Width, Height;
 	EPrimitive Primitive = EPrimitive::Circle;
 	float Radius = 10.f;
 };

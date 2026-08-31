@@ -8,7 +8,7 @@
 class CollisionManager : public TotalManager
 {
 public:
-	vector<AColider*> colliders;
+	vector<ACollider*> colliders;
 
 	void CheckCollision()
 	{
@@ -26,7 +26,7 @@ public:
 		}
 	}
 
-	bool IsCollide(AColider* a, AColider* b)
+	bool IsCollide(ACollider* a, ACollider* b)
 	{
 		if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
 		{
@@ -46,7 +46,7 @@ public:
 		}
 	}
 
-	void ResolveCollision(AColider* a, AColider* b)
+	void ResolveCollision(ACollider* a, ACollider* b)
 	{
 		if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
 		{
