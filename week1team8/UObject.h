@@ -32,6 +32,10 @@ public:
 	AActor() {};
 	virtual ~AActor() {};
 	virtual void Draw(URenderer& renderer);				// 화면에 그리기
+	EPrimitive GetPrimitive()
+	{
+		return Primitive;
+	}
 
 	void SetLocation(const FVector& loc) { Location = loc; }
 	void SetRadius ( const float _Radius ) { Radius = _Radius; }
