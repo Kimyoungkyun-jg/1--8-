@@ -1,4 +1,5 @@
 #pragma once
+
 #include "UObject.h"
 #include <vector>
 
@@ -6,11 +7,10 @@ using namespace std;
 
 extern vector<UObject*> AllObjects;
 
-
-class TotalManager : public UObject //»ó¼Ó¿ë 
+class TotalManager : public UObject // ìƒì†ìš© 
 {
-public: 
-	static TotalManager& GetInstance() //½Ì±ÛÅæ ÆĞÅÏÀ¸·Î °ü¸®
+public:
+	static TotalManager& GetInstance() // ì‹±ê¸€í†¤ íŒ¨í„´ìœ¼ë¡œ ê´€ë¦¬
 	{
 		static TotalManager instance;
 		return instance;
@@ -19,11 +19,12 @@ public:
 	TotalManager(const TotalManager&) = delete;
 	TotalManager& operator=(const TotalManager) = delete;
 
+	~TotalManager() override;
+
 private:
 	TotalManager()
 	{
 		AllObjects.push_back(this);
 	}
-	~TotalManager() override;
 };
 
