@@ -1,4 +1,6 @@
-﻿#include "Renderer.h"
+#include <DirectXMath.h>
+
+#include "Renderer.h"
 
 void URenderer::Create(HWND hWindow)
 {
@@ -236,7 +238,7 @@ void URenderer::PrepareShader()
 	DeviceContext->PSSetShader(SimplePixelShader, nullptr, 0);
 }
 
-void URenderer::UpdateConstant(FVector Offset, FVector Scale)
+void URenderer::UpdateConstant(FVector Offset, float Rotation, FVector Scale)
 {
 	if (ConstantBuffer)
 	{
@@ -246,10 +248,16 @@ void URenderer::UpdateConstant(FVector Offset, FVector Scale)
 		FConstants* constants = (FConstants*)constantbufferMSR.pData;
 		{
 			constants->Offset = Offset;
+			constants->Rotation = DirectX::XMConvertToRadians(Rotation); // Radians
 			constants->Scale = Scale;
 		}
 		DeviceContext->Unmap(ConstantBuffer, 0);
 	}
+}
+
+void URenderer::UpdateConstant(FVector Offset, FVector Scale)
+{
+	UpdateConstant(Offset, 0.0f, Scale);
 }
 
 void URenderer::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices)

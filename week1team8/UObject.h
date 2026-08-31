@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d11.h>
 #include "Renderer.h"
+#include <vector>
 
 enum class EPrimitive
 {
@@ -13,16 +14,16 @@ class UObject
 public:
 	UObject()
 	{
-		++TotalUObject;
 	}
 	virtual ~UObject()
 	{
-		--TotalUObject;
 	}
 
-	static int TotalUObject;
 	ID3D11Buffer* VertexBuffer;
 	UINT NumVertices;
+
+private:
+	int index;
 };
 
 class AActor : public UObject
@@ -31,25 +32,42 @@ public:
 	AActor() {};
 	virtual ~AActor() {};
 	virtual void Draw(URenderer& renderer);				// 화면에 그리기
+	EPrimitive GetPrimitive()
+	{
+		return Primitive;
+	}
+
+	void SetLocation(const FVector& loc) { Location = loc; }
+	void SetRadius ( const float _Radius ) { Radius = _Radius; }
+
+	void SetRotation ( const float _Rotation ) { Rotation = _Rotation; }
+	void SetWidthHeight ( const float _Width, const float _Height ) { Width = _Width, Height = _Height; }
+	float GetRotation () const { return Rotation; }
+	float GetWidth ( ) const { return Width; }
+	float GetHeight ( ) const { return Height; }
 
 protected:
-	FVector Location = FVector(0, 0, 0);										// 위치
+	FVector Location = FVector(0, 0, 0);				// 위치
+	float Rotation;
+	float Width, Height;
 	EPrimitive Primitive = EPrimitive::Circle;
 	float Radius = 10.f;
 };
 
-class AColider : public AActor
+class ACollider : public AActor
 {
 public:
-	AColider()
+	ACollider()
 	{
 	}
-	virtual ~AColider()
+	virtual ~ACollider()
 	{
 	}
 	virtual void Move(float t, bool bUseGravity);		// t 시간동안 이동
 	virtual bool CheckCollision(UObject* Other);
 	virtual void ResolveCollision(UObject* Other);	// 충돌 해결 (속도 변화, 겹침 해결)
+	void SetVelocity ( FVector _Vel ) { Velocity = _Vel; }
+	FVector GetVelocity ( ) const { return Velocity; }
 
 protected:
 	FVector Velocity;			// 속도
@@ -57,16 +75,14 @@ protected:
 
 };
 
-class ABird : public AColider
+class ABird : public ACollider
 {
 public:
 	ABird() {}
 	virtual ~ABird() {}
-
-	virtual void Draw(URenderer& renderer);
 };
 
-class AObstacle : public AColider
+class AObstacle : public ACollider
 {
 public:
 	AObstacle(float _hp = 1.0f) : hp(_hp) {}

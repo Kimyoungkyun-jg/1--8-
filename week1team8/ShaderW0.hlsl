@@ -1,9 +1,9 @@
 cbuffer constants : register(b0) // FConstants
 {
     float3 Offset;
-    float Pad1;
+    float Rotation;
     float3 Scale;
-    float Pad2;
+    float Pad;
 }
 
 struct VS_INPUT
@@ -22,7 +22,18 @@ PS_INPUT mainVS(VS_INPUT input) // Vertex Shader
 {
     PS_INPUT output;
     
-    output.position = input.position * float4(Scale, 1.0) + float4(Offset, 0);
+    // Scale
+    float2 scaled = input.position.xy * Scale.xy;
+    
+    // Rotate
+    float cosTheta = cos(Rotation);
+    float sinTheta = sin(Rotation);
+    float2 rotated = float2(scaled.x * cosTheta - scaled.y * sinTheta, scaled.x * sinTheta + scaled.y * cosTheta);
+    
+    // Offset
+    float2 translated = rotated + Offset.xy;
+    
+    output.position = float4(translated, input.position.z, 1.0);
     output.color = input.color;
     
     return output;

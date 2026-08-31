@@ -10,8 +10,6 @@
 #include "ImGui/imgui_impl_dx11.h"		
 #include "ImGui/imgui_impl_win32.h"		
 
-#include <vector>
-
 using namespace std;
 
 // FVertexSimple, triangle_vertices, cube_vertices, sphere_vertices
@@ -31,137 +29,91 @@ UIManager* uiManager = nullptr; //전역으로 사용하는 매니저
 
 
 bool bUseGravity = true;
-int UObject::TotalUObject = 0;
 
-//class UPrimitiveManager
-//{
-//public:
-//	// 반드시 UBall이 아닌 UPrimitive로 선언하여야 하며 바꾸면 안됩니다.
-//	UObject** AllObjects;
-//	int Capacity;
-//
-//	UPrimitiveManager()
-//	{
-//		AllObjects = new UObject * [10];
-//		Capacity = 10;
-//	}
-//
-//	~UPrimitiveManager()
-//	{
-//		int count = UBall::TotalNumBalls;
-//
-//		for (int i = 0; i < count; i++)
-//		{
-//			delete AllObjects[i];
-//		}
-//
-//		delete[] AllObjects;
-//	}
-//
-//	// 임의의 위치, 속도, 크기를 가진 공 생성
-//	UBall* CreateRandomBall(ID3D11Buffer* vertexBuffer, UINT numVertices)
-//	{
-//		// new 연산자를 사용해 공의 인스턴스(Instance)를 즉시 생성합니다.
-//		UBall* ball = new UBall();
-//
-//		// 크기
-//		float minRadius = 0.05f;
-//		float maxRadius = 0.10f;
-//		ball->Radius = (static_cast<float>(rand()) / RAND_MAX) * (maxRadius - minRadius) + minRadius;
-//
-//		// 질량
-//		float PI = acos(-1.0f);
-//		ball->Mass = 4.0f / 3.0f * PI * (ball->Radius * ball->Radius * ball->Radius);
-//
-//		// 위치
-//		float locWidth = 0.5f;
-//		float locHeight = 0.5f;
-//		float locX = (static_cast<float>(rand()) / RAND_MAX) * locWidth - locWidth / 2;
-//		float locY = (static_cast<float>(rand()) / RAND_MAX) * locHeight - locHeight / 2;
-//		ball->Location = FVector(locX, locY);
-//
-//		// 속력
-//		float minSpeed = 1.0f;
-//		float maxSpeed = 5.0f;
-//		float speed = (static_cast<float>(rand()) / RAND_MAX) * (maxSpeed - minSpeed) + minSpeed;
-//
-//		// 방향
-//		float radian = (static_cast<float>(rand()) / RAND_MAX) * 2 * PI;
-//		FVector direction = FVector(cos(radian), sin(radian));
-//
-//		// 속도
-//		ball->Velocity = direction * speed;
-//
-//		// 인자로 받은 렌더링 데이터를 멤버 변수에 저장합니다.
-//		ball->VertexBuffer = vertexBuffer;
-//		ball->NumVertices = numVertices;
-//
-//		return ball;
-//	}
-//
-//	void RemoveBall(int removeIndex)
-//	{
-//		int lastIndex = UBall::TotalNumBalls - 1;
-//
-//		// delete 연산자를 사용해 공의 인스턴스를 즉시 소멸시킵니다.
-//		delete AllObjects[removeIndex];
-//
-//		// 마지막 요소를 삭제된 자리에 덮어쓰기
-//		AllObjects[removeIndex] = AllObjects[lastIndex];
-//		AllObjects[lastIndex] = nullptr;
-//	}
-//
-//	void ResizeBallList(int newCount, ID3D11Buffer* vertexBuffer, UINT numVertices)
-//	{
-//		if (newCount < UBall::TotalNumBalls)
-//		{
-//			int removeCount = UBall::TotalNumBalls - newCount;
-//			for (int i = 0; i < removeCount; i++)
-//			{
-//				// 관리되고 있는 전체 공들 중 반드시 임의의(Random) 공이 소멸해야 합니다.
-//				int removeIndex = rand() % UBall::TotalNumBalls;
-//
-//				RemoveBall(removeIndex);
-//			}
-//		}
-//		else if (newCount > UBall::TotalNumBalls)
-//		{
-//			Reserve(newCount);
-//
-//			// 새로 생성
-//			for (int i = UBall::TotalNumBalls; i < newCount; i++)
-//			{
-//				AllObjects[i] = CreateRandomBall(vertexBuffer, numVertices);
-//			}
-//		}
-//	}
-//
-//	void Reserve(int capacity)
-//	{
-//		if (Capacity >= capacity)
-//		{
-//			return;
-//		}
-//
-//		int newCapacity = (Capacity > 0) ? Capacity : 10;
-//		while (newCapacity < capacity)
-//		{
-//			newCapacity *= 2;
-//		}
-//
-//		UPrimitive** AllObjects = new UPrimitive * [newCapacity];
-//
-//		for (int i = 0; i < UBall::TotalNumBalls; i++)
-//		{
-//			AllObjects[i] = AllObjects[i];
-//		}
-//
-//		delete[] AllObjects;
-//
-//		AllObjects = AllObjects;
-//		Capacity = newCapacity;
-//	}
-//};
+class UObjectManager
+{
+public:
+	std::vector<UObject*> AllObjects;
+
+	void Destroy(UObject* Target)
+	{
+		for (int i = 0; i < AllObjects.size(); ++i)
+		{
+			if (AllObjects[i] == Target)
+			{
+				UObject* temp = AllObjects[i];
+			}
+		}
+	}
+
+};
+
+UObjectManager ObjectManager;
+
+template<class T>
+T* NewObject(ID3D11Buffer* vertexBuffer, UINT numVertices )
+{
+	static_assert( std::is_base_of_v<UObject, T> );
+
+	T* temp = new T;
+	ObjectManager.AllObjects.push_back(temp);
+	return static_cast<T*>(temp);	
+}
+
+template<class T>
+T* SpawnActor(ID3D11Buffer* vertexBuffer, UINT numVertices, FVector Location, EPrimitive Primitive)
+{
+	static_assert( std::is_base_of_v<AActor, T> );
+
+	AActor* SpawnedActor =  NewObject<T>(vertexBuffer, numVertices);
+
+	// 크기
+	float minRadius = 0.05f;
+	float maxRadius = 0.10f;
+	SpawnedActor->SetRadius ( ( static_cast< float >( rand ( ) ) / RAND_MAX ) * ( maxRadius - minRadius ) + minRadius );
+
+	// 위치
+	SpawnedActor->SetLocation (Location);
+
+	// 인자로 받은 렌더링 데이터를 멤버 변수에 저장합니다.
+	SpawnedActor->VertexBuffer = vertexBuffer;
+	SpawnedActor->NumVertices = numVertices;
+
+	return static_cast<T*>(SpawnedActor);
+
+}
+
+template<class T>
+T* SpawnColider(ID3D11Buffer* vertexBuffer, UINT numVertices, FVector Location, EPrimitive Primitive)
+{
+	static_assert( std::is_base_of_v<ACollider, T> );
+	ACollider* Colider = SpawnActor<T>(vertexBuffer, numVertices, Location, Primitive );
+
+	// 속력
+	float minSpeed = 1.0f;
+	float maxSpeed = 5.0f;
+	float speed = (static_cast<float>(rand()) / RAND_MAX) * (maxSpeed - minSpeed) + minSpeed;
+
+	// 방향
+	float PI = acos ( -1.0f );
+	float radian = (static_cast<float>(rand()) / RAND_MAX) * 2 * PI;
+	FVector direction = FVector(cos(radian), sin(radian));
+
+	// 속도
+	Colider->SetVelocity(direction * speed);
+	return static_cast<T*>(Colider);
+}
+
+void DEBUG_SpawnBalls ( int BallCount, ID3D11Buffer* vertexBuffer, UINT numVertices )
+{
+	if ( BallCount !=  ObjectManager.AllObjects.size ( ) )
+	{
+		if ( BallCount > ObjectManager.AllObjects.size ( ) )
+		{
+			ACollider* NewBall = SpawnColider<ACollider> ( vertexBuffer, numVertices, FVector ( 0, 0, 0 ), EPrimitive::Circle );
+		}
+	}
+}
 
 float clamp(float val, float minVal, float maxVal)
 {
@@ -228,8 +180,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Init((void*)hWnd);
 	ImGui_ImplDX11_Init(renderer.Device, renderer.DeviceContext);
 
-	std::vector<UObject> AllObjects;
-
 	const int targetFPS = 144;
 	const double targetFrameTime = 1000.0 / targetFPS;	// 한 프레임의 목표 시간 (밀리초 단위)
 
@@ -288,22 +238,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
+		DEBUG_SpawnBalls( ballCount, vertexBufferSphere, numVerticesSphere );
 
 		renderer.Prepare();
 		renderer.PrepareShader();
 
 		// 여기에 Colider만 이동
-
-
+		for ( int i = 0; i < ObjectManager.AllObjects.size ( ); i++ )
+		{
+			if (ACollider* Colider = dynamic_cast< ACollider* > ( ObjectManager.AllObjects[ i ] ) )
+			{
+				Colider->Move(elapsedTime, true);
+			}
+		}
 		// 충돌 검사
 
 		// 그리기
-		for (int i = 0; i < UObject::TotalUObject; i++)
+		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)
 		{
-			if (AllObjects.size() < 1) break; //allobject 암것도 없으면 안그림
-			
 
-			if (AActor* Actor = dynamic_cast<AActor*>(&AllObjects[i]))
+			if (ObjectManager.AllObjects.size() < 1) break; //allobject 암것도 없으면 안그림
+
+
+			if (AActor* Actor = dynamic_cast<AActor*>(ObjectManager.AllObjects[i]))
+
 			{
 				Actor->Draw(renderer);
 			}
