@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class FVector2
 {
@@ -77,6 +77,23 @@ public:
 class AObstacle : public AColider
 {
 public:
-	AObstacle();
-	virtual ~AObstacle();
+	AObstacle(float _hp = 1) : hp(_hp)
+	{
+	};
+	virtual ~AObstacle()
+
+private:
+	float hp;
+};
+
+class APig : public AObstacle
+{
+	APig(){}
+	~APig();
+};
+
+class ABlock : public AObstacle
+{
+	ABlock();
+	~ABlock(){}
 };
