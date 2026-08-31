@@ -57,6 +57,9 @@
     <ClCompile Include="CollisionManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="UObject.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
     <ClCompile Include="UIManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -113,6 +116,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="UIManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Global.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

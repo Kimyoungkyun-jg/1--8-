@@ -5,6 +5,8 @@
 #include "TotalManager.h"
 #include "UObject.h"
 
+using namespace std;
+
 class CollisionManager : public TotalManager
 {
 public:

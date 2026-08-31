@@ -134,6 +134,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="TotalManager.cpp" />
+    <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="UObject.cpp" />
     <ClCompile Include="Vector.cpp" />
   </ItemGroup>
@@ -144,6 +145,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CollisionManager.h" />
+    <ClInclude Include="Global.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
     <ClInclude Include="ImGui\imgui_impl_dx11.h" />
@@ -155,6 +157,7 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="TotalManager.h" />
+    <ClInclude Include="UIManager.h" />
     <ClInclude Include="UObject.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="VertexSimple.h" />
