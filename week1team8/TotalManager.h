@@ -1,29 +1,26 @@
 #pragma once
+
 #include "UObject.h"
 #include <vector>
 
-using namespace std;
 
-extern vector<UObject*> AllObjects;
+extern std::vector<UObject> AllObjects;
 
-
-class TotalManager : public UObject //상속용 
+class TotalManager : public UObject
 {
-public: 
-	static TotalManager& GetInstance() //싱글톤 패턴으로 관리
+public:
+	static TotalManager& GetInstance()
 	{
 		static TotalManager instance;
 		return instance;
 	}
 
 	TotalManager(const TotalManager&) = delete;
-	TotalManager& operator=(const TotalManager) = delete;
+	TotalManager& operator=(const TotalManager&) = delete;
 
 protected:
-	TotalManager()
+	TotalManager() : UObject()
 	{
-		AllObjects.push_back(this);
 	}
-
+	virtual ~TotalManager() override {}
 };
-

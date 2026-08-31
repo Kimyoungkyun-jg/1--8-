@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <d3d11.h>
 #include "Renderer.h"
 
@@ -69,24 +69,23 @@ public:
 class AObstacle : public AColider
 {
 public:
-	AObstacle(float _hp = 1) : hp(_hp)
-	{
+	AObstacle(float _hp = 1.0f) : hp(_hp) {}
+	virtual ~AObstacle() {}
 
-	};
-	virtual ~AObstacle();
-
-private:
-	float hp;
+protected:
+	float hp = 1.0f;
 };
 
 class APig : public AObstacle
 {
-	APig(){}
-	~APig(){}
+public:
+	APig() : AObstacle(1.0f) {}
+	virtual ~APig() {}
 };
 
 class ABlock : public AObstacle
 {
-	ABlock(){}
-	~ABlock(){}
+public:
+	ABlock() : AObstacle(1.0f) {}
+	virtual ~ABlock() {}
 };

@@ -1,4 +1,4 @@
-﻿#pragma comment(lib, "user32")				
+#pragma comment(lib, "user32")				
 
 #include <windows.h>					
 #include <d3d11.h>						
@@ -300,6 +300,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 그리기
 		for (int i = 0; i < UObject::TotalUObject; i++)
 		{
+			if (AllObjects.size() < 1) break; //allobject 암것도 없으면 안그림
+			
+
 			if (AActor* Actor = dynamic_cast<AActor*>(&AllObjects[i]))
 			{
 				Actor->Draw(renderer);
@@ -330,7 +333,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 		uiManager->Render(4); //UI그리기
-
+		uiManager->Update(elapsedTime * 0.001);
 
 
 		ImGui::Render();										// 그리기 명령 준비	

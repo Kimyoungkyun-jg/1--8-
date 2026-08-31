@@ -57,6 +57,9 @@
     <ClCompile Include="CollisionManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="UIManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ShaderW0.hlsl">
@@ -107,6 +110,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="CollisionManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="UIManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
