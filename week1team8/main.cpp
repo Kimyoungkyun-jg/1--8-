@@ -19,7 +19,12 @@ using namespace std;
 #include "Renderer.h"
 #include "UObject.h"
 
+//모든 매니저 헤더파일
+#include "TotalManager.h"
+#include "UIManager.h"
+#include "CollisionManager.h"
 
+UIManager* uiManager = nullptr; //전역으로 사용하는 매니저
 
 // 화면 경계 (NDC)
 const float leftBorder = -1.0f;
@@ -654,6 +659,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	renderer.CreateShader();
 	renderer.CreateConstantBuffer();
 
+	//UIManager초기화
+	uiManager = new UIManager();
+	uiManager->Initialize(renderer.SwapChain);
+
 	// 정점 개수 계산
 	UINT numVerticesCube = sizeof(cube_vertices) / sizeof(FVertexSimple);
 	UINT numVerticesSphere = sizeof(sphere_vertices) / sizeof(FVertexSimple);
@@ -696,6 +705,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bRightPressed = false;
 	bool bBlockValid = false;
 	bool bPaddleValid = false;
+
+
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -849,6 +860,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::End();
 		}
 
+
+		uiManager->Render(4); //UI그리기
+
+
+
 		ImGui::Render();										// 그리기 명령 준비	
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());	// 그리기 명령 실행
 
@@ -881,3 +897,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	return 0;
 }
+
+

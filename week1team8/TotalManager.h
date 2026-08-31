@@ -19,11 +19,11 @@ public:
 	TotalManager(const TotalManager&) = delete;
 	TotalManager& operator=(const TotalManager) = delete;
 
-private:
+protected:
 	TotalManager()
 	{
 		AllObjects.push_back(this);
 	}
-	~TotalManager() override;
+
 };
 

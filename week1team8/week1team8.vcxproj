@@ -134,6 +134,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="TotalManager.cpp" />
+    <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -154,6 +155,7 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="TotalManager.h" />
+    <ClInclude Include="UIManager.h" />
     <ClInclude Include="UObject.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="VertexSimple.h" />

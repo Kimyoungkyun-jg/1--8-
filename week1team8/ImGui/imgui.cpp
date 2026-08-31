@@ -6231,6 +6231,7 @@ void ImGui::Render()
     CallContextHooks(&g, ImGuiContextHookType_RenderPost);
 }
 
+
 // Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
 // CalcTextSize("") should return ImVec2(0.0f, g.FontSize)
 ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_text_after_double_hash, float wrap_width)
@@ -18567,6 +18568,7 @@ void ImGui::ShowFontSelector(const char* label)
 // Prefer just including imgui_internal.h from your code rather than using this define. If a declaration is missing from imgui_internal.h add it or request it on the github.
 #ifdef IMGUI_INCLUDE_IMGUI_USER_INL
 #include "imgui_user.inl"
+#include "UIManager.h"
 #endif
 
 //-----------------------------------------------------------------------------

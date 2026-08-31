@@ -80,7 +80,7 @@ public:
 	AObstacle(float _hp = 1) : hp(_hp)
 	{
 	};
-	virtual ~AObstacle()
+	virtual ~AObstacle();
 
 private:
 	float hp;
