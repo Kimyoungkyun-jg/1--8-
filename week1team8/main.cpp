@@ -1,4 +1,4 @@
-// ¾î¶°ÇÑ Ãß°¡ÀûÀÎ Æ÷ÇÔ(Include)µµ ÇÏÁö ¸¶¼¼¿ä.
+// ï¿½î¶°ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(Include)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
 #pragma comment(lib, "user32")			
 #pragma comment(lib, "d3d11")			
 #pragma comment(lib, "d3dcompiler")		
@@ -380,40 +380,40 @@ public:
 	}
 };
 
-// È­¸é °æ°è (NDC)
+// È­ï¿½ï¿½ ï¿½ï¿½ï¿½ (NDC)
 const float leftBorder = -1.0f;
 const float rightBorder = 1.0f;
 const float topBorder = 1.0f;
 const float bottomBorder = -1.0f;
 
-// Áß·Â
+// ï¿½ß·ï¿½
 const FVector G(0.0f, -9.8f, 0.0f);
 bool bUseGravity = true;
 
-// Å¬·¡½º ÀÌ¸§ ¿Ü¿¡´Â ÀÚÀ¯·Ó°Ô ¼öÁ¤ÇÏ¼¼¿ä.
+// Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ ï¿½Ü¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¼ï¿½ï¿½ï¿½.
 class UPrimitive
 {
 public:
-	// ·»´õ¸µ
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	ID3D11Buffer* VertexBuffer;
 	UINT NumVertices;
 
 	virtual ~UPrimitive() {}
-	virtual void Move(float t) = 0;							// t ½Ã°£µ¿¾È ÀÌµ¿
-	virtual void Draw(URenderer& renderer) = 0;				// È­¸é¿¡ ±×¸®±â
-	virtual bool CheckCollision(UPrimitive* other) = 0;		// Ãæµ¹ °¨Áö
-	virtual void ResolveCollision(UPrimitive* other) = 0;	// Ãæµ¹ ÇØ°á (¼Óµµ º¯È­, °ãÄ§ ÇØ°á)
+	virtual void Move(float t) = 0;							// t ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
+	virtual void Draw(URenderer& renderer) = 0;				// È­ï¿½é¿¡ ï¿½×¸ï¿½ï¿½ï¿½
+	virtual bool CheckCollision(UPrimitive* other) = 0;		// ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½
+	virtual void ResolveCollision(UPrimitive* other) = 0;	// ï¿½æµ¹ ï¿½Ø°ï¿½ (ï¿½Óµï¿½ ï¿½ï¿½È­, ï¿½ï¿½Ä§ ï¿½Ø°ï¿½)
 };
 
-// Å¬·¡½º ÀÌ¸§°ú, ¾Æ·¡ ´Ù¼¸°³ÀÇ º¯¼ö ÀÌ¸§Àº º¯°æÇÏÁö ¾Ê½À´Ï´Ù.
+// Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½, ï¿½Æ·ï¿½ ï¿½Ù¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê½ï¿½ï¿½Ï´ï¿½.
 class UBall : public UPrimitive
 {
 public:
-	FVector Location;			// À§Ä¡
-	FVector Velocity;			// ¼Óµµ
-	float Radius;				// ¹ÝÁö¸§
-	float Mass;					// Áú·®
-	static int TotalNumBalls;	// °ø °³¼ö (»ý¼ºÀÚ, ÆÄ±«ÀÚ °ü¸®)
+	FVector Location;			// ï¿½ï¿½Ä¡
+	FVector Velocity;			// ï¿½Óµï¿½
+	float Radius;				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	float Mass;					// ï¿½ï¿½ï¿½ï¿½
+	static int TotalNumBalls;	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½Ä±ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 
 	UBall()
 	{
@@ -429,16 +429,16 @@ public:
 	{
 		float deltaTime = t / 1000.0f;
 
-		// ¼Óµµ º¯È­
+		// ï¿½Óµï¿½ ï¿½ï¿½È­
 		if (bUseGravity)
 		{
 			Velocity += G * deltaTime;
 		}
 
-		// À§Ä¡ º¯È­
+		// ï¿½ï¿½Ä¡ ï¿½ï¿½È­
 		Location += Velocity * deltaTime;
 
-		// °ø-º® Ãæµ¹ °¨Áö ¹× ÇØ°á
+		// ï¿½ï¿½-ï¿½ï¿½ ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ø°ï¿½
 		if (Location.x < leftBorder + Radius)
 		{
 			Velocity.x *= -1.0f;
@@ -463,7 +463,7 @@ public:
 
 	void Draw(URenderer& renderer) override
 	{
-		// À§Ä¡¿Í Å©±â¸¦ »ó¼ö ¹öÆÛ¿¡ ¾÷µ¥ÀÌÆ®
+		// ï¿½ï¿½Ä¡ï¿½ï¿½ Å©ï¿½â¸¦ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Û¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 		renderer.UpdateConstant(Location, FVector(Radius, Radius, 1.0f));
 		renderer.RenderPrimitive(VertexBuffer, NumVertices);
 	}
@@ -479,7 +479,7 @@ public:
 		FVector diff = Location - otherBall->Location;
 		float radiusSum = (Radius + otherBall->Radius);
 
-		// µÎ °ø »çÀÌÀÇ °Å¸®°¡ ¹ÝÁö¸§ÀÇ ÇÕº¸´Ù ÀÛÀ¸¸é Ãæµ¹
+		// ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Õºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½æµ¹
 		return diff.LengthSquared() < radiusSum * radiusSum;
 	}
 
@@ -493,33 +493,33 @@ public:
 
 		FVector diff = Location - otherBall->Location;
 
-		// Ãæµ¹ ¹ý¼± º¤ÅÍ
+		// ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		FVector normal = diff;
 		normal.Normalize();
 
-		// »ó´ë ¼Óµµ
+		// ï¿½ï¿½ï¿½ ï¿½Óµï¿½
 		FVector v_rel = Velocity - otherBall->Velocity;
 
-		// »ó´ë ¼Óµµ¿Í ¹ý¼±ÀÌ ÀÌ·ç´Â °¢µµ
+		// ï¿½ï¿½ï¿½ ï¿½Óµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì·ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		float v_rel_n = v_rel.DotProduct(normal);
 
-		// ¸Ö¾îÁö°í ÀÖ´Ù¸é Ãæµ¹ Ã³¸®¸¦ ÇÏÁö ¾ÊÀ½
+		// ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ ï¿½æµ¹ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		if (v_rel_n >= 0)
 		{
 			return;
 		}
 
-		// ¹Ý¹ß °è¼ö
+		// ï¿½Ý¹ï¿½ ï¿½ï¿½ï¿½
 		float e = 1.0f;
 
-		// Ãæ°Ý·®
+		// ï¿½ï¿½Ý·ï¿½
 		float j = -(1.0f + e) * v_rel_n / (1.0f / Mass + 1.0f / otherBall->Mass);
 
-		// ¼Óµµ º¯È­
+		// ï¿½Óµï¿½ ï¿½ï¿½È­
 		Velocity += normal * (j / Mass);
 		otherBall->Velocity -= normal * (j / otherBall->Mass);
 
-		// °ãÄ§ ÇØ°á
+		// ï¿½ï¿½Ä§ ï¿½Ø°ï¿½
 		float penetration = (Radius + otherBall->Radius) - diff.Length();
 
 		if (penetration < 0.01f)
@@ -538,7 +538,7 @@ int UBall::TotalNumBalls = 0;
 class UPrimitiveManager
 {
 public:
-	// ¹Ýµå½Ã UBallÀÌ ¾Æ´Ñ UPrimitive·Î ¼±¾ðÇÏ¿©¾ß ÇÏ¸ç ¹Ù²Ù¸é ¾ÈµË´Ï´Ù.
+	// ï¿½Ýµï¿½ï¿½ UBallï¿½ï¿½ ï¿½Æ´ï¿½ UPrimitiveï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ ï¿½Ï¸ï¿½ ï¿½Ù²Ù¸ï¿½ ï¿½ÈµË´Ï´ï¿½.
 	UPrimitive** PrimitiveList;
 	int Capacity;
 
@@ -560,41 +560,41 @@ public:
 		delete[] PrimitiveList;
 	}
 
-	// ÀÓÀÇÀÇ À§Ä¡, ¼Óµµ, Å©±â¸¦ °¡Áø °ø »ý¼º
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡, ï¿½Óµï¿½, Å©ï¿½â¸¦ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	UBall* CreateRandomBall(ID3D11Buffer* vertexBuffer, UINT numVertices)
 	{
-		// new ¿¬»êÀÚ¸¦ »ç¿ëÇØ °øÀÇ ÀÎ½ºÅÏ½º(Instance)¸¦ Áï½Ã »ý¼ºÇÕ´Ï´Ù.
+		// new ï¿½ï¿½ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½(Instance)ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 		UBall* ball = new UBall();
 
-		// Å©±â
+		// Å©ï¿½ï¿½
 		float minRadius = 0.05f;
 		float maxRadius = 0.10f;
 		ball->Radius = (static_cast<float>(rand()) / RAND_MAX) * (maxRadius - minRadius) + minRadius;
 
-		// Áú·®
+		// ï¿½ï¿½ï¿½ï¿½
 		float PI = acos(-1.0f);
 		ball->Mass = 4.0f / 3.0f * PI * (ball->Radius * ball->Radius * ball->Radius);
 
-		// À§Ä¡
+		// ï¿½ï¿½Ä¡
 		float locWidth = 0.5f;
 		float locHeight = 0.5f;
 		float locX = (static_cast<float>(rand()) / RAND_MAX) * locWidth - locWidth / 2;
 		float locY = (static_cast<float>(rand()) / RAND_MAX) * locHeight - locHeight / 2;
 		ball->Location = FVector(locX, locY);
 
-		// ¼Ó·Â
+		// ï¿½Ó·ï¿½
 		float minSpeed = 1.0f;
 		float maxSpeed = 5.0f;
 		float speed = (static_cast<float>(rand()) / RAND_MAX) * (maxSpeed - minSpeed) + minSpeed;
 
-		// ¹æÇâ
+		// ï¿½ï¿½ï¿½ï¿½
 		float radian = (static_cast<float>(rand()) / RAND_MAX) * 2 * PI;
 		FVector direction = FVector(cos(radian), sin(radian));
 
-		// ¼Óµµ
+		// ï¿½Óµï¿½
 		ball->Velocity = direction * speed;
 
-		// ÀÎÀÚ·Î ¹ÞÀº ·»´õ¸µ µ¥ÀÌÅÍ¸¦ ¸â¹ö º¯¼ö¿¡ ÀúÀåÇÕ´Ï´Ù.
+		// ï¿½ï¿½ï¿½Ú·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 		ball->VertexBuffer = vertexBuffer;
 		ball->NumVertices = numVertices;
 
@@ -605,10 +605,10 @@ public:
 	{
 		int lastIndex = UBall::TotalNumBalls - 1;
 
-		// delete ¿¬»êÀÚ¸¦ »ç¿ëÇØ °øÀÇ ÀÎ½ºÅÏ½º¸¦ Áï½Ã ¼Ò¸ê½ÃÅµ´Ï´Ù.
+		// delete ï¿½ï¿½ï¿½ï¿½ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Î½ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ò¸ï¿½ï¿½Åµï¿½Ï´ï¿½.
 		delete PrimitiveList[removeIndex];
 
-		// ¸¶Áö¸· ¿ä¼Ò¸¦ »èÁ¦µÈ ÀÚ¸®¿¡ µ¤¾î¾²±â
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ò¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½î¾²ï¿½ï¿½
 		PrimitiveList[removeIndex] = PrimitiveList[lastIndex];
 		PrimitiveList[lastIndex] = nullptr;
 	}
@@ -620,7 +620,7 @@ public:
 			int removeCount = UBall::TotalNumBalls - newCount;
 			for (int i = 0; i < removeCount; i++)
 			{
-				// °ü¸®µÇ°í ÀÖ´Â ÀüÃ¼ °øµé Áß ¹Ýµå½Ã ÀÓÀÇÀÇ(Random) °øÀÌ ¼Ò¸êÇØ¾ß ÇÕ´Ï´Ù.
+				// ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ýµï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(Random) ï¿½ï¿½ï¿½ï¿½ ï¿½Ò¸ï¿½ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½.
 				int removeIndex = rand() % UBall::TotalNumBalls;
 
 				RemoveBall(removeIndex);
@@ -630,7 +630,7 @@ public:
 		{
 			Reserve(newCount);
 
-			// »õ·Î »ý¼º
+			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			for (int i = UBall::TotalNumBalls; i < newCount; i++)
 			{
 				PrimitiveList[i] = CreateRandomBall(vertexBuffer, numVertices);
@@ -706,7 +706,7 @@ public:
 		FVector closest(closestX, closestY);
 		FVector diff = closest - ball->Location;
 
-		// °Å¸®°¡ ¹ÝÁö¸§ÀÇ ÇÕº¸´Ù ÀÛÀ¸¸é Ãæµ¹
+		// ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Õºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½æµ¹
 		return diff.LengthSquared() < ball->Radius * ball->Radius;
 	}
 
@@ -729,32 +729,32 @@ public:
 		FVector closest(closestX, closestY);
 		FVector diff = closest - ball->Location;
 
-		// Ãæµ¹ ¹ý¼± º¤ÅÍ
+		// ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		FVector normal = diff;
 		normal.Normalize();
 
-		// »ó´ë ¼Óµµ
+		// ï¿½ï¿½ï¿½ ï¿½Óµï¿½
 		FVector v_rel = ball->Velocity * -1.0f;
 
-		// »ó´ë ¼Óµµ¿Í ¹ý¼±ÀÌ ÀÌ·ç´Â °¢µµ
+		// ï¿½ï¿½ï¿½ ï¿½Óµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì·ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		float v_rel_n = v_rel.DotProduct(normal);
 
-		// ¸Ö¾îÁö°í ÀÖ´Ù¸é Ãæµ¹ Ã³¸®¸¦ ÇÏÁö ¾ÊÀ½
+		// ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ ï¿½æµ¹ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		if (v_rel_n >= 0)
 		{
 			return;
 		}
 
-		// ¹Ý¹ß °è¼ö
+		// ï¿½Ý¹ï¿½ ï¿½ï¿½ï¿½
 		float e = 1.0f;
 
-		// Ãæ°Ý·®
+		// ï¿½ï¿½Ý·ï¿½
 		float j = -(1.0f + e) * v_rel_n;
 
-		// ¼Óµµ º¯È­
+		// ï¿½Óµï¿½ ï¿½ï¿½È­
 		ball->Velocity -= normal * j;
 
-		// °ãÄ§ ÇØ°á
+		// ï¿½ï¿½Ä§ ï¿½Ø°ï¿½
 		float penetration = ball->Radius - diff.Length();
 
 		if (penetration < 0.01f)
@@ -769,8 +769,8 @@ public:
 
 constexpr int BlockRows = 4;
 constexpr int BlockCols = 8;
-float UBlock::Height = 0.3f * 2 / BlockRows; // ºñÀ² * Ã¢ ³ôÀÌ / Çà
-float UBlock::Width = 1.0f * 2 / BlockCols;	// ºñÀ² * Ã¢ ³Êºñ / ¿­
+float UBlock::Height = 0.3f * 2 / BlockRows; // ï¿½ï¿½ï¿½ï¿½ * Ã¢ ï¿½ï¿½ï¿½ï¿½ / ï¿½ï¿½
+float UBlock::Width = 1.0f * 2 / BlockCols;	// ï¿½ï¿½ï¿½ï¿½ * Ã¢ ï¿½Êºï¿½ / ï¿½ï¿½
 int UBlock::TotalNumBlocks = BlockRows * BlockCols;
 
 class UBlockManager
@@ -884,11 +884,11 @@ public:
 		FVector closest(closestX, closestY);
 		FVector diff = closest - ball->Location;
 
-		// °Å¸®°¡ ¹ÝÁö¸§ÀÇ ÇÕº¸´Ù ÀÛÀ¸¸é Ãæµ¹
+		// ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Õºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½æµ¹
 		return diff.LengthSquared() < ball->Radius * ball->Radius;
 	}
 
-	// ÆÐµé¿¡ À­¸é¿¡ ¸ÂÀº °æ¿ì ¸ÂÀº À§Ä¡¿¡ µû¶ó Æ¨±â´Â ¹æÇâ Á¶Á¤
+	// ï¿½Ðµé¿¡ ï¿½ï¿½ï¿½é¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Æ¨ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	void ResolveCollision(UPrimitive* other) override
 	{
 		UBall* ball = dynamic_cast<UBall*>(other);
@@ -914,11 +914,11 @@ public:
 				float degree = offset / Width * 150.0f - 75.0f;
 				float PI = acos(-1.0f);
 				float radian = degree * PI / 180.0f;
-				// -90µµ°¡ ¿ÞÂÊ, 0µµ°¡ ¼öÁ÷, 90µµ°¡ ¿À¸¥ÂÊ
+				// -90ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, 90ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 				ball->Velocity = FVector(sin(radian), cos(radian), 0.0f) * ball->Velocity.Length();
 
-				// °ãÄ¨ ÇØ°á
+				// ï¿½ï¿½Ä¨ ï¿½Ø°ï¿½
 				if (ball->Location.y > Location.y)
 				{
 					ball->Location.y += overlapY;
@@ -932,7 +932,7 @@ public:
 			{
 				ball->Velocity.y *= -1;
 
-				// °ãÄ§ ÇØ°á
+				// ï¿½ï¿½Ä§ ï¿½Ø°ï¿½
 				ball->Location.y -= overlapY;
 			}
 		}
@@ -940,7 +940,7 @@ public:
 		{
 			ball->Velocity.x *= -1;
 
-			// °ãÄ§ ÇØ°á
+			// ï¿½ï¿½Ä§ ï¿½Ø°ï¿½
 			if (ball->Location.x > Location.x)
 			{
 				ball->Location.x += overlapX;
@@ -974,7 +974,7 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	// ImGui ¸Þ½ÃÁö Ã³¸®
+	// ImGui ï¿½Þ½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
 	{
 		return true;
@@ -1004,40 +1004,40 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024, nullptr, nullptr, hInstance, nullptr);
 
-	// ·»´õ·¯ ÃÊ±âÈ­
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
 	URenderer renderer;
 	renderer.Create(hWnd);
 	renderer.CreateShader();
 	renderer.CreateConstantBuffer();
 
-	// Á¤Á¡ °³¼ö °è»ê
+	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 	UINT numVerticesCube = sizeof(cube_vertices) / sizeof(FVertexSimple);
 	UINT numVerticesSphere = sizeof(sphere_vertices) / sizeof(FVertexSimple);
 
-	// ¹öÅØ½º ¹öÆÛ(Vertex Buffer)´Â 1°³¸¸ »ý¼ºÇÏ¼¼¿ä.
+	// ï¿½ï¿½ï¿½Ø½ï¿½ ï¿½ï¿½ï¿½ï¿½(Vertex Buffer)ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¼ï¿½ï¿½ï¿½.
 	ID3D11Buffer* vertexBufferCube = renderer.CreateVertexBuffer(cube_vertices, sizeof(cube_vertices));
 	ID3D11Buffer* vertexBufferSphere = renderer.CreateVertexBuffer(sphere_vertices, sizeof(sphere_vertices));
 
-	// ImGui ÃÊ±âÈ­
+	// ImGui ï¿½Ê±ï¿½È­
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	ImGui_ImplWin32_Init((void*)hWnd);
 	ImGui_ImplDX11_Init(renderer.Device, renderer.DeviceContext);
 
-	// °ø ¹è¿­À» °ü¸®ÇÏ´Â Å¬·¡½º
+	// ï¿½ï¿½ ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
 	UPrimitiveManager manager;
 	UPrimitive**& ballList = manager.PrimitiveList;
 
-	// ºí·° ¹è¿­À» °ü¸®ÇÏ´Â Å¬·¡½º
+	// ï¿½ï¿½ï¿½ ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
 	UBlockManager blockManager;
 	blockManager.CreateBlocks(vertexBufferCube, numVerticesCube);
 
-	// ÆÐµé
+	// ï¿½Ðµï¿½
 	UPaddle* paddle = CreatePaddle(vertexBufferCube, numVerticesCube);
 
 	const int targetFPS = 144;
-	const double targetFrameTime = 1000.0 / targetFPS;	// ÇÑ ÇÁ·¹ÀÓÀÇ ¸ñÇ¥ ½Ã°£ (¹Ð¸®ÃÊ ´ÜÀ§)
+	const double targetFrameTime = 1000.0 / targetFPS;	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½Ã°ï¿½ (ï¿½Ð¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 
 	LARGE_INTEGER frequency;	// tick/sec
 	QueryPerformanceFrequency(&frequency);
@@ -1053,7 +1053,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bBlockValid = false;
 	bool bPaddleValid = false;
 
-	// Main Loop (Quit Message°¡ µé¾î¿À±â Àü±îÁö ¾Æ·¡ Loop¸¦ ¹«ÇÑÈ÷ ½ÇÇàÇÏ°Ô µÊ)
+	// Main Loop (Quit Messageï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½ Loopï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½)
 	while (bIsExit == false)
 	{
 		QueryPerformanceCounter(&startTime);
@@ -1100,7 +1100,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		renderer.Prepare();
 		renderer.PrepareShader();
 
-		// ÀÌµ¿
+		// ï¿½Ìµï¿½
 		for (int i = 0; i < UBall::TotalNumBalls; i++)
 		{
 			ballList[i]->Move(elapsedTime);
@@ -1111,12 +1111,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			paddle->Move(elapsedTime);
 		}
 
-		// Ãæµ¹ °Ë»ç
+		// ï¿½æµ¹ ï¿½Ë»ï¿½
 		for (int i = 0; i < UBall::TotalNumBalls; i++)
 		{
 			for (int j = i + 1; j < UBall::TotalNumBalls; j++)
 			{
-				// µÎ °´Ã¼ Ãæµ¹ ¹ß»ý
+				// ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½æµ¹ ï¿½ß»ï¿½
 				if (ballList[i]->CheckCollision(ballList[j]))
 				{
 					ballList[j]->ResolveCollision(ballList[i]);
@@ -1144,7 +1144,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		// ±×¸®±â
+		// ï¿½×¸ï¿½ï¿½ï¿½
 		for (int i = 0; i < UBall::TotalNumBalls; i++)
 		{
 			ballList[i]->Draw(renderer);
@@ -1205,34 +1205,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::End();
 		}
 
-		ImGui::Render();										// ±×¸®±â ¸í·É ÁØºñ	
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());	// ±×¸®±â ¸í·É ½ÇÇà
+		ImGui::Render();										// ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Øºï¿½	
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());	// ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 		renderer.SwapBuffer();
 
-		do	// ÇÁ·¹ÀÓ ´ë±â
+		do	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 		{
 			Sleep(0);
 			QueryPerformanceCounter(&endTime);
 
-			// ÇÑ ÇÁ·¹ÀÓÀÌ ¼Ò¿äµÈ ½Ã°£ °è»ê (¹Ð¸®ÃÊ ´ÜÀ§·Î º¯È¯)
+			// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ò¿ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ (ï¿½Ð¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯)
 			elapsedTime = (endTime.QuadPart - startTime.QuadPart) * 1000.0 / frequency.QuadPart;
 		} while (elapsedTime < targetFrameTime);
 	}
 
-	ImGui_ImplDX11_Shutdown();	//ImGui ¸®¼Ò½º ÇØÁ¦
+	ImGui_ImplDX11_Shutdown();	//ImGui ï¿½ï¿½ï¿½Ò½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-	// ·»´õ·¯ ¸®¼Ò½º ÇØÁ¦
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ò½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	renderer.ReleaseVertexBuffer(vertexBufferCube);
 	renderer.ReleaseVertexBuffer(vertexBufferSphere);
 	renderer.ReleaseConstantBuffer();
 	renderer.ReleaseShader();
 	renderer.Release();
 
-	// °øÀº UPrimitiveManager ¼Ò¸êÀÚ¿¡¼­ ÇØÁ¦
-	// ºí·°Àº UBlockManager ¼Ò¸êÀÚ¿¡¼­ ÇØÁ¦
+	// ï¿½ï¿½ï¿½ï¿½ UPrimitiveManager ï¿½Ò¸ï¿½ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ UBlockManager ï¿½Ò¸ï¿½ï¿½Ú¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	delete paddle;
 
 	return 0;
