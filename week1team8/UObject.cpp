@@ -1,7 +1,7 @@
-﻿#include "UObject.h"
+#include "UObject.h"
 #include "Global.h"
 
-void AColider::Move(float t, bool bUseGravity)
+void ACollider::Move(float t, bool bUseGravity)
 {
 	float deltaTime = t / 1000.0f;
 
@@ -41,7 +41,7 @@ void AColider::Move(float t, bool bUseGravity)
 }
 
 
-bool AColider::CheckCollision(UObject* Other)
+bool ACollider::CheckCollision(UObject* Other)
 {
 	if (Primitive == EPrimitive::Circle)
 	{
@@ -83,7 +83,7 @@ bool AColider::CheckCollision(UObject* Other)
 	return true;
 }
 
-void AColider::ResolveCollision(UObject* Other)
+void ACollider::ResolveCollision(UObject* Other)
 {
 	if (Primitive == EPrimitive::Circle)
 	{

@@ -4,26 +4,18 @@
 
 using namespace std;
 
-extern vector<UObject*> AllObjects;
-
-
-class TotalManager : public UObject //»ó¼Ó¿ë 
+class TotalManager : public UObject //ï¿½ï¿½Ó¿ï¿½ 
 {
 public: 
-	static TotalManager& GetInstance() //½Ì±ÛÅæ ÆÐÅÏÀ¸·Î °ü¸®
+	static TotalManager& GetInstance() //ï¿½Ì±ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	{
 		static TotalManager instance;
 		return instance;
 	}
 
+	TotalManager ( ){}
+
 	TotalManager(const TotalManager&) = delete;
 	TotalManager& operator=(const TotalManager) = delete;
-
-private:
-	TotalManager()
-	{
-		AllObjects.push_back(this);
-	}
-	~TotalManager() override;
 };
 
