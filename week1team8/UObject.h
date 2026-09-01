@@ -94,6 +94,10 @@ public:
 	AObstacle(float _hp = 1.0f) : hp(_hp) {}
 	virtual ~AObstacle() {}
 
+	virtual void Pressed(FVector _Location) override;
+	virtual void Released(FVector _Location) override;
+	bool bEditing = false;
+
 protected:
 	float hp = 1.0f;
 };
@@ -110,10 +114,6 @@ class ABlock : public AObstacle
 public:
 	ABlock() : AObstacle(1.0f) { colId = EColliderId::BLOCK; }
 	virtual ~ABlock() {}
-
-	virtual void Pressed(FVector _Location) override;
-	virtual void Released(FVector _Location) override;
-	bool bEditing = false;
 };
 
 class ASlingShot : public AActor
