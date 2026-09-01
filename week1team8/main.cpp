@@ -85,10 +85,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	renderer.CreateConstantBuffer();
 	renderer.CreateVertexBufferInfos();
 
-	//UIManager초기화
-	UIManager& uiManager = UIManager::Get();
-	uiManager.Initialize(renderer.SwapChain, 1024, 1024);
-
 	// ImGui 초기화
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -117,6 +113,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bButtonPressed = false;
 	bool bSave = false;
 
+	// 매니저 초기화
+	UIManager& uiManager = UIManager::Get();
+	uiManager.Initialize(renderer.SwapChain, 1024, 1024);
+
 	UObjectManager& ObjectManager = UObjectManager::Get();
 	CollisionManager& CM = CollisionManager::GetInstance();
 
@@ -126,10 +126,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SM.LoadSound("sfx_bird", L"Assets/sfx_bird.wav");
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
-	// 테스트용
-	// AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
-	// ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
-
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	ASlingShot* SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
 	ABird* Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
@@ -137,6 +133,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SlingShot->EquippedBird = Bird;
 	SlingShot->ShotPoint = Bird->GetLocation();
 	// AActor* ShotPoint = SpawnActor<AActor>(SlingShot->ShotPoint, EPrimitive::Circle);
+
+	// 테스트용
+	// AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
+	// ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
 
 	while (bIsExit == false)
 	{
