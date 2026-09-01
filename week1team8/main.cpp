@@ -26,6 +26,7 @@
 #include "UIManager.h"
 #include "CollisionManager.h"
 #include "ObjectManager.h"
+#include "SoundManager.h"
 
 
 bool bUseGravity = true;
@@ -127,9 +128,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bButtonPressed = false;
 	bool bSave = false;
 
-	UObjectManager &ObjectManager = UObjectManager::Get();
+	UObjectManager& ObjectManager = UObjectManager::Get();
 	CollisionManager& CM = CollisionManager::GetInstance();
 
+	SoundManager& SM = SoundManager::Get();
+	SM.Initialize();
+	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
+	SM.LoadSound("sfx_bird", L"Assets/sfx_bird.wav");
+
+	SM.PlayBGM("bgm_main", true, 0.5f);
 
 	//테스트용
 	/*AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
@@ -145,10 +152,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
-	ASlingShot *SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
-	ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
+	ASlingShot* SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
+	ABird* Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
 
-	SlingShot->EquippedBird = Bird;	
+	SlingShot->EquippedBird = Bird;
 	SlingShot->ShotPoint = Bird->GetLocation();
 	//AActor* ShotPoint = SpawnActor<AActor>(SlingShot->ShotPoint, EPrimitive::Circle);
 
@@ -234,6 +241,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				bPressed = false;
 				ReleaseCapture();
+				SM.PlaySFX("sfx_bird");
 			}
 			else if (msg.message == WM_MOUSEMOVE)
 			{
@@ -253,7 +261,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//EDITOR : 블록 생성
 		if (bButtonPressed)
 		{
-			ABlock *Block = SpawnColider<ABlock>({ 0, 0, 1 }, EPrimitive::Rectangle, true, { BlockWidth, BlockHeight, 1 }, 70);
+			ABlock* Block = SpawnColider<ABlock>({ 0, 0, 1 }, EPrimitive::Rectangle, true, { BlockWidth, BlockHeight, 1 }, 70);
 			Block->bEditing = true;
 		}
 
@@ -265,7 +273,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		renderer.Prepare();
 		renderer.PrepareShader();
 
-		for (ACollider *Collider : CM.colliders)
+		for (ACollider* Collider : CM.colliders)
 		{
 			Collider->Move(elapsedTime);
 		}
@@ -358,6 +366,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	renderer.ReleaseConstantBuffer();
 	renderer.ReleaseShader();
 	renderer.Release();
+
+	// 사운드 매니저 해제
+	SM.Shutdown();
 
 	return 0;
 }
