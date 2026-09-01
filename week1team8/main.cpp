@@ -17,7 +17,7 @@
 #include "UObject.h"
 #include "Global.h"
 #include "TemplateLibrary.h"
-// #include "LoadManager.h"
+#include "LoadManager.h"
 
 //모든 매니저 헤더파일
 #include "GameManager.h"
@@ -252,13 +252,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		// EDITOR : 블록 생성 ??
+		// EDITOR : 블록 생성
 		if (bButtonPressed)
 		{
 			ABlock* Block = SpawnColider<ABlock>({ 0, 0, 1 }, EPrimitive::Rectangle, true, { BlockWidth, BlockHeight, 1 }, 70);
 			Block->bEditing = true;
 		}
 
+		// 맵 저장
 		if (bSave)
 		{
 			LoadManager::Get().SaveMap(Bird, SlingShot);
