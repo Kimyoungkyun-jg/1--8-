@@ -64,6 +64,7 @@ public:
 	virtual bool CheckCollision(UObject* Other);
 	virtual void ResolveCollision(UObject* Other);	// 충돌 해결 (속도 변화, 겹침 해결)
 	void SetVelocity(FVector _Vel) { Velocity = _Vel; }
+	void SetMass(float _Mass) { Mass = _Mass; }
 	FVector GetVelocity() const { return Velocity; }
 	float GetMass() const { return Mass; }
 	EColliderId GetColliderId() const { return colId; }
@@ -72,7 +73,7 @@ public:
 
 protected:
 	FVector Velocity;						// 속도
-	float Mass;								// 질량
+	float Mass = 10;						// 질량
 	EColliderId colId = EColliderId::NONE;	// collider 종류
 };
 
@@ -110,10 +111,10 @@ public:
 	virtual ~ABlock() {}
 };
 
-class ASlingShot : public ACollider
+class ASlingShot : public AActor
 {
 public:
-	ASlingShot() { colId = EColliderId::SLINGSHOT; }
+	ASlingShot() { }
 	virtual ~ASlingShot() {}
 
 	virtual void Pressed(FVector _Location) override;
