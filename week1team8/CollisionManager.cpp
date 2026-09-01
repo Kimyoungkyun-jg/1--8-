@@ -77,7 +77,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACo
 	// 충돌 감지
 	FVector diff = a->GetLocation() - b->GetLocation();
 	float dist = diff.Length();
-	float radiusSum = (a->GetScale().x / 2 + b->GetScale().x / 2);
+	float radiusSum = (a->GetScale().x + b->GetScale().x);
 	bool isCollision = dist < radiusSum;
 
 	// 중심이 매우 겹침 (추후 수정)
@@ -94,8 +94,8 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACo
 	float penetration = radiusSum - dist;
 
 	// 충돌 지점
-	FVector pointA = a->GetLocation() - normal * a->GetScale().x / 2;
-	FVector pointB = b->GetLocation() + normal * b->GetScale().x / 2;
+	FVector pointA = a->GetLocation() - normal * a->GetScale().x;
+	FVector pointB = b->GetLocation() + normal * b->GetScale().x;
 	FVector contactPoint = (pointA + pointB) / 2;
 
 	CollisionInfo info
@@ -213,7 +213,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleRectangle(
 	FVector diff = a->GetLocation() - closest;
 	float dist = diff.Length();
 
-	bool isCollision = dist < a->GetScale().x / 2;
+	bool isCollision = dist < a->GetScale().x;
 
 	// 원이 사각형 내부에 들어감
 	if (dist <= 0.0001f)
@@ -226,10 +226,10 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleRectangle(
 	normal.Normalize();
 
 	// 침투
-	float penetration = a->GetScale().x / 2 - dist;
+	float penetration = a->GetScale().x - dist;
 
 	// 충돌 지점
-	FVector pointA = a->GetLocation() - normal * a->GetScale().x / 2;
+	FVector pointA = a->GetLocation() - normal * a->GetScale().x;
 	FVector pointB = closest;
 	FVector contactPoint = (pointA + pointB) / 2;
 

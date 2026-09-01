@@ -10,6 +10,5 @@ enum class EColliderId
 	BIRD,
 	PIG,
 	BLOCK,
-	SLINGSHOT,
 	NONE
 };
