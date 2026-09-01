@@ -156,7 +156,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 4. 프레임 교체 및 대기
 
 		QueryPerformanceCounter(&startTime);
-		ProcessInput();
+
 		// 입력 처리
 		MSG msg;
 
