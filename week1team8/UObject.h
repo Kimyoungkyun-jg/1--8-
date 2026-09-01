@@ -25,10 +25,11 @@ public:
 	void SetLocation(const FVector& loc) { Location = loc; }
 	void SetRotation(const float _Rotation) { Rotation = _Rotation; }
 	void SetScale(const FVector& _Scal) { Scale = _Scal; }
-	void SetPrimitive(EPrimitive _Primitive) {Primitive = _Primitive;}
+	void SetPrimitive(EPrimitive _Primitive) { Primitive = _Primitive; }
 	float GetRotation() const { return Rotation; }
 	EPrimitive GetPrimitive() const { return Primitive; }
 	FVector GetScale() const { return Scale; }
+	FVector GetLocation() const { return Location; }
 
 protected:
 	FVector Location = FVector(0, 0, 0);				// 위치
@@ -42,6 +43,7 @@ class ACollider : public AActor
 public:
 	ACollider()
 	{
+
 	}
 	virtual ~ACollider()
 	{
@@ -49,9 +51,9 @@ public:
 	virtual void Move(float t, bool bUseGravity);		// t 시간동안 이동
 	virtual bool CheckCollision(UObject* Other);
 	virtual void ResolveCollision(UObject* Other);	// 충돌 해결 (속도 변화, 겹침 해결)
-	void SetVelocity ( FVector _Vel ) { Velocity = _Vel; }
-	FVector GetVelocity ( ) const { return Velocity; }
-	EColliderId GetColId() const { return colId; }
+	void SetVelocity(FVector _Vel) { Velocity = _Vel; }
+	FVector GetVelocity() const { return Velocity; }
+	float GetMass() const { return Mass; }
 
 protected:
 	FVector Velocity;			// 속도

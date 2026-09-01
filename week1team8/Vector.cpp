@@ -45,6 +45,11 @@ FVector FVector::operator*(float scalar) const
 	return FVector(x * scalar, y * scalar, z * scalar);
 }
 
+FVector FVector::operator/(float scalar) const
+{
+	return *this * (1 / scalar);
+}
+
 FVector& FVector::operator+=(const FVector& other)
 {
 	x += other.x;
