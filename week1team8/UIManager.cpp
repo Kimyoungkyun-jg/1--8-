@@ -33,6 +33,7 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth,int nHeight)
 	hr = D2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &Brush);
 	if (FAILED(hr)) return false;
 
+	//고정 HUD 폰트
 	hr = DWriteFactory->CreateTextFormat(
 		L"맑은 고딕",
 		nullptr,
@@ -45,6 +46,7 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth,int nHeight)
 	);
 	if (FAILED(hr)) return false;
 
+	//화면 점수 폰트
 	hr = DWriteFactory->CreateTextFormat(
 		L"맑은 고딕",
 		nullptr,
@@ -57,6 +59,24 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth,int nHeight)
 	);
 	if (FAILED(hr)) return false;
 
+
+	//WIC Factory 초기화
+	CoInitialize(nullptr); // COM 초기화
+	CoCreateInstance(
+		CLSID_WICImagingFactory,
+		nullptr,
+		CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS(&WICFactory)
+	);
+
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	//비트맵 로드
+	const wchar_t* imagePath = L"C:\\Users\\JUNGLE\\Desktop\\1--8-\\week1team8\\Assets\\img\\pausebtn.png";
+	PauseButtonBitmap = LoadBitmapFromFile(imagePath);
 
 	screenWidth = nWidth;
 	screenHeight = nHeight;
@@ -113,6 +133,7 @@ void UIManager::Update(float deltaTime)
 
 void UIManager::Render(int birdsLeft)
 {
+	// 좌상단 고정 점수표
 	if (!D2DRenderTarget)
 		return;
 
@@ -139,6 +160,7 @@ void UIManager::Render(int birdsLeft)
 		DWRITE_MEASURING_MODE_NATURAL
 	);
 
+	// 화면에 뜨는 점수 
 	for (size_t i = 0; i < FloatingTexts.size(); ++i)
 	{
 		const FFloatingText& ft = FloatingTexts[i];
@@ -182,11 +204,28 @@ void UIManager::Render(int birdsLeft)
 		D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 	}
 
+
+	//일시 정지 버튼
+
+	if (PauseButtonBitmap)
+	{
+		D2DRenderTarget->DrawBitmap(
+			PauseButtonBitmap,
+			&PauseButtonRect,
+			1.0f, // 불투명도 (Opacity)
+			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+		);
+	}
+
+
 	D2DRenderTarget->EndDraw();
 }
 
 void UIManager::Release()
 {
+	if (PauseButtonBitmap) { PauseButtonBitmap->Release(); PauseButtonBitmap = nullptr; }
+	if (WICFactory) { WICFactory->Release(); WICFactory = nullptr; }
+
 	if (FloatingFont) { FloatingFont->Release(); FloatingFont = nullptr; }
 	if (HUDFont) { HUDFont->Release(); HUDFont = nullptr; }
 	if (Brush) { Brush->Release(); Brush = nullptr; }
@@ -276,3 +315,53 @@ std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos)
 	return { screenX, screenY };
 }
 
+
+ID2D1Bitmap* UIManager::LoadBitmapFromFile(const wchar_t* uri)
+{
+	if (!WICFactory || !D2DRenderTarget) return nullptr;
+
+	IWICBitmapDecoder* decoder = nullptr;
+	IWICBitmapFrameDecode* frame = nullptr;
+	IWICFormatConverter* converter = nullptr;
+	ID2D1Bitmap* bitmap = nullptr;
+
+	// 이미지 파일 디코더 생성
+	if (FAILED(WICFactory->CreateDecoderFromFilename(uri, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder)))
+	{
+		return nullptr;
+	}
+
+	// 첫 번째 프레임 디코딩
+	if (FAILED(decoder->GetFrame(0, &frame)))
+	{
+		decoder->Release();
+		return nullptr;
+	}
+
+	// Direct2D 호환 32bppPBGRA 포맷 변환기 생성
+	if (FAILED(WICFactory->CreateFormatConverter(&converter)))
+	{
+		frame->Release();
+		decoder->Release();
+		return nullptr;
+	}
+
+	converter->Initialize(
+		frame,
+		GUID_WICPixelFormat32bppPBGRA,
+		WICBitmapDitherTypeNone,
+		nullptr,
+		0.0f,
+		WICBitmapPaletteTypeMedianCut
+	);
+
+	// D2D 비트맵 생성
+	D2DRenderTarget->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap);
+
+	// 임시 WIC 객체 해제
+	converter->Release();
+	frame->Release();
+	decoder->Release();
+
+	return bitmap;
+}

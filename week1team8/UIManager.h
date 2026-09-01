@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include <wincodec.h>
 #include <d3d11.h>
 #include <d2d1.h>
 #include <d2d1helper.h>
@@ -14,6 +15,7 @@
 
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
+#pragma comment(lib, "windowscodecs.lib")
 
 using namespace std;
 
@@ -170,6 +172,12 @@ private:
 	IDWriteTextFormat* HUDFont = nullptr;
 	IDWriteTextFormat* FloatingFont = nullptr;
 
+
+	IWICImagingFactory* WICFactory = nullptr;
+	ID2D1Bitmap* PauseButtonBitmap = nullptr; // 로드할 비트맵 이미지 포인터
+
+
+
 	int TargetScore = 0;
 	float DisplayScore = 0.0f;
 	vector<FFloatingText> FloatingTexts;
@@ -184,4 +192,6 @@ private:
 	int screenWidth;
 	int screenHeight;
 
+	D2D1_RECT_F PauseButtonRect = D2D1::RectF(1180.0f, 30.0f, 1240.0f, 80.0f); //일시정지 버튼 위치
+	ID2D1Bitmap* LoadBitmapFromFile(const wchar_t* uri);
 };
