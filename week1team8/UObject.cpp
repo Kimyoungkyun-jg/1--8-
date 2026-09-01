@@ -40,6 +40,35 @@ void ACollider::Move(float t, bool bUseGravity)
 			Location.y = Global::topBorder - Radius;
 		}
 	}
+	else if (Primitive == EPrimitive::Rectangle)
+	{
+		float halfWidth = Scale.x * 0.5f;   // 가로 절반 
+		float halfHeight = Scale.y * 0.5f;  // 세로 절반 
+
+		// 좌/우 벽 충돌 
+		if (Location.x < Global::leftBorder + halfWidth)
+		{
+			Velocity.x *= -1.0f;
+			Location.x = Global::leftBorder + halfWidth;
+		}
+		if (Location.x > Global::rightBorder - halfWidth)
+		{
+			Velocity.x *= -1.0f;
+			Location.x = Global::rightBorder - halfWidth;
+		}
+
+		// 상/하 벽 충돌
+		if (Location.y < Global::bottomBorder + halfHeight)
+		{
+			Velocity.y *= -1.0f;
+			Location.y = Global::bottomBorder + halfHeight;
+		}
+		if (Location.y > Global::topBorder - halfHeight)
+		{
+			Velocity.y *= -1.0f;
+			Location.y = Global::topBorder - halfHeight;
+		}
+	}
 }
 
 

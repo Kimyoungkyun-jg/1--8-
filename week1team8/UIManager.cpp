@@ -218,7 +218,7 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 		score = hp * 2000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::LightGreen);
 	}
-	else
+	else //벽돌끼리 부딪쳤을때는 가장 가까운 floatingtext에 합류
 	{
 		FFloatingText* ft = nullptr;
 		float smalldistsq = 9999;

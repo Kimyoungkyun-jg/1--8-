@@ -100,13 +100,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	LARGE_INTEGER startTime, endTime;
 	double elapsedTime = 0.0;
 
-	int ballCount = 0;
+	int ballCount = 1;
 
 	bool bIsExit = false;
 	bool bLeftPressed = false;
 	bool bRightPressed = false;
 
 	UObjectManager &ObjectManager = UObjectManager::Get();
+
+
+	//테스트용
+	AObstacle* block = SpawnColider<AObstacle>(FVector(0, 0, 0), EPrimitive::Rectangle, { 0.5,0.5,0.5 });
+	block->SetVelocity(0);
+
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -155,7 +161,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			if (ballCount > ObjectManager.AllObjects.size())
 			{
-				ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, { 0.1, 0.1, 1 });
+				ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 50, 0), EPrimitive::Circle, { 0.1, 0.1, 1 });
 			}
 			else
 			{
@@ -163,6 +169,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				ObjectManager.Destroy(ObjectManager.AllObjects[randi]);
 			}
 		}
+
 
 		renderer.Prepare();
 		renderer.PrepareShader();
@@ -185,7 +192,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 			if (AActor* Actor = dynamic_cast<AActor*>(ObjectManager.AllObjects[i]))
-
 			{
 				Actor->Draw(renderer);
 			}

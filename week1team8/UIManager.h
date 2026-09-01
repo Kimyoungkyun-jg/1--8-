@@ -26,7 +26,7 @@ struct FFloatingText
 	float X;
 	float Y;
 	float VelocityY; 
-	float FloatTimer; 
+	float FloatTimer; //유지되는 시간
 	D2D1_COLOR_F Color;
 
 	bool bIsFlyingToHUD; 
