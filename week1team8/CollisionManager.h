@@ -65,6 +65,8 @@ public:
 	// a == Circle, b == Rectangle
 	CollisionInfo CheckCollisionCircleRectangle(ACollider* a, ACollider* b);
 
+	void ResolvePosition(ACollider* a, ACollider* b, const CollisionInfo& info);
+
 	// 충돌해결
 	float ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info);
 };
