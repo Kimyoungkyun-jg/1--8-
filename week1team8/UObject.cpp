@@ -2,20 +2,14 @@
 #include "Global.h"
 #include "CollisionManager.h"
 
-ACollider::ACollider()
-{
-	CollisionManager& colMgr = CollisionManager::GetInstance();
-	colMgr.colliders.push_back(this);
-}
-
-void ACollider::Move(float t, bool bUseGravity)
+void ACollider::Move(float t)
 {
 	float deltaTime = t / 1000.0f;
 
 	// 속도 변화
 	if (bUseGravity)
 	{
-		Velocity += Global::G * deltaTime;
+		Velocity += Global::G / 2 * deltaTime;
 	}
 
 	// 위치 변화
@@ -232,4 +226,51 @@ void AActor::Draw(URenderer& renderer)
 {
 	renderer.UpdateConstant(Location, Scale);
 	renderer.RenderPrimitive(Primitive);
+}
+
+void UObject::Pressed(FVector _Location)
+{
+	//empty
+}
+
+void UObject::Clicked()
+{
+	//empty
+}
+
+void UObject::Released(FVector _Location)
+{
+	//empty
+}
+
+void ABird::Pressed(FVector _Location)
+{
+	Location = _Location;
+	Velocity = 0.f;
+	bUseGravity = false;
+}
+
+void ABird::Released(FVector _Location)
+{
+	bUseGravity = true;
+}
+
+void ASlingShot::Pressed(FVector _Location)
+{
+	if (EquippedBird)
+	{
+		EquippedBird->SetLocation(_Location);
+		EquippedBird->SetVelocity(0.f);
+		EquippedBird->bUseGravity = false;
+	}
+}
+
+void ASlingShot::Released(FVector _Location)
+{
+	if (EquippedBird)
+	{
+		FVector Direction = ShotPoint - EquippedBird->GetLocation();
+		EquippedBird->SetVelocity(Direction * Power);
+		EquippedBird->Released(_Location);
+	}
 }

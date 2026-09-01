@@ -1,6 +1,7 @@
 #pragma comment(lib, "user32")				
 
-#include <windows.h>					
+#include <windows.h>
+#include <windowsx.h>
 #include <d3d11.h>						
 #include <d3dcompiler.h>
 #include <vector>
@@ -31,6 +32,21 @@ bool bUseGravity = true;
 float clamp(float val, float minVal, float maxVal)
 {
 	return fmin(maxVal, fmax(minVal, val));
+}
+
+FVector ScreenToWorld(HWND hwnd, int MouseX, int MouseY)
+{
+	RECT rec;
+	GetClientRect(hwnd, &rec);
+
+	float w = rec.right - rec.left;
+	float c = rec.top - rec.bottom;
+
+	FVector res;
+	res.x = max(-1, min(2 * MouseX / w - 1, 1));
+	res.y = max(-1, min(2 * MouseY / c + 1, 1));
+
+	return res;
 }
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -67,7 +83,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	HWND hWnd = CreateWindowExW(0, WindowClass, Title,
 		WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024, nullptr, nullptr, hInstance, nullptr);
+		CW_USEDEFAULT, CW_USEDEFAULT, 2560, 1440, nullptr, nullptr, hInstance, nullptr);
 
 	// 렌더러 초기화
 	URenderer renderer;
@@ -99,26 +115,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	LARGE_INTEGER startTime, endTime;
 	double elapsedTime = 0.0;
 
-	int ballCount = 1;
-
 	bool bIsExit = false;
-	bool bLeftPressed = false;
-	bool bRightPressed = false;
+	bool bPressed = false;
+	int MouseX = 0, MouseY = 0;
+	FVector WorldMouseXY;
+	ACollider* PressedCollider = nullptr;
 
 	UObjectManager &ObjectManager = UObjectManager::Get();
+	CollisionManager& CM = CollisionManager::GetInstance();
 
 
 	//테스트용
-	AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, { 0.5,0.5,0.5 });
+	/*AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
 	block->SetVelocity(0);
 
-	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, { 0.1, 0.1, 1 });
+	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });*/
+
+
+	//테스트용
+	AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
+	block->SetVelocity(0);
+
+	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
+	ASlingShot *SlingShot = SpawnColider<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, false, { 0.05, 0.3, 1 });
+	ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.05, 0.05, 0.1 });
+
+	SlingShot->EquippedBird = Bird;
+	SlingShot->ShotPoint = Bird->GetLocation();
+	//AActor* ShotPoint = SpawnActor<AActor>(SlingShot->ShotPoint, EPrimitive::Circle);
+
 	while (bIsExit == false)
 	{
 		QueryPerformanceCounter(&startTime);
 
+		//입력 처리
 		MSG msg;
 
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -131,45 +163,94 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bIsExit = true;
 				break;
 			}
-			else if (msg.message == WM_KEYDOWN)
+			else if (msg.message == WM_LBUTTONDOWN)
 			{
-				if (msg.wParam == VK_LEFT)
+				bPressed = true;
+				MouseX = GET_X_LPARAM(msg.lParam);
+				MouseY = GET_Y_LPARAM(msg.lParam);
+				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+				SetCapture(msg.hwnd);
+
+				bool bFound = false;
+				for (ACollider* Collider : CM.colliders)
 				{
-					bLeftPressed = true;
+					FVector ColLoc = Collider->GetLocation();
+					EPrimitive Primitive = Collider->GetPrimitive();
+					if (Primitive == EPrimitive::Circle)
+					{
+						float dist = (ColLoc - WorldMouseXY).Length();
+						if (dist <= Collider->GetScale().x)
+						{
+							//원 모양 객체를 클릭 중
+							PressedCollider = Collider;
+							Collider->Clicked();
+							bFound = true;
+							break;
+						}
+					}
+					else if (Primitive == EPrimitive::Rectangle)
+					{
+						float half = Collider->GetScale().x / 2.f;
+						if (WorldMouseXY.x >= ColLoc.x - half
+							&& WorldMouseXY.x <= ColLoc.x + half
+							&& WorldMouseXY.y >= ColLoc.y - half
+							&& WorldMouseXY.y <= ColLoc.y + half
+							)
+						{
+							//직사각형 모양의 객체를 클릭 중
+							PressedCollider = Collider;
+							Collider->Clicked();
+							bFound = true;
+							break;
+						}
+					}
 				}
-				else if (msg.wParam == VK_RIGHT)
+
+				if (!bFound)
 				{
-					bRightPressed = true;
+					PressedCollider = nullptr;
 				}
 			}
-			else if (msg.message == WM_KEYUP)
+			else if (msg.message == WM_LBUTTONUP)
 			{
-				if (msg.wParam == VK_LEFT)
+				MouseX = GET_X_LPARAM(msg.lParam);
+				MouseY = GET_Y_LPARAM(msg.lParam);
+				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+
+				if (PressedCollider)
 				{
-					bLeftPressed = false;
+					if (PressedCollider->GetColliderId() == EColliderId::BIRD)
+					{
+						SlingShot->Released(WorldMouseXY);
+					}
+					else PressedCollider->Released(WorldMouseXY);
 				}
-				else if (msg.wParam == VK_RIGHT)
+
+				bPressed = false;
+				ReleaseCapture();
+			}
+			else if (msg.message == WM_MOUSEMOVE)
+			{
+				if (bPressed)
 				{
-					bRightPressed = false;
+					MouseX = GET_X_LPARAM(msg.lParam);
+					MouseY = GET_Y_LPARAM(msg.lParam);
+					WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+					if (PressedCollider)
+					{
+						PressedCollider->Pressed(WorldMouseXY);
+					}
 				}
 			}
 		}
-
-		//볼 생성
-
-
 
 
 		renderer.Prepare();
 		renderer.PrepareShader();
 
-		//TODO: ColiderManager의 Colider모음으로 순회
-		for ( int i = 0; i < ObjectManager.AllObjects.size ( ); i++ )
+		for (ACollider *Collider : CM.colliders)
 		{
-			if (ACollider* Colider = dynamic_cast< ACollider* > (ObjectManager.AllObjects[i]))
-			{
-				Colider->Move(elapsedTime, true);
-			}
+			Collider->Move(elapsedTime);
 		}
 
 		// 충돌 검사
@@ -181,9 +262,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)
 		{
-
 			if (ObjectManager.AllObjects.empty()) break; //allobject 암것도 없으면 안그림
-
 
 			if (AActor* Actor = dynamic_cast<AActor*>(ObjectManager.AllObjects[i]))
 			{
@@ -191,26 +270,46 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-
+		string s = "NONE";
+		if (PressedCollider)
+		{
+			switch (PressedCollider->GetColliderId())
+			{
+			case EColliderId::BIRD:
+				s = "BIRD";
+				break;
+			case EColliderId::PIG:
+				s = "PIG";
+				break;
+			case EColliderId::BLOCK:
+				s = "BLOCK";
+				break;
+			case EColliderId::SLINGSHOT:
+				s = "SLINGSHOT";
+				break;
+			case EColliderId::NONE:
+				s = "NONE";
+				break;
+			default:
+				s = "NONE";
+				break;
+			}
+		}
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
 		ImGui::Begin("Jungle Property Window");
 		ImGui::Text("Hello Jungle World!");
-		ImGui::Checkbox("Gravity", &bUseGravity);
 		ImGui::SetNextItemWidth(100);
 		ImGui::SetNextItemWidth(100);
-		if (ImGui::InputInt("Number of Balls", &ballCount, 1))
-		{
-			if (ballCount < 0)
-			{
-				ballCount = 0;
-			}
+		ImGui::End();
 
-			//manager.ResizeBallList(ballCount, vertexBufferSphere, numVerticesSphere);
-		}
-
+		ImGui::Begin("Screen Info");
+		ImGui::Text("Mouse Coord : %d %d", MouseX, MouseY);
+		ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
+		ImGui::Text("PressedColliderID %s", s.c_str());
+		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
 		ImGui::End();
 
 

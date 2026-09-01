@@ -10,10 +10,21 @@ class UObject
 public:
 	UObject()
 	{
+		++IDMax;
+		ID = IDMax;
 	}
 	virtual ~UObject()
 	{
 	}
+	int GetID() const { return ID; }
+
+	virtual void Pressed(FVector _Location);
+	virtual void Clicked();
+	virtual void Released(FVector _Location);
+
+private:
+	inline static int IDMax = 0;
+	int ID;
 };
 
 class AActor : public UObject
@@ -42,21 +53,27 @@ protected:
 class ACollider : public AActor
 {
 public:
-	ACollider();
+	ACollider()
+	{
+
+	}
 	virtual ~ACollider()
 	{
 	}
-	virtual void Move(float t, bool bUseGravity);		// t 시간동안 이동
+	virtual void Move(float t);		// t 시간동안 이동
 	virtual bool CheckCollision(UObject* Other);
 	virtual void ResolveCollision(UObject* Other);	// 충돌 해결 (속도 변화, 겹침 해결)
 	void SetVelocity(FVector _Vel) { Velocity = _Vel; }
 	FVector GetVelocity() const { return Velocity; }
 	float GetMass() const { return Mass; }
+	EColliderId GetColliderId() const { return colId; }
+
+	bool bUseGravity = true;
 
 protected:
-	FVector Velocity;			// 속도
-	float Mass;					// 질량
-	EColliderId colId = EColliderId::NONE; // collider 종류
+	FVector Velocity;						// 속도
+	float Mass;								// 질량
+	EColliderId colId = EColliderId::NONE;	// collider 종류
 };
 
 class ABird : public ACollider
@@ -64,6 +81,9 @@ class ABird : public ACollider
 public:
 	ABird() { colId = EColliderId::BIRD; }
 	virtual ~ABird() {}
+
+	virtual void Pressed(FVector _Location) override;
+	virtual void Released(FVector _Location) override;
 };
 
 class AObstacle : public ACollider
@@ -88,4 +108,22 @@ class ABlock : public AObstacle
 public:
 	ABlock() : AObstacle(1.0f) { colId = EColliderId::BLOCK; }
 	virtual ~ABlock() {}
+};
+
+class ASlingShot : public ACollider
+{
+public:
+	ASlingShot() { colId = EColliderId::SLINGSHOT; }
+	virtual ~ASlingShot() {}
+
+	virtual void Pressed(FVector _Location) override;
+	virtual void Released(FVector _Location) override;
+
+	ABird* EquippedBird;
+
+	//새총 발사 지점
+	FVector ShotPoint;
+
+	//새총 강도
+	float Power = 7.f;
 };

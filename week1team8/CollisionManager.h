@@ -23,12 +23,33 @@ public:
 
 	CollisionManager(const CollisionManager&) = delete;
 	CollisionManager& operator=(const CollisionManager&) = delete;
-	CollisionManager();;
-	~CollisionManager();;
+	CollisionManager();
+	~CollisionManager();
+
+	float InvMass(float mass);
 
 	std::vector<ACollider*> colliders;
 
-	float InvMass(float mass);
+	void AddColider(ACollider* col)
+	{
+		colliders.push_back(col);
+	}
+
+	bool DeleteColider(int id)
+	{
+		for (int i = 0; i < colliders.size(); i++)
+		{
+			if (colliders[i]->GetID() == id)
+			{
+				std::swap(colliders[i], colliders.back());
+				colliders.pop_back();
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 
 	std::vector<CollisionInfo> CheckCollisionAll();
 
