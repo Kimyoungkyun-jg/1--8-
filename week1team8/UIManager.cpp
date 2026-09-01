@@ -145,40 +145,41 @@ void UIManager::Render(int birdsLeft)
 
 		Brush->SetColor(ft.Color);
 
+		float width = 120.0f;  // 점수 텍스트 길이에 맞춰 적절한 폭으로 설정
+		float height = 40.0f;  // 양수로 설정
+
 		D2D1_RECT_F rect = D2D1::RectF(
 			ft.X,
 			ft.Y,
-			ft.X + 250.0f,
-			ft.Y - 60.0f
+			ft.X + width,
+			ft.Y + height
 		);
 
-		if (!ft.CustomText.empty())
-		{
-			D2DRenderTarget->DrawText(
-				ft.CustomText.c_str(),
-				static_cast<UINT32>(ft.CustomText.length()),
-				FloatingFont,
-				&rect,
-				Brush,
-				D2D1_DRAW_TEXT_OPTIONS_NONE,
-				DWRITE_MEASURING_MODE_NATURAL
-			);
-		}
-		else
-		{
-			wchar_t dynamicScoreStr[32];
-			swprintf_s(dynamicScoreStr, L"%d", static_cast<int>(ft.CurrentScore));
+		// 실제 rect의 정중앙 좌표 계산
+		D2D1_POINT_2F center = D2D1::Point2F(ft.X + width * 0.5f, ft.Y + height * 0.5f);
 
-			D2DRenderTarget->DrawText(
-				dynamicScoreStr,
-				static_cast<UINT32>(wcslen(dynamicScoreStr)),
-				FloatingFont,
-				&rect,
-				Brush,
-				D2D1_DRAW_TEXT_OPTIONS_NONE,
-				DWRITE_MEASURING_MODE_NATURAL
-			);
-		}
+		D2D1::Matrix3x2F scaleMatrix = D2D1::Matrix3x2F::Scale(
+			D2D1::SizeF(ft.ftscale, ft.ftscale),
+			center
+		);
+
+		D2DRenderTarget->SetTransform(scaleMatrix);
+
+		wchar_t dynamicScoreStr[32];
+		swprintf_s(dynamicScoreStr, L"%d", static_cast<int>(ft.CurrentScore));
+
+		D2DRenderTarget->DrawText(
+			dynamicScoreStr,
+			static_cast<UINT32>(wcslen(dynamicScoreStr)),
+			FloatingFont,
+			&rect,
+			Brush,
+			D2D1_DRAW_TEXT_OPTIONS_NONE,
+			DWRITE_MEASURING_MODE_NATURAL
+		);
+
+		// 변환 행렬 초기화
+		D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 	}
 
 	D2DRenderTarget->EndDraw();
@@ -242,6 +243,7 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 		{
 			ft->TargetScore += 500;
 			ft->FloatTimer += 0.4f;
+			ft->ftscale = 1.5f;
 		}
 		
 		return;

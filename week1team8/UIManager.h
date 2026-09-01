@@ -32,6 +32,8 @@ struct FFloatingText
 	float FloatTimer; //
 	D2D1_COLOR_F Color;
 
+	float ftscale = 1.0f;
+
 	bool bIsFlyingToHUD; 
 	bool bIsFinished; 
 
@@ -47,6 +49,7 @@ struct FFloatingText
 		, Color({ 1.0f, 1.0f, 1.0f, 1.0f })
 		, bIsFlyingToHUD(false)
 		, bIsFinished(false)
+		, ftscale(1.5f)
 	{
 	}
 
@@ -61,6 +64,7 @@ struct FFloatingText
 		, Color(color)
 		, bIsFlyingToHUD(false)
 		, bIsFinished(false)
+		, ftscale(1.5f)
 	{
 	}
 
@@ -75,11 +79,23 @@ struct FFloatingText
 		, Color(color)
 		, bIsFlyingToHUD(false)
 		, bIsFinished(false)
+		, ftscale(1.5f)
 	{
 	}
 
 	void Update(float deltaTime)
 	{
+		if (ftscale > 1.0f)
+		{
+			float shrinkSpeed = 6.0f; // 줄어드는 속도
+			ftscale += (1.0f - ftscale) * (shrinkSpeed * deltaTime);
+			if (ftscale < 1.001f)
+			{
+				ftscale = 1.0f;
+			}
+		}
+
+
 		if (!bIsFlyingToHUD)
 		{
 			Y += VelocityY * deltaTime;

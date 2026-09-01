@@ -93,6 +93,19 @@ public:
 	AObstacle(float _hp = 1.0f) : hp(_hp) {}
 	virtual ~AObstacle() {}
 
+	void SetHP(int ammount)
+	{
+		hp = ammount;
+	}
+
+	int minusHp(int ammount = 1)
+	{
+		hp -= ammount;
+		if (hp < 0) hp = 0;
+
+		return hp;
+	}
+
 protected:
 	float hp = 1.0f;
 };

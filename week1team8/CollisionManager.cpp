@@ -111,6 +111,19 @@ CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollid
 		isCollision
 	};
 
+	AObstacle* oba = static_cast<AObstacle*>(a);
+	AObstacle* obb = static_cast<AObstacle*>(b);
+
+	if (oba)
+	{
+		if (oba->minusHp() == 0)
+		{
+		
+		}
+
+	}
+	if(obb) obb->minusHp();
+
 	return info;
 }
 
