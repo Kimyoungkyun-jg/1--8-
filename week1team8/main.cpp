@@ -350,6 +350,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::InputFloat("PigWidth", &PigWidth);
 		ImGui::InputFloat("PigHeight", &PigHeight);
 		bPigBtnPressed = ImGui::Button("Spawn Pig", ImVec2(100, 20));
+		if (ImGui::Button("Clear Map", ImVec2(100, 20)))
+		{
+			LoadManager.ClearMap(SlingShot, Bird);
+		}
 		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);
