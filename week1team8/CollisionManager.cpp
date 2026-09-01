@@ -262,8 +262,8 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 	}
 
 	// 위치 보정
-	const float slop = 0.01f; // 이 정도 침투는 무시
-	const float baumgarte = 0.2f;   // 한 번에 20%만 보정
+	const float slop = 0.0001f; // 이 정도 침투는 무시
+	const float baumgarte = 1.0f;   // 나중에 dt 기반으로 변경
 
 	float correctionAmount = std::fmax(penetration - slop, 0.0f);
 	if (correctionAmount > 0.0f)
