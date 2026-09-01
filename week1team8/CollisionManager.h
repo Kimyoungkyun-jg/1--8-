@@ -65,5 +65,5 @@ public:
 	CollisionInfo CheckCollisionCircleRectangle(ACollider* a, ACollider* b);
 
 	// 충돌해결
-	void ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info);
+	float ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info);
 };
