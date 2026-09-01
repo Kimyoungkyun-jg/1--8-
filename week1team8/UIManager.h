@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 #include <cmath>
+#include <algorithm>
 #include "TotalManager.h"
 
 #pragma comment(lib, "d2d1.lib")
@@ -18,76 +19,105 @@ using namespace std;
 
 struct FFloatingText
 {
-	float TargetScore = 0.0f;
-	float CurrentScore = 0.0f;
-	std::wstring CustomText = L"";
+	float TargetScore; 
+	float CurrentScore;  
+	std::wstring CustomText;
 
-	float X = 0.0f;
-	float Y = 0.0f;
-	float VelocityY = -60.0f;
-	float LifeTime = 1.2f;
-	float MaxLifeTime = 1.2f;
-	float Scale = 1.0f;
-	D2D1_COLOR_F Color = { 1.0f, 0.843f, 0.0f, 1.0f }; 
+	float X;
+	float Y;
+	float VelocityY; 
+	float FloatTimer; //
+	D2D1_COLOR_F Color;
 
-	void* TargetID = nullptr;
+	bool bIsFlyingToHUD; 
+	bool bIsFinished; 
+
+	static constexpr float TargetHUD_X = 50.0f; 
+	static constexpr float TargetHUD_Y = 40.0f;
 
 	FFloatingText()
-		: Color({ 1.0f, 1.0f, 1.0f, 1.0f })
+		: TargetScore(0.0f)
+		, CurrentScore(0.0f)
+		, CustomText(L"")
+		, X(0.0f)
+		, Y(0.0f)
+		, VelocityY(-30.0f)
+		, FloatTimer(0.7f)
+		, Color({ 1.0f, 1.0f, 1.0f, 1.0f })
+		, bIsFlyingToHUD(false)
+		, bIsFinished(false)
 	{
 	}
 
-	FFloatingText(float score, float x, float y, void* target = nullptr, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f })
+	FFloatingText(float score, float x, float y, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f })
 		: TargetScore(score)
 		, CurrentScore(0.0f)
+		, CustomText(L"")
 		, X(x)
 		, Y(y)
-		, VelocityY(-60.0f)
-		, LifeTime(1.2f)
-		, MaxLifeTime(1.2f)
-		, Scale(1.0f)
+		, VelocityY(-30.0f)
+		, FloatTimer(0.7f)
 		, Color(color)
-		, TargetID(target)
+		, bIsFlyingToHUD(false)
+		, bIsFinished(false)
 	{
 	}
 
 	FFloatingText(const wchar_t* text, float x, float y, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f })
-		: CustomText(text ? text : L"")
+		: TargetScore(0.0f)
+		, CurrentScore(0.0f)
+		, CustomText(text ? text : L"")
 		, X(x)
 		, Y(y)
-		, VelocityY(-60.0f)
-		, LifeTime(1.2f)
-		, MaxLifeTime(1.2f)
-		, Scale(1.0f)
+		, VelocityY(-30.0f)
+		, FloatTimer(0.7f)
 		, Color(color)
+		, bIsFlyingToHUD(false)
+		, bIsFinished(false)
 	{
-	}
-
-	void AddScore(float additionalScore)
-	{
-		TargetScore += additionalScore;
-		LifeTime = MaxLifeTime;
-		Scale = 1.2f;
 	}
 
 	void Update(float deltaTime)
 	{
-		Y += VelocityY * deltaTime;
-		LifeTime -= deltaTime;
-
-		if (CurrentScore < TargetScore)
+		if (!bIsFlyingToHUD)
 		{
-			float speed = 5.0f;
-			CurrentScore += (TargetScore - CurrentScore) * (speed * deltaTime);
-			if (std::abs(TargetScore - CurrentScore) < 1.0f)
+			Y += VelocityY * deltaTime;
+			FloatTimer -= deltaTime;
+
+			if (CurrentScore < TargetScore)
+			{
+				float speed = 15.0f;
+				CurrentScore += (TargetScore - CurrentScore) * (speed * deltaTime);
+				if (std::abs(TargetScore - CurrentScore) < 1.0f)
+				{
+					CurrentScore = TargetScore;
+				}
+			}
+
+			if (FloatTimer <= 0.0f)
 			{
 				CurrentScore = TargetScore;
+				bIsFlyingToHUD = true;
 			}
 		}
-
-		if (Scale > 1.0f)
+		else
 		{
-			Scale -= 1.0f * deltaTime;
+			float dx = TargetHUD_X - X;
+			float dy = TargetHUD_Y - Y;
+			float dist = std::sqrt(dx * dx + dy * dy);
+
+			if (dist < 35.0f)
+			{
+				bIsFinished = true;
+			}
+			else
+			{
+				float flySpeed = 2400.0f * deltaTime;
+				if (flySpeed > dist) flySpeed = dist;
+
+				X += (dx / dist) * flySpeed;
+				Y += (dy / dist) * flySpeed;
+			}
 		}
 	}
 };
@@ -95,34 +125,25 @@ struct FFloatingText
 class UIManager
 {
 public:
-	UIManager() {};
-	~UIManager();
-
-	static UIManager& GetInstance() 
+	static UIManager& Get()
 	{
-		static UIManager instance;
-		return instance;
+		static UIManager UIManager;
+		return UIManager;
 	}
 
-	UIManager(const UIManager&) = delete;
-	UIManager& operator=(const UIManager&) = delete;
+	~UIManager();
 
 	bool Initialize(IDXGISwapChain* swapChain);
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
 
-protected:
-
-
-
-	void SpawnFloatingText(float score, float screenX, float screenY, void* targetID = nullptr, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
+	void SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
 	void SpawnFloatingText(const wchar_t* text, float screenX, float screenY, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
 
 	void Release();
 
-	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp, void* targetID = nullptr);
-	void CalScore();
+	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp);
 
 private:
 	ID2D1Factory* D2DFactory = nullptr;
@@ -138,4 +159,8 @@ private:
 	bool bInitialized = false;
 
 	vector<pair<float, float>> blockcolPoses;
+
+private:
+	UIManager() {};
+	
 };

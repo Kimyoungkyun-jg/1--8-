@@ -1,15 +1,21 @@
 #include "UObject.h"
 #include "Global.h"
+#include "CollisionManager.h"
 
+ACollider::ACollider()
+{
+	CollisionManager& colMgr = CollisionManager::GetInstance();
+	colMgr.colliders.push_back(this);
+}
 
-void ACollider::Move(float t, bool bUseGravity)
+void ACollider::Move(float t)
 {
 	float deltaTime = t / 1000.0f;
 
 	// 속도 변화
 	if (bUseGravity)
 	{
-		Velocity += Global::G * deltaTime;
+		Velocity += Global::G / 2 * deltaTime;
 	}
 
 	// 위치 변화
@@ -38,6 +44,35 @@ void ACollider::Move(float t, bool bUseGravity)
 		{
 			Velocity.y *= -1.0f;
 			Location.y = Global::topBorder - Radius;
+		}
+	}
+	else if (Primitive == EPrimitive::Rectangle)
+	{
+		float halfWidth = Scale.x * 0.5f;   // 가로 절반 
+		float halfHeight = Scale.y * 0.5f;  // 세로 절반 
+
+		// 좌/우 벽 충돌 
+		if (Location.x < Global::leftBorder + halfWidth)
+		{
+			Velocity.x *= -1.0f;
+			Location.x = Global::leftBorder + halfWidth;
+		}
+		if (Location.x > Global::rightBorder - halfWidth)
+		{
+			Velocity.x *= -1.0f;
+			Location.x = Global::rightBorder - halfWidth;
+		}
+
+		// 상/하 벽 충돌
+		if (Location.y < Global::bottomBorder + halfHeight)
+		{
+			Velocity.y *= -1.0f;
+			Location.y = Global::bottomBorder + halfHeight;
+		}
+		if (Location.y > Global::topBorder - halfHeight)
+		{
+			Velocity.y *= -1.0f;
+			Location.y = Global::topBorder - halfHeight;
 		}
 	}
 }
@@ -197,4 +232,51 @@ void AActor::Draw(URenderer& renderer)
 {
 	renderer.UpdateConstant(Location, Scale);
 	renderer.RenderPrimitive(Primitive);
+}
+
+void UObject::Pressed(FVector _Location)
+{
+	//empty
+}
+
+void UObject::Clicked()
+{
+	//empty
+}
+
+void UObject::Released(FVector _Location)
+{
+	//empty
+}
+
+void ABird::Pressed(FVector _Location)
+{
+	Location = _Location;
+	Velocity = 0.f;
+	bUseGravity = false;
+}
+
+void ABird::Released(FVector _Location)
+{
+	bUseGravity = true;
+}
+
+void ASlingShot::Pressed(FVector _Location)
+{
+	if (EquippedBird)
+	{
+		EquippedBird->SetLocation(_Location);
+		EquippedBird->SetVelocity(0.f);
+		EquippedBird->bUseGravity = false;
+	}
+}
+
+void ASlingShot::Released(FVector _Location)
+{
+	if (EquippedBird)
+	{
+		FVector Direction = ShotPoint - EquippedBird->GetLocation();
+		EquippedBird->SetVelocity(Direction * Power);
+		EquippedBird->Released(_Location);
+	}
 }

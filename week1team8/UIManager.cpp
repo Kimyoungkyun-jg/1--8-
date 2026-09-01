@@ -59,7 +59,7 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain)
 
 	bInitialized = true;
 
-	SpawnFloatingText(100.0f, 500.0f, 500.0f, nullptr, D2D1::ColorF(D2D1::ColorF::Yellow));
+	SpawnFloatingText(100.0f, 500.0f, 500.0f, D2D1::ColorF(D2D1::ColorF::Yellow));
 
 	return true;
 }
@@ -69,22 +69,9 @@ void UIManager::AddScore(int points)
 	TargetScore += points;
 }
 
-void UIManager::SpawnFloatingText(float score, float screenX, float screenY, void* targetID, D2D1_COLOR_F color)
+void UIManager::SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color)
 {
-	if (targetID != nullptr)
-	{
-		for (auto& ft : FloatingTexts)
-		{
-			if (ft.TargetID == targetID && ft.LifeTime > 0.0f)
-			{
-				ft.AddScore(score);
-				return;
-			}
-		}
-	}
-
-	FloatingTexts.emplace_back(score, screenX, screenY, targetID, color);
-	AddScore(static_cast<int>(score));
+	FloatingTexts.emplace_back(score, screenX, screenY, color);
 }
 
 void UIManager::SpawnFloatingText(const wchar_t* text, float screenX, float screenY, D2D1_COLOR_F color)
@@ -94,7 +81,7 @@ void UIManager::SpawnFloatingText(const wchar_t* text, float screenX, float scre
 
 void UIManager::Update(float deltaTime)
 {
-	if (DisplayScore < TargetScore)
+	if (DisplayScore < TargetScore) 
 	{
 		float speed = 10.0f;
 		DisplayScore += (TargetScore - DisplayScore) * (speed * deltaTime);
@@ -108,12 +95,15 @@ void UIManager::Update(float deltaTime)
 	{
 		it->Update(deltaTime);
 
-		if (it->LifeTime <= 0.0f)
+		if (it->bIsFinished) 
 		{
-			
-			it = FloatingTexts.erase(it);
-			
+			if (it->TargetScore > 0.0f)
+			{
+				AddScore(static_cast<int>(it->TargetScore)); 
+			}
 
+			it = FloatingTexts.erase(it);
+		}
 		else
 		{
 			++it;
@@ -149,13 +139,11 @@ void UIManager::Render(int birdsLeft)
 		DWRITE_MEASURING_MODE_NATURAL
 	);
 
-	for (const FFloatingText& ft : FloatingTexts)
+	for (size_t i = 0; i < FloatingTexts.size(); ++i)
 	{
-		float alpha = ft.LifeTime / ft.MaxLifeTime;
-		D2D1_COLOR_F drawColor = ft.Color;
-		drawColor.a = alpha;
+		const FFloatingText& ft = FloatingTexts[i];
 
-		Brush->SetColor(drawColor);
+		Brush->SetColor(ft.Color);
 
 		D2D1_RECT_F rect = D2D1::RectF(
 			ft.X,
@@ -207,7 +195,7 @@ void UIManager::Release()
 	bInitialized = false;
 }
 
-void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp, void* targetID)
+void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp)
 {
 	float score = 0.0f;
 	D2D1_COLOR_F color = D2D1::ColorF(D2D1::ColorF::Gold);
@@ -230,14 +218,29 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 		score = hp * 2000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::LightGreen);
 	}
-	else
+	else //벽돌끼리 부딪쳤을때는 가장 가까운 floatingtext에 합류
 	{
+		FFloatingText* ft = nullptr;
+		float smalldistsq = 9999;
+		for (auto& it : FloatingTexts)
+		{
+			float temp = sqrt(it.X - colposx) + sqrt(it.Y - colposy);
+			if (smalldistsq < temp)
+			{
+				ft = &it;
+				smalldistsq = temp;
+			}
+		}
+
+		if (ft)
+		{
+			ft->TargetScore += hp * 500;
+			ft->FloatTimer += 2.0f;
+		}
+		
 		return;
 	}
 
-	SpawnFloatingText(score, colposx, colposy, targetID, color);
+	SpawnFloatingText(score, colposx, colposy, color);
 }
 
-void UIManager::CalScore()
-{
-}
