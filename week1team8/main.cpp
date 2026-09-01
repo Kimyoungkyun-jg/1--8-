@@ -25,8 +25,7 @@
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 
- //전역으로 사용하는 매니저
-UIManager* uiManager = nullptr;
+
 bool bUseGravity = true;
 
 float clamp(float val, float minVal, float maxVal)
@@ -77,8 +76,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	renderer.CreateConstantBuffer();
 
 	//UIManager초기화
-	uiManager = new UIManager();
-	uiManager->Initialize(renderer.SwapChain);
+	UIManager& uiManager = UIManager::Get();
+	uiManager.Initialize(renderer.SwapChain);
 
 
 	// 버텍스 버퍼(Vertex Buffer)는 1개만 생성하세요.
@@ -100,13 +99,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	LARGE_INTEGER startTime, endTime;
 	double elapsedTime = 0.0;
 
-	int ballCount = 0;
+	int ballCount = 1;
 
 	bool bIsExit = false;
 	bool bLeftPressed = false;
 	bool bRightPressed = false;
 
 	UObjectManager &ObjectManager = UObjectManager::Get();
+
+
+	//테스트용
+	AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, { 0.5,0.5,0.5 });
+	block->SetVelocity(0);
+
+	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, { 0.1, 0.1, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -150,19 +156,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		//볼 생성
-		UObjectManager& ObjectManager = UObjectManager::Get();
-		if (ballCount != ObjectManager.AllObjects.size())
-		{
-			if (ballCount > ObjectManager.AllObjects.size())
-			{
-				ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, { 0.1, 0.1, 1 });
-			}
-			else
-			{
-				int randi = rand() % ObjectManager.AllObjects.size();
-				ObjectManager.Destroy(ObjectManager.AllObjects[randi]);
-			}
-		}
+
+
+
 
 		renderer.Prepare();
 		renderer.PrepareShader();
@@ -175,7 +171,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				Colider->Move(elapsedTime, true);
 			}
 		}
+
 		// 충돌 검사
+		CollisionManager& ColManager = CollisionManager::GetInstance();
+		ColManager.CheckCollisionAll();
+
+		
 
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)
@@ -185,7 +186,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 			if (AActor* Actor = dynamic_cast<AActor*>(ObjectManager.AllObjects[i]))
-
 			{
 				Actor->Draw(renderer);
 			}
@@ -214,8 +214,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::End();
 
 
-		uiManager->Render(4); //UI그리기
-		uiManager->Update(elapsedTime * 0.001);
+		uiManager.Render(4); //UI그리기
+		uiManager.Update(elapsedTime * 0.001);
 
 
 		ImGui::Render();										// 그리기 명령 준비	
