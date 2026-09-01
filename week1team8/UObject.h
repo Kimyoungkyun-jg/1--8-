@@ -72,6 +72,8 @@ public:
 	EColliderId GetColliderId() const { return colId; }
 	float GetStaticFriction() const { return StaticFriction; }
 	float GetDynamicFriction() const { return DynamicFriction; }
+	void SetStaticFriction(float _f) { StaticFriction = _f; }
+	void SetdynamicFriction(float _f) { DynamicFriction = _f; }
 
 	bool bUseGravity = true;
 

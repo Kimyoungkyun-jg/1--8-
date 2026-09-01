@@ -50,6 +50,8 @@ public:
 		return false;
 	}
 
+	void SetAllCollisionFriction(float _dynamic, float _static);
+
 	std::vector<CollisionInfo> CheckCollisionAll();
 
 	// 충돌 감지
