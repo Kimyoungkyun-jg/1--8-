@@ -23,8 +23,8 @@ public:
 
 	CollisionManager(const CollisionManager&) = delete;
 	CollisionManager& operator=(const CollisionManager&) = delete;
-	CollisionManager();;
-	~CollisionManager();;
+	CollisionManager();
+	~CollisionManager();
 
 	std::vector<ACollider*> colliders;
 

@@ -2,12 +2,6 @@
 #include "Global.h"
 #include "CollisionManager.h"
 
-ACollider::ACollider()
-{
-	CollisionManager& colMgr = CollisionManager::GetInstance();
-	colMgr.colliders.push_back(this);
-}
-
 void ACollider::Move(float t)
 {
 	float deltaTime = t / 1000.0f;
