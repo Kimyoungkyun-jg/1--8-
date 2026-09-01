@@ -94,7 +94,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//UIManager초기화
 	UIManager& uiManager = UIManager::Get();
-	uiManager.Initialize(renderer.SwapChain);
+	uiManager.Initialize(renderer.SwapChain, 1024, 1024);
 
 
 	// 버텍스 버퍼(Vertex Buffer)는 1개만 생성하세요.
