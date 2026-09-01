@@ -144,7 +144,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ASlingShot *SlingShot = SpawnColider<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, false, { 0.05, 0.3, 1 });
 	//ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.2, 0.2, 0.1 });
 
-	SlingShot->EquippedBird = Bird;
+	SlingShot->EquippedBird = Bird;	
 	SlingShot->ShotPoint = Bird->GetLocation();
 	//AActor* ShotPoint = SpawnActor<AActor>(SlingShot->ShotPoint, EPrimitive::Circle);
 
@@ -285,9 +285,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				break;
 			case EColliderId::BLOCK:
 				s = "BLOCK";
-				break;
-			case EColliderId::SLINGSHOT:
-				s = "SLINGSHOT";
 				break;
 			case EColliderId::NONE:
 				s = "NONE";

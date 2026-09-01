@@ -134,6 +134,7 @@
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="TotalManager.cpp" />
     <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="UObject.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="TotalManager.h" />
     <ClInclude Include="UIManager.h" />

@@ -36,8 +36,12 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 			if (info.isCollision)
 			{
-				ResolveCollision(colliders[i], colliders[j], info);
-				infos.push_back(info);
+				float impulse = ResolveCollision(colliders[i], colliders[j], info);
+
+				if (impulse > 1.0f)
+				{
+					infos.push_back(info);
+				}
 			}
 		}
 	}
@@ -215,8 +219,8 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 	float dist = diff.Length();
 
 	bool isCollision = dist < a->GetScale().x / 2;
-	
-	// 원이 사각형 내부에 들어감
+
+	// 원이 사각형 내부에 들어감 (추후 수정)
 	if (dist <= 0.0001f)
 	{
 		return CollisionInfo();
@@ -246,7 +250,7 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 }
 
 // 충돌해결
-void CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
+float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
 {
 	FVector normal = info.normal;
 	float penetration = info.penetration;
@@ -257,7 +261,7 @@ void CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Collis
 	// 스태틱 충돌 (추후 수정)
 	if (invMassA + invMassB <= 0.0f)
 	{
-		return;
+		return 0.0f;
 	}
 
 	// 위치 보정
@@ -271,7 +275,7 @@ void CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Collis
 	// 충돌 지점에서 멀어지는 중 (내적의 결과가 양수 = 충돌 방향과 상대 속도가 예각을 이룸
 	if (relativeVelocityNormal >= 0)
 	{
-		return;
+		return 0.0f;
 	}
 
 	float restitution = 0.8f; // 반발계수
@@ -280,4 +284,6 @@ void CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Collis
 	// 충격량 적용
 	a->SetVelocity(a->GetVelocity() + normal * (impulse * invMassA));
 	b->SetVelocity(b->GetVelocity() - normal * (impulse * invMassB));
+
+	return impulse;
 }

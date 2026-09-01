@@ -39,24 +39,13 @@ inline T* SpawnActor(FVector Location, EPrimitive Primitive, FVector Scale = { 0
 }
 
 template<class T>
-inline T* SpawnColider(FVector Location, EPrimitive Primitive, bool bUseGravity = true, FVector Scale = { 0.1, 0.1, 1 })
+inline T* SpawnColider(FVector Location, EPrimitive Primitive, bool bUseGravity = true, FVector Scale = { 0.1, 0.1, 1 }, float Mass = 10)
 {
 	static_assert(std::is_base_of_v<ACollider, T>);
 	ACollider* Colider = SpawnActor<T>(Location, Primitive, Scale);
 
-	//// 속력
-	//float minSpeed = 1.0f;
-	//float maxSpeed = 5.0f;
-	//float speed = (static_cast<float>(rand()) / RAND_MAX) * (maxSpeed - minSpeed) + minSpeed;
-
-	//// 방향
-	//float PI = acos(-1.0f);
-	//float radian = (static_cast<float>(rand()) / RAND_MAX) * 2 * PI;
-	//FVector direction = FVector(cos(radian), sin(radian));
-
-	//// 속도
-	//Colider->SetVelocity(direction * speed);
 	Colider->bUseGravity = bUseGravity;
+	Colider->SetMass(Mass);
 	CollisionManager::GetInstance().AddColider(Colider);
 
 	return static_cast<T*>(Colider);
