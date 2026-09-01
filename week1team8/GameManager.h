@@ -26,7 +26,7 @@ public:
 
 	void Initialize()
 	{
-
+		Menu();
 	}
 
 	// Menu -> Play

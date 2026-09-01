@@ -149,14 +149,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	while (bIsExit == false)
 	{
 		// 한 프레임 동작 (게임 매니저는 1 ~ 2를 관리함)
+		// 0. 프레임 시작 기록 
 		// 1. 입력 처리 (GameState 구분)
 		// 2. 게임 루프 (GameState == Play) (이동, 충돌처리, 등)
-		// 3. 렌더 준비
-		// 4. 렌더 실행 (게임 -> UI -> ImGui 순)
-		// 5. 프레임 교체 및 대기
+		// 3. 렌더 준비 및 렌더 실행 (게임 -> UI -> ImGui 순)
+		// 4. 프레임 교체 및 대기
 
 		QueryPerformanceCounter(&startTime);
-
+		ProcessInput();
 		// 입력 처리
 		MSG msg;
 
@@ -313,7 +313,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		// UI 그리기
-		uiManager.Render(4); 
+		uiManager.Render(4);
 		uiManager.Update(elapsedTime * 0.001);
 
 		// ImGui
