@@ -78,7 +78,6 @@ void UIManager::SpawnFloatingText(float score, float screenX, float screenY, voi
 			if (ft.TargetID == targetID && ft.LifeTime > 0.0f)
 			{
 				ft.AddScore(score);
-				AddScore(static_cast<int>(score));
 				return;
 			}
 		}
@@ -111,8 +110,10 @@ void UIManager::Update(float deltaTime)
 
 		if (it->LifeTime <= 0.0f)
 		{
+			
 			it = FloatingTexts.erase(it);
-		}
+			
+
 		else
 		{
 			++it;

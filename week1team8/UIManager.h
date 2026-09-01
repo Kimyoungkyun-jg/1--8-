@@ -28,7 +28,7 @@ struct FFloatingText
 	float LifeTime = 1.2f;
 	float MaxLifeTime = 1.2f;
 	float Scale = 1.0f;
-	D2D1_COLOR_F Color = { 1.0f, 0.843f, 0.0f, 1.0f }; // Gold
+	D2D1_COLOR_F Color = { 1.0f, 0.843f, 0.0f, 1.0f }; 
 
 	void* TargetID = nullptr;
 
@@ -77,7 +77,7 @@ struct FFloatingText
 
 		if (CurrentScore < TargetScore)
 		{
-			float speed = 15.0f;
+			float speed = 5.0f;
 			CurrentScore += (TargetScore - CurrentScore) * (speed * deltaTime);
 			if (std::abs(TargetScore - CurrentScore) < 1.0f)
 			{
@@ -96,8 +96,9 @@ class UIManager
 {
 public:
 	UIManager() {};
+	~UIManager();
 
-	static UIManager& GetInstance() // 싱글톤 패턴으로 관리
+	static UIManager& GetInstance() 
 	{
 		static UIManager instance;
 		return instance;
@@ -106,13 +107,14 @@ public:
 	UIManager(const UIManager&) = delete;
 	UIManager& operator=(const UIManager&) = delete;
 
-protected:
-
-
 	bool Initialize(IDXGISwapChain* swapChain);
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
+
+protected:
+
+
 
 	void SpawnFloatingText(float score, float screenX, float screenY, void* targetID = nullptr, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
 	void SpawnFloatingText(const wchar_t* text, float screenX, float screenY, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
