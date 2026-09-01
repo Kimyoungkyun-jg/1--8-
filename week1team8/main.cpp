@@ -4,122 +4,35 @@
 #include <d3d11.h>						
 #include <d3dcompiler.h>
 #include <vector>
+#include <cstdlib>
 
 #include "ImGui/imgui.h"				
 #include "ImGui/imgui_internal.h"		
 #include "ImGui/imgui_impl_dx11.h"		
 #include "ImGui/imgui_impl_win32.h"		
 
-using namespace std;
-
 // FVertexSimple, triangle_vertices, cube_vertices, sphere_vertices
-#include "Sphere.h"	
 #include "Vector.h"
 #include "Renderer.h"
 #include "UObject.h"
 #include "Global.h"
+#include "TemplateLibrary.h"
 
 
 //모든 매니저 헤더파일
 #include "TotalManager.h"
 #include "UIManager.h"
 #include "CollisionManager.h"
+#include "ObjectManager.h"
 
-UIManager* uiManager = nullptr; //전역으로 사용하는 매니저
-
-
+ //전역으로 사용하는 매니저
+UIManager* uiManager = nullptr;
 bool bUseGravity = true;
-
-class UObjectManager
-{
-public:
-	std::vector<UObject*> AllObjects;
-
-	void Destroy(UObject* Target)
-	{
-		for (int i = 0; i < AllObjects.size(); ++i)
-		{
-			if (AllObjects[i] == Target)
-			{
-				UObject* temp = AllObjects[i];
-			}
-		}
-	}
-
-};
-
-UObjectManager ObjectManager;
-
-template<class T>
-T* NewObject(ID3D11Buffer* vertexBuffer, UINT numVertices )
-{
-	static_assert( std::is_base_of_v<UObject, T> );
-
-	T* temp = new T;
-	ObjectManager.AllObjects.push_back(temp);
-	return static_cast<T*>(temp);	
-}
-
-template<class T>
-T* SpawnActor(ID3D11Buffer* vertexBuffer, UINT numVertices, FVector Location, EPrimitive Primitive)
-{
-	static_assert( std::is_base_of_v<AActor, T> );
-
-	AActor* SpawnedActor =  NewObject<T>(vertexBuffer, numVertices);
-
-	// 크기
-	float minRadius = 0.05f;
-	float maxRadius = 0.10f;
-	SpawnedActor->SetRadius ( ( static_cast< float >( rand ( ) ) / RAND_MAX ) * ( maxRadius - minRadius ) + minRadius );
-
-	// 위치
-	SpawnedActor->SetLocation (Location);
-
-	// 인자로 받은 렌더링 데이터를 멤버 변수에 저장합니다.
-	SpawnedActor->VertexBuffer = vertexBuffer;
-	SpawnedActor->NumVertices = numVertices;
-
-	return static_cast<T*>(SpawnedActor);
-
-}
-
-template<class T>
-T* SpawnColider(ID3D11Buffer* vertexBuffer, UINT numVertices, FVector Location, EPrimitive Primitive)
-{
-	static_assert( std::is_base_of_v<ACollider, T> );
-	ACollider* Colider = SpawnActor<T>(vertexBuffer, numVertices, Location, Primitive );
-
-	// 속력
-	float minSpeed = 1.0f;
-	float maxSpeed = 5.0f;
-	float speed = (static_cast<float>(rand()) / RAND_MAX) * (maxSpeed - minSpeed) + minSpeed;
-
-	// 방향
-	float PI = acos ( -1.0f );
-	float radian = (static_cast<float>(rand()) / RAND_MAX) * 2 * PI;
-	FVector direction = FVector(cos(radian), sin(radian));
-
-	// 속도
-	Colider->SetVelocity(direction * speed);
-	return static_cast<T*>(Colider);
-}
-
-void DEBUG_SpawnBalls ( int BallCount, ID3D11Buffer* vertexBuffer, UINT numVertices )
-{
-	if ( BallCount !=  ObjectManager.AllObjects.size ( ) )
-	{
-		if ( BallCount > ObjectManager.AllObjects.size ( ) )
-		{
-			ACollider* NewBall = SpawnColider<ACollider> ( vertexBuffer, numVertices, FVector ( 0, 0, 0 ), EPrimitive::Circle );
-		}
-	}
-}
 
 float clamp(float val, float minVal, float maxVal)
 {
 	return fmin(maxVal, fmax(minVal, val));
 }
-
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -145,6 +58,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
 	WCHAR WindowClass[] = L"JungleWindowClass";
 	WCHAR Title[] = L"Game Tech Lab";
 
@@ -165,13 +80,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	uiManager = new UIManager();
 	uiManager->Initialize(renderer.SwapChain);
 
-	// 정점 개수 계산
-	UINT numVerticesCube = sizeof(cube_vertices) / sizeof(FVertexSimple);
-	UINT numVerticesSphere = sizeof(sphere_vertices) / sizeof(FVertexSimple);
 
 	// 버텍스 버퍼(Vertex Buffer)는 1개만 생성하세요.
-	ID3D11Buffer* vertexBufferCube = renderer.CreateVertexBuffer(cube_vertices, sizeof(cube_vertices));
-	ID3D11Buffer* vertexBufferSphere = renderer.CreateVertexBuffer(sphere_vertices, sizeof(sphere_vertices));
+	renderer.CreateVertexBufferInfos();
 
 	// ImGui 초기화
 	IMGUI_CHECKVERSION();
@@ -195,7 +106,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bLeftPressed = false;
 	bool bRightPressed = false;
 
-
+	UObjectManager &ObjectManager = UObjectManager::Get();
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -238,15 +149,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		DEBUG_SpawnBalls( ballCount, vertexBufferSphere, numVerticesSphere );
+		//볼 생성
+		UObjectManager& ObjectManager = UObjectManager::Get();
+		if (ballCount != ObjectManager.AllObjects.size())
+		{
+			if (ballCount > ObjectManager.AllObjects.size())
+			{
+				ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, { 0.1, 0.1, 1 });
+			}
+			else
+			{
+				int randi = rand() % ObjectManager.AllObjects.size();
+				ObjectManager.Destroy(ObjectManager.AllObjects[randi]);
+			}
+		}
 
 		renderer.Prepare();
 		renderer.PrepareShader();
 
-		// 여기에 Colider만 이동
+		//TODO: ColiderManager의 Colider모음으로 순회
 		for ( int i = 0; i < ObjectManager.AllObjects.size ( ); i++ )
 		{
-			if (ACollider* Colider = dynamic_cast< ACollider* > ( ObjectManager.AllObjects[ i ] ) )
+			if (ACollider* Colider = dynamic_cast< ACollider* > (ObjectManager.AllObjects[i]))
 			{
 				Colider->Move(elapsedTime, true);
 			}
@@ -257,7 +181,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)
 		{
 
-			if (ObjectManager.AllObjects.size() < 1) break; //allobject 암것도 없으면 안그림
+			if (ObjectManager.AllObjects.empty()) break; //allobject 암것도 없으면 안그림
 
 
 			if (AActor* Actor = dynamic_cast<AActor*>(ObjectManager.AllObjects[i]))
@@ -314,8 +238,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui::DestroyContext();
 
 	// 렌더러 리소스 해제
-	renderer.ReleaseVertexBuffer(vertexBufferCube);
-	renderer.ReleaseVertexBuffer(vertexBufferSphere);
+	renderer.ReleaseVertexBuffers();
 	renderer.ReleaseConstantBuffer();
 	renderer.ReleaseShader();
 	renderer.Release();

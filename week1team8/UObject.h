@@ -3,12 +3,6 @@
 #include "Renderer.h"
 #include <vector>
 
-enum class EPrimitive
-{
-	Circle,
-	Rectangle
-};
-
 class UObject
 {
 public:
@@ -18,12 +12,6 @@ public:
 	virtual ~UObject()
 	{
 	}
-
-	ID3D11Buffer* VertexBuffer;
-	UINT NumVertices;
-
-private:
-	int index;
 };
 
 class AActor : public UObject
@@ -31,27 +19,21 @@ class AActor : public UObject
 public:
 	AActor() {};
 	virtual ~AActor() {};
-	virtual void Draw(URenderer& renderer);				// 화면에 그리기
-	EPrimitive GetPrimitive()
-	{
-		return Primitive;
-	}
+	virtual void Draw(URenderer& renderer);
 
 	void SetLocation(const FVector& loc) { Location = loc; }
-	void SetRadius ( const float _Radius ) { Radius = _Radius; }
-
-	void SetRotation ( const float _Rotation ) { Rotation = _Rotation; }
-	void SetWidthHeight ( const float _Width, const float _Height ) { Width = _Width, Height = _Height; }
-	float GetRotation () const { return Rotation; }
-	float GetWidth ( ) const { return Width; }
-	float GetHeight ( ) const { return Height; }
+	void SetRotation(const float _Rotation) { Rotation = _Rotation; }
+	void SetScale(const FVector& _Scal) { Scale = _Scal; }
+	void SetPrimitive(EPrimitive _Primitive) {Primitive = _Primitive;}
+	float GetRotation() const { return Rotation; }
+	EPrimitive GetPrimitive() const { return Primitive; }
+	FVector GetScale() const { return Scale; }
 
 protected:
 	FVector Location = FVector(0, 0, 0);				// 위치
-	float Rotation;
-	float Width, Height;
 	EPrimitive Primitive = EPrimitive::Circle;
-	float Radius = 10.f;
+	float Rotation;
+	FVector Scale = { 1, 1, 1 };
 };
 
 class ACollider : public AActor

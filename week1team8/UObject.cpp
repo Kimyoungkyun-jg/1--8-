@@ -1,5 +1,6 @@
 #include "UObject.h"
 #include "Global.h"
+#include "enums.h"
 
 void ACollider::Move(float t, bool bUseGravity)
 {
@@ -16,6 +17,7 @@ void ACollider::Move(float t, bool bUseGravity)
 
 	if (Primitive == EPrimitive::Circle)
 	{
+		float Radius = Scale.x;
 		// 공-벽 충돌 감지 및 해결
 		if (Location.x < Global::leftBorder + Radius)
 		{
@@ -193,14 +195,6 @@ void ACollider::ResolveCollision(UObject* Other)
 
 void AActor::Draw(URenderer& renderer)
 {
-	if (Primitive == EPrimitive::Circle)
-	{
-		// 위치와 크기를 상수 버퍼에 업데이트
-		renderer.UpdateConstant(Location, FVector(Radius, Radius, 1.0f));
-		renderer.RenderPrimitive(VertexBuffer, NumVertices);
-	}
-	else if (Primitive == EPrimitive::Rectangle)
-	{
-
-	}
+	renderer.UpdateConstant(Location, Scale);
+	renderer.RenderPrimitive(Primitive);
 }

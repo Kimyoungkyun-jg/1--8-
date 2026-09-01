@@ -1,13 +1,21 @@
-﻿#pragma once
+#pragma once
 
 #pragma comment(lib, "d3d11")			
 #pragma comment(lib, "d3dcompiler")		
 
 #include <d3d11.h>						
 #include <d3dcompiler.h>
+#include <vector>
 
 #include "VertexSimple.h"
 #include "Vector.h"
+#include "enums.h"
+
+struct FVertexBufferInfo
+{
+	ID3D11Buffer* vertexBuffer;
+	UINT numVertucies;
+};
 
 class URenderer
 {
@@ -64,14 +72,19 @@ public:
 	void CreateConstantBuffer();
 	void ReleaseConstantBuffer();
 
+	void CreateVertexBufferInfos();
 	ID3D11Buffer* CreateVertexBuffer(FVertexSimple* vertices, UINT byteWidth);
-	void ReleaseVertexBuffer(ID3D11Buffer* vertexBuffer);
+	void ReleaseVertexBuffers();
 
 	void Prepare();
 	void PrepareShader();
 
 	void UpdateConstant(FVector Offset, float Rotation, FVector Scale);
 	void UpdateConstant(FVector Offset, FVector Scale);
-	void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices);
+	void RenderPrimitive(EPrimitive Primitive);
 	void SwapBuffer();
+
+private:
+	void ReleaseVertexBuffer(ID3D11Buffer* vertexBuffer);
+	std::vector<FVertexBufferInfo> VertexBufferInfos;
 };
