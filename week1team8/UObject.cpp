@@ -22,22 +22,22 @@ void ACollider::Move(float t)
 		// 공-벽 충돌 감지 및 해결
 		if (Location.x < Global::leftBorder + Radius)
 		{
-			Velocity.x *= -1.0f;
+			Velocity.x *= -0.8f;
 			Location.x = Global::leftBorder + Radius;
 		}
 		if (Location.x > Global::rightBorder - Radius)
 		{
-			Velocity.x *= -1.0f;
+			Velocity.x *= -0.8f;
 			Location.x = Global::rightBorder - Radius;
 		}
 		if (Location.y < Global::bottomBorder + Radius)
 		{
-			Velocity.y *= -1.0f;
+			Velocity.y *= -0.8f;
 			Location.y = Global::bottomBorder + Radius;
 		}
 		if (Location.y > Global::topBorder - Radius)
 		{
-			Velocity.y *= -1.0f;
+			Velocity.y *= -0.8f;
 			Location.y = Global::topBorder - Radius;
 		}
 	}
@@ -49,24 +49,24 @@ void ACollider::Move(float t)
 		// 좌/우 벽 충돌 
 		if (Location.x < Global::leftBorder + halfWidth)
 		{
-			Velocity.x *= -1.0f;
+			Velocity.x *= -0.8f;
 			Location.x = Global::leftBorder + halfWidth;
 		}
 		if (Location.x > Global::rightBorder - halfWidth)
 		{
-			Velocity.x *= -1.0f;
+			Velocity.x *= -0.8f;
 			Location.x = Global::rightBorder - halfWidth;
 		}
 
 		// 상/하 벽 충돌
 		if (Location.y < Global::bottomBorder + halfHeight)
 		{
-			Velocity.y *= -1.0f;
+			Velocity.y *= -0.8f;
 			Location.y = Global::bottomBorder + halfHeight;
 		}
 		if (Location.y > Global::topBorder - halfHeight)
 		{
-			Velocity.y *= -1.0f;
+			Velocity.y *= -0.8f;
 			Location.y = Global::topBorder - halfHeight;
 		}
 	}
