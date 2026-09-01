@@ -148,6 +148,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
 	{
+		// 한 프레임 동작 (게임 매니저는 1 ~ 2를 관리함)
+		// 1. 입력 처리 (GameState 구분)
+		// 2. 게임 루프 (GameState == Play) (이동, 충돌처리, 등)
+		// 3. 렌더 준비
+		// 4. 렌더 실행 (게임 -> UI -> ImGui 순)
+		// 5. 프레임 교체 및 대기
+
 		QueryPerformanceCounter(&startTime);
 
 		// 입력 처리
@@ -245,15 +252,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		//EDITOR : 블록 생성
+		// EDITOR : 블록 생성 ??
 		if (bButtonPressed)
 		{
 			ABlock* Block = SpawnColider<ABlock>({ 0, 0, 1 }, EPrimitive::Rectangle, true, { BlockWidth, BlockHeight, 1 }, 70);
 			Block->bEditing = true;
 		}
-
-		renderer.Prepare();
-		renderer.PrepareShader();
 
 		for (ACollider* Collider : CM.colliders)
 		{
@@ -263,6 +267,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 충돌 검사
 		CollisionManager& ColManager = CollisionManager::GetInstance();
 		ColManager.CheckCollisionAll();
+
+		// 렌더 준비
+		renderer.Prepare();
+		renderer.PrepareShader();
 
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)
@@ -298,6 +306,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
+		// UI 그리기
+		uiManager.Render(4); 
+		uiManager.Update(elapsedTime * 0.001);
+
 		// ImGui
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
@@ -324,9 +336,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);
 		ImGui::End();
-
-		uiManager.Render(4); //UI그리기
-		uiManager.Update(elapsedTime * 0.001);
 
 		ImGui::Render();										// 그리기 명령 준비	
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());	// 그리기 명령 실행
