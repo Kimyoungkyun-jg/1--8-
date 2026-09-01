@@ -6,14 +6,15 @@
 
 #include "UObject.h"
 
+
 struct CollisionInfo
 {
 	FVector contactPoint = FVector();
 	FVector normal = FVector();
 	float penetration = 0.0f;
 	bool isCollision = false;
-	ACollider* a;
-	ACollider* b;
+	EColliderId colAId;
+	EColliderId colBId;
 };
 
 class CollisionManager
@@ -30,6 +31,7 @@ public:
 	float InvMass(float mass);
 
 	std::vector<ACollider*> colliders;
+	std::vector<ACollider*> pendingkills;
 
 	void AddColider(ACollider* col)
 	{

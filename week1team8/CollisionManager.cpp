@@ -1,4 +1,5 @@
 #include "CollisionManager.h"
+#include "ObjectManager.h"
 
 CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관리
 {
@@ -30,8 +31,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		for (size_t j = i + 1; j < n; j++)
 		{
 			CollisionInfo info = CheckCollision(colliders[i], colliders[j]);
-			info.a = colliders[i];
-			info.b = colliders[j];
+			info.colAId = colliders[i]->GetColliderId();
+			info.colBId = colliders[j]->GetColliderId();
 
 
 			if (info.isCollision)
@@ -40,10 +41,19 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 				if (impulse > 10.0f)
 				{
+					infos.push_back(info);
 				}
 			}
 		}
 	}
+
+	for (int i = (int)pendingkills.size() - 1; i >= 0; i--)
+	{
+		UObjectManager::Get().Destroy(pendingkills[i]);
+	}
+
+	pendingkills.clear();
+
 
 	return infos;
 }
@@ -109,19 +119,7 @@ CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollid
 		penetration,
 		isCollision
 	};
-
-	AObstacle* oba = static_cast<AObstacle*>(a);
-	AObstacle* obb = static_cast<AObstacle*>(b);
-
-	if (oba)
-	{
-		if (oba->minusHp() == 0)
-		{
-		
-		}
-
-	}
-	if(obb) obb->minusHp();
+	
 
 	return info;
 }
@@ -206,6 +204,7 @@ CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, A
 		penetration,
 		isCollision
 	};
+
 
 	return info;
 }
@@ -296,6 +295,44 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 	// 충격량 적용
 	a->SetVelocity(a->GetVelocity() + normal * (impulse * invMassA));
 	b->SetVelocity(b->GetVelocity() - normal * (impulse * invMassB));
+
+	if (impulse > 10.0f)
+	{
+		AObstacle* oba = dynamic_cast<AObstacle*>(a);
+		AObstacle* obb = dynamic_cast<AObstacle*>(b);
+
+		if (oba)
+		{
+			if (oba->minusHp() == 0)
+			{
+				bool alreadyPending = false;
+				for (auto* p : pendingkills)
+				{
+					if (p == oba) { alreadyPending = true; break; }
+				}
+				if (!alreadyPending)
+				{
+					pendingkills.push_back(oba);
+				}
+			}
+		}
+
+		if (obb)
+		{
+			if (obb->minusHp() == 0)
+			{
+				bool alreadyPending = false;
+				for (auto* p : pendingkills)
+				{
+					if (p == obb) { alreadyPending = true; break; }
+				}
+				if (!alreadyPending)
+				{
+					pendingkills.push_back(obb);
+				}
+			}
+		}
+	}
 
 	return impulse;
 }

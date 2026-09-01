@@ -262,9 +262,8 @@ void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
 	{
 		for (auto& it : infos)
 		{
-			
 			pair<float, float> pos = WorldToScreen(it.contactPoint);
-			CalPos(it.a->GetColliderId(), it.b->GetColliderId(), pos.first, pos.second);
+			CalPos(it.colAId, it.colBId, pos.first, pos.second);
 		}
 	}
 }

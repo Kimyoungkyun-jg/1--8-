@@ -18,7 +18,7 @@
 #include "UObject.h"
 #include "Global.h"
 #include "TemplateLibrary.h"
-#include "LoadManager.h"
+//#include "LoadManager.h"
 
 
 //모든 매니저 헤더파일
@@ -146,10 +146,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//테스트용
-	AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
+	ABlock* block = SpawnColider<ABlock>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
 	block->SetVelocity(0);
 
-	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
+	//ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	ASlingShot *SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
@@ -274,7 +274,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// 충돌 검사
 		CollisionManager& ColManager = CollisionManager::GetInstance();
-		ColManager.CheckCollisionAll();
+		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
 
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)
@@ -329,7 +329,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
 		if (bSave)
 		{
-			LoadManager::Get().SaveMap(Bird, SlingShot);
+			//LoadManager::Get().SaveMap(Bird, SlingShot);
 		}
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);
