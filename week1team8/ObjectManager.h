@@ -40,6 +40,17 @@ public:
 		AllObjects.clear();
 	}
 
+	UObject* Find(int ID)
+	{
+		for (UObject* Obj : AllObjects)
+		{
+			if (Obj->GetID() == ID)
+				return Obj;
+		}
+
+		return nullptr;
+	}
+
 	static UObjectManager& Get()
 	{
 		static UObjectManager Manager;
