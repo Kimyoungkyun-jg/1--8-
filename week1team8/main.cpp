@@ -12,29 +12,20 @@
 #include "ImGui/imgui_impl_dx11.h"		
 #include "ImGui/imgui_impl_win32.h"		
 
-// FVertexSimple, triangle_vertices, cube_vertices, sphere_vertices
 #include "Vector.h"
 #include "Renderer.h"
 #include "UObject.h"
 #include "Global.h"
 #include "TemplateLibrary.h"
-#include "LoadManager.h"
-
+// #include "LoadManager.h"
 
 //모든 매니저 헤더파일
-#include "TotalManager.h"
 #include "UIManager.h"
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "SoundManager.h"
 
-
 bool bUseGravity = true;
-
-float clamp(float val, float minVal, float maxVal)
-{
-	return fmin(maxVal, fmax(minVal, val));
-}
 
 FVector ScreenToWorld(HWND hwnd, int MouseX, int MouseY)
 {
@@ -92,14 +83,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	renderer.Create(hWnd);
 	renderer.CreateShader();
 	renderer.CreateConstantBuffer();
+	renderer.CreateVertexBufferInfos();
 
 	//UIManager초기화
 	UIManager& uiManager = UIManager::Get();
 	uiManager.Initialize(renderer.SwapChain, 1024, 1024);
-
-
-	// 버텍스 버퍼(Vertex Buffer)는 1개만 생성하세요.
-	renderer.CreateVertexBufferInfos();
 
 	// ImGui 초기화
 	IMGUI_CHECKVERSION();
@@ -108,6 +96,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Init((void*)hWnd);
 	ImGui_ImplDX11_Init(renderer.Device, renderer.DeviceContext);
 
+	// 프레임 관리
 	const int targetFPS = 144;
 	const double targetFrameTime = 1000.0 / targetFPS;	// 한 프레임의 목표 시간 (밀리초 단위)
 
@@ -135,21 +124,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SM.Initialize();
 	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
 	SM.LoadSound("sfx_bird", L"Assets/sfx_bird.wav");
-
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
-	//테스트용
-	/*AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
-	block->SetVelocity(0);
-
-	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });*/
-
-
-	//테스트용
-	AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
-	block->SetVelocity(0);
-
-	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
+	// 테스트용
+	// AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
+	// ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	ASlingShot* SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
@@ -157,13 +136,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SlingShot->EquippedBird = Bird;
 	SlingShot->ShotPoint = Bird->GetLocation();
-	//AActor* ShotPoint = SpawnActor<AActor>(SlingShot->ShotPoint, EPrimitive::Circle);
+	// AActor* ShotPoint = SpawnActor<AActor>(SlingShot->ShotPoint, EPrimitive::Circle);
 
 	while (bIsExit == false)
 	{
 		QueryPerformanceCounter(&startTime);
 
-		//입력 처리
+		// 입력 처리
 		MSG msg;
 
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -310,6 +289,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				break;
 			}
 		}
+
+		// ImGui
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
@@ -330,20 +311,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
 		if (bSave)
 		{
-			LoadManager::Get().SaveMap(Bird, SlingShot);
+			// LoadManager::Get().SaveMap(Bird, SlingShot);
 		}
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);
 		ImGui::End();
 
-
 		uiManager.Render(4); //UI그리기
 		uiManager.Update(elapsedTime * 0.001);
-
 
 		ImGui::Render();										// 그리기 명령 준비	
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());	// 그리기 명령 실행
 
+		// 프레임 교체
 		renderer.SwapBuffer();
 
 		do	// 프레임 대기
@@ -356,7 +336,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		} while (elapsedTime < targetFrameTime);
 	}
 
-	ImGui_ImplDX11_Shutdown();	//ImGui 리소스 해제
+	//ImGui 리소스 해제
+	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
@@ -371,5 +352,3 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	return 0;
 }
-
-
