@@ -17,6 +17,9 @@
 
 using namespace std;
 
+static constexpr float TargetHUD_X = 50.0f;
+static constexpr float TargetHUD_Y = 40.0f;
+
 struct FFloatingText
 {
 	float TargetScore; 
@@ -32,8 +35,6 @@ struct FFloatingText
 	bool bIsFlyingToHUD; 
 	bool bIsFinished; 
 
-	static constexpr float TargetHUD_X = 50.0f; 
-	static constexpr float TargetHUD_Y = 40.0f;
 
 	FFloatingText()
 		: TargetScore(0.0f)
@@ -106,7 +107,7 @@ struct FFloatingText
 			float dy = TargetHUD_Y - Y;
 			float dist = std::sqrt(dx * dx + dy * dy);
 
-			if (dist < 35.0f)
+			if (dist < 100.0f)
 			{
 				bIsFinished = true;
 			}
@@ -133,7 +134,7 @@ public:
 
 	~UIManager();
 
-	bool Initialize(IDXGISwapChain* swapChain);
+	bool Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight);
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
@@ -162,5 +163,9 @@ private:
 
 private:
 	UIManager() {};
-	std::pair<float, float> WorldToScreen(const FVector& worldPos, float screenWidth, float screenHeight);
+	std::pair<float, float> WorldToScreen(const FVector& worldPos);
+	
+	int screenWidth;
+	int screenHeight;
+
 };

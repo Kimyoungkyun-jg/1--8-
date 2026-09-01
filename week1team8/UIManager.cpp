@@ -6,7 +6,7 @@ UIManager::~UIManager()
 	Release();
 }
 
-bool UIManager::Initialize(IDXGISwapChain* swapChain)
+bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth,int nHeight)
 {
 	if (!swapChain) return false;
 
@@ -58,7 +58,8 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain)
 	if (FAILED(hr)) return false;
 
 
-	
+	screenWidth = nWidth;
+	screenHeight = nHeight;
 
 	return true;
 }
@@ -126,7 +127,7 @@ void UIManager::Render(int birdsLeft)
 	);
 
 	Brush->SetColor(D2D1::ColorF(D2D1::ColorF::White));
-	D2D1_RECT_F hudRect = D2D1::RectF(30.0f, 30.0f, 600.0f, 80.0f);
+	D2D1_RECT_F hudRect = D2D1::RectF(TargetHUD_X, TargetHUD_Y, 600.0f, 80.0f);
 
 	D2DRenderTarget->DrawText(
 		scoreText,
@@ -148,7 +149,7 @@ void UIManager::Render(int birdsLeft)
 			ft.X,
 			ft.Y,
 			ft.X + 250.0f,
-			ft.Y + 60.0f
+			ft.Y - 60.0f
 		);
 
 		if (!ft.CustomText.empty())
@@ -250,13 +251,13 @@ void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
 		for (auto& it : infos)
 		{
 			
-			pair<float, float> pos = WorldToScreen(it.contactPoint, 2560, 1440);
+			pair<float, float> pos = WorldToScreen(it.contactPoint);
 			CalPos(it.a->GetColliderId(), it.b->GetColliderId(), pos.first, pos.second);
 		}
 	}
 }
 
-std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos, float screenWidth, float screenHeight)
+std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos)
 {
 	float screenX = (worldPos.x + 1.0f) * 0.5f * screenWidth;
 	float screenY = (1.0f - worldPos.y) * 0.5f * screenHeight;

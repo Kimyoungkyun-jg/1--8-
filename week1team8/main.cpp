@@ -93,7 +93,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//UIManager초기화
 	UIManager& uiManager = UIManager::Get();
-	uiManager.Initialize(renderer.SwapChain);
+	uiManager.Initialize(renderer.SwapChain, 1024, 1024);
 
 
 	// 버텍스 버퍼(Vertex Buffer)는 1개만 생성하세요.
@@ -133,14 +133,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//테스트용
-	ABlock* block = SpawnColider<ABlock>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
+	ABlock* block = SpawnColider<ABlock>(FVector(0, -40, 0), EPrimitive::Rectangle, true, { 0.8,0.2,0.5 });
 	block->SetVelocity(0);
 
-	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });
+	ABlock* block1 = SpawnColider<ABlock>(FVector(0.1, 0, 0), EPrimitive::Rectangle, true, { 0.1,0.1,0.5 });
+
+	ABird* Bird = SpawnColider<ABird>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	ASlingShot *SlingShot = SpawnColider<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, false, { 0.05, 0.3, 1 });
-	ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.2, 0.2, 0.1 });
+	//ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.2, 0.2, 0.1 });
 
 	SlingShot->EquippedBird = Bird;
 	SlingShot->ShotPoint = Bird->GetLocation();
