@@ -123,12 +123,26 @@ public:
 	virtual ~ABlock() {}
 };
 
+class ABand : public  AActor
+{
+public:
+	ABand() {}
+	virtual ~ABand() {}
+
+	void AttachPoint(FVector Point);
+	void Stretched(FVector BirdLoc);
+
+private:
+	FVector AttachedPoint;
+};
+
 class ASlingShot : public AActor
 {
 public:
-	ASlingShot() { }
-	virtual ~ASlingShot() {}
+	ASlingShot(){}
+	virtual ~ASlingShot(){}
 
+	void SpawnBand();
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 
@@ -138,5 +152,8 @@ public:
 	FVector ShotPoint;
 
 	//새총 강도
-	float Power = 7.f;
+	float Power = 10.f;
+private:
+	ABand* BackBand;
+	ABand* FrontBand;
 };

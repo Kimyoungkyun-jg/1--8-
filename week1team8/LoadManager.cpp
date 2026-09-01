@@ -162,8 +162,8 @@ void LoadManager::ClearMap(ASlingShot*& SlingShot, ABird*& Bird)
 {
 	UObjectManager::GetInstance().DistroyAllActors();
 
-	SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
-	Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
+	SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 1 });
+	Bird = SpawnColider<ABird>({ -0.5, -0.6, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
 
 	SlingShot->EquippedBird = Bird;
 	SlingShot->ShotPoint = Bird->GetLocation();

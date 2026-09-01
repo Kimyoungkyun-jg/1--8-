@@ -2,6 +2,7 @@
 #include "Global.h"
 #include "CollisionManager.h"
 #include "ObjectManager.h"
+#include "TemplateLibrary.h"
 
 void ACollider::Move(float t)
 {
@@ -261,6 +262,19 @@ void ABird::Released(FVector _Location)
 	bUseGravity = true;
 }
 
+void ASlingShot::SpawnBand()
+{
+	BackBand = SpawnActor<ABand>(Location, EPrimitive::Rectangle);
+	FrontBand = SpawnActor<ABand>(Location, EPrimitive::Rectangle);
+
+	//새총의 왼쪽 위를 Back에, 오른쪽 위를 Front에
+	FVector BackPoint = Location + FVector(-Scale.x / 2, -Scale.y / 2, 0);
+	FVector FrontPoint = Location + FVector(Scale.x / 2, -Scale.y / 2, 0);
+
+	BackBand->AttachPoint(BackPoint);
+	FrontBand->AttachPoint(FrontPoint);
+}
+
 void ASlingShot::Pressed(FVector _Location)
 {
 	if (EquippedBird)
@@ -299,4 +313,15 @@ void AObstacle::Released(FVector _Location)
 		Velocity = 0.f;
 		bUseGravity = true;
 	}
+}
+
+void ABand::AttachPoint(FVector Point)
+{
+	AttachedPoint = Point;
+	////밴드의 오른쪽 지점을 구한다.
+	//FVector RightPoint
+}
+
+void ABand::Stretched(FVector BirdLoc)
+{
 }

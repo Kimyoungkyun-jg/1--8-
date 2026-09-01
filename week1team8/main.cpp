@@ -139,8 +139,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bResult = LoadManager.LoadMap(1, SlingShot, Bird);
 	if (!bResult)
 	{
-		SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 0 });
-		Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50);
+		SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
+		Bird = SpawnColider<ABird>({ -0.5, -0.6, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50);
 
 		SlingShot->EquippedBird = Bird;
 		SlingShot->ShotPoint = Bird->GetLocation();
