@@ -6,7 +6,6 @@
 #include <d3dcompiler.h>
 #include <vector>
 #include <cstdlib>
-#include <fstream>
 
 #include "ImGui/imgui.h"				
 #include "ImGui/imgui_internal.h"		
@@ -19,6 +18,7 @@
 #include "UObject.h"
 #include "Global.h"
 #include "TemplateLibrary.h"
+#include "LoadManager.h"
 
 
 //모든 매니저 헤더파일
@@ -26,6 +26,7 @@
 #include "UIManager.h"
 #include "CollisionManager.h"
 #include "ObjectManager.h"
+#include "SoundManager.h"
 
 
 bool bUseGravity = true;
@@ -130,6 +131,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UObjectManager &ObjectManager = UObjectManager::Get();
 	CollisionManager& CM = CollisionManager::GetInstance();
 
+	SoundManager& SM = SoundManager::Get();
+	SM.Initialize();
+	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
+	SM.LoadSound("sfx_bird", L"Assets/sfx_bird.wav");
+
+	SM.PlayBGM("bgm_main");
 
 	//테스트용
 	/*AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
@@ -234,7 +241,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				bPressed = false;
 				ReleaseCapture();
-			}
+				SM.PlaySFX("sfx_bird");			}
 			else if (msg.message == WM_MOUSEMOVE)
 			{
 				if (bPressed)
@@ -320,8 +327,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::InputFloat("Height", &BlockHeight);
 		bButtonPressed = ImGui::Button("Spawn Box", ImVec2(100, 20));
 		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
-		ImGui::SetNextItemWidth(100);
-		ImGui::SetNextItemWidth(100);
+		if (bSave)
+		{
+			LoadManager::Get().SaveMap(Bird, SlingShot);
+		}
+		ImGui::SetNextItemWidth(200);
+		ImGui::SetNextItemWidth(300);
 		ImGui::End();
 
 
@@ -353,6 +364,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	renderer.ReleaseConstantBuffer();
 	renderer.ReleaseShader();
 	renderer.Release();
+
+	// 사운드 매니저 해제
+	SM.Shutdown();
 
 	return 0;
 }

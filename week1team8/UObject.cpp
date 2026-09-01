@@ -1,6 +1,7 @@
 #include "UObject.h"
 #include "Global.h"
 #include "CollisionManager.h"
+#include "ObjectManager.h"
 
 void ACollider::Move(float t)
 {
@@ -241,6 +242,11 @@ void UObject::Clicked()
 void UObject::Released(FVector _Location)
 {
 	//empty
+}
+
+void UObject::Destroy()
+{
+	UObjectManager::Get().Destroy(this);
 }
 
 void ABird::Pressed(FVector _Location)
