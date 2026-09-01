@@ -112,8 +112,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	float BlockWidth = 0.4;
 	float BlockHeight = 0.05;
 	float PigWidth = 0.15, PigHeight = 0.15;
-	bool bBlockBtnPressed = false, bPigBtnPressed = false;
-	bool bSave = false;
+	bool bEditorMode = false;
 
 	// 매니저 초기화
 	GameManager& gameManager = GameManager::GetInstance();
@@ -137,7 +136,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	ASlingShot* SlingShot = nullptr;
 	ABird* Bird = nullptr;
-	bool bResult = LoadManager.LoadMap(0, SlingShot, Bird);
+	bool bResult = LoadManager.LoadMap(1, SlingShot, Bird);
 	if (!bResult)
 	{
 		SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 0 });
@@ -348,7 +347,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			LoadManager.ClearMap(SlingShot, Bird);
 		}
-		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
+		if (ImGui::Button("Save Map", ImVec2(100, 20)))
+		{
+			LoadManager.SaveMap();
+		}
+		if (ImGui::Checkbox("EditorMode", &bEditorMode))
+		{
+			CollisionManager::GetInstance().SetAllCollisionFriction(1.f, 1.f);
+		}
+		else
+		{
+			CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
+		}
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);
 		ImGui::End();

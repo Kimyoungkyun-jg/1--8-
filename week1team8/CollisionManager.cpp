@@ -21,6 +21,16 @@ float CollisionManager::InvMass(float mass)
 	return 1.0f / mass;
 }
 
+void CollisionManager::SetAllCollisionFriction(float _dynamic, float _static)
+{
+	size_t n = colliders.size();
+	for (size_t i = 0; i < n; i++)
+	{
+		colliders[i]->SetdynamicFriction(_dynamic);
+		colliders[i]->SetStaticFriction(_static);
+	}
+}
+
 std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 {
 	std::vector<CollisionInfo> infos;
