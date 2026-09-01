@@ -141,7 +141,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ABird* Bird = SpawnColider<ABird>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
-	ASlingShot *SlingShot = SpawnColider<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, false, { 0.05, 0.3, 1 });
+	ASlingShot *SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
 	//ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.2, 0.2, 0.1 });
 
 	SlingShot->EquippedBird = Bird;	
