@@ -20,7 +20,7 @@ float CollisionManager::InvMass(float mass)
 	return 1.0f / mass;
 }
 
-std::vector<CollisionManager::CollisionInfo> CollisionManager::CheckCollisionAll()
+std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 {
 	std::vector<CollisionInfo> infos;
 	size_t n = colliders.size();
@@ -32,6 +32,7 @@ std::vector<CollisionManager::CollisionInfo> CollisionManager::CheckCollisionAll
 			CollisionInfo info = CheckCollision(colliders[i], colliders[j]);
 			info.a = colliders[i];
 			info.b = colliders[j];
+
 
 			if (info.isCollision)
 			{
@@ -49,7 +50,7 @@ std::vector<CollisionManager::CollisionInfo> CollisionManager::CheckCollisionAll
 }
 
 // 충돌 감지
-CollisionManager::CollisionInfo CollisionManager::CheckCollision(ACollider* a, ACollider* b)
+CollisionInfo CollisionManager::CheckCollision(ACollider* a, ACollider* b)
 {
 	if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
 	{
@@ -76,7 +77,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollision(ACollider* a, A
 }
 
 // 위치, 크기(가로, 세로, 반지름), 회전, 속도, 무게 필요
-CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollider* b)
+CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollider* b)
 {
 	// 충돌 감지
 	FVector diff = a->GetLocation() - b->GetLocation();
@@ -113,7 +114,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACo
 	return info;
 }
 
-CollisionManager::CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, ACollider* b)
+CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, ACollider* b)
 {
 	// 충돌 감지
 	float widthA = a->GetScale().x;
@@ -198,7 +199,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionRectangleRectang
 }
 
 // a == Circle, b == Rectangle
-CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACollider* b)
+CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACollider* b)
 {
 	// 충돌 감지
 	float widthB = b->GetScale().x;

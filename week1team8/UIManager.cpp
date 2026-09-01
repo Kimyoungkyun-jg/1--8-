@@ -6,7 +6,7 @@ UIManager::~UIManager()
 	Release();
 }
 
-bool UIManager::Initialize(IDXGISwapChain* swapChain)
+bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth,int nHeight)
 {
 	if (!swapChain) return false;
 
@@ -57,9 +57,9 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain)
 	);
 	if (FAILED(hr)) return false;
 
-	bInitialized = true;
 
-	SpawnFloatingText(100.0f, 500.0f, 500.0f, D2D1::ColorF(D2D1::ColorF::Yellow));
+	screenWidth = nWidth;
+	screenHeight = nHeight;
 
 	return true;
 }
@@ -127,7 +127,7 @@ void UIManager::Render(int birdsLeft)
 	);
 
 	Brush->SetColor(D2D1::ColorF(D2D1::ColorF::White));
-	D2D1_RECT_F hudRect = D2D1::RectF(30.0f, 30.0f, 600.0f, 80.0f);
+	D2D1_RECT_F hudRect = D2D1::RectF(TargetHUD_X, TargetHUD_Y, 600.0f, 80.0f);
 
 	D2DRenderTarget->DrawText(
 		scoreText,
@@ -149,7 +149,7 @@ void UIManager::Render(int birdsLeft)
 			ft.X,
 			ft.Y,
 			ft.X + 250.0f,
-			ft.Y + 60.0f
+			ft.Y - 60.0f
 		);
 
 		if (!ft.CustomText.empty())
@@ -192,10 +192,10 @@ void UIManager::Release()
 	if (D2DRenderTarget) { D2DRenderTarget->Release(); D2DRenderTarget = nullptr; }
 	if (DWriteFactory) { DWriteFactory->Release(); DWriteFactory = nullptr; }
 	if (D2DFactory) { D2DFactory->Release(); D2DFactory = nullptr; }
-	bInitialized = false;
+
 }
 
-void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp)
+void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy)
 {
 	float score = 0.0f;
 	D2D1_COLOR_F color = D2D1::ColorF(D2D1::ColorF::Gold);
@@ -203,19 +203,19 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 	if ((colAId == EColliderId::BIRD && colBId == EColliderId::PIG) ||
 		(colAId == EColliderId::PIG  && colBId == EColliderId::BIRD))
 	{
-		score = hp * 1000.0f;
+		score += 1000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::Gold);
 	}
 	else if ((colAId == EColliderId::BIRD  && colBId == EColliderId::BLOCK) ||
 		     (colAId == EColliderId::BLOCK && colBId == EColliderId::BIRD))
 	{
-		score = hp * 500.0f;
+		score = 500.0f;
 		color = D2D1::ColorF(D2D1::ColorF::Yellow);
 	}
 	else if ((colAId == EColliderId::BLOCK && colBId == EColliderId::PIG) ||
 		     (colAId == EColliderId::PIG   && colBId == EColliderId::BLOCK))
 	{
-		score = hp * 2000.0f;
+		score = 2000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::LightGreen);
 	}
 	else //벽돌끼리 부딪쳤을때는 가장 가까운 floatingtext에 합류
@@ -234,7 +234,7 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 
 		if (ft)
 		{
-			ft->TargetScore += hp * 500;
+			ft->TargetScore += 500;
 			ft->FloatTimer += 2.0f;
 		}
 		
@@ -242,5 +242,26 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 	}
 
 	SpawnFloatingText(score, colposx, colposy, color);
+}
+
+void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
+{
+	if (infos.size() > 0)
+	{
+		for (auto& it : infos)
+		{
+			
+			pair<float, float> pos = WorldToScreen(it.contactPoint);
+			CalPos(it.a->GetColliderId(), it.b->GetColliderId(), pos.first, pos.second);
+		}
+	}
+}
+
+std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos)
+{
+	float screenX = (worldPos.x + 1.0f) * 0.5f * screenWidth;
+	float screenY = (1.0f - worldPos.y) * 0.5f * screenHeight;
+
+	return { screenX, screenY };
 }
 
