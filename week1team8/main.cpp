@@ -267,7 +267,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		if (bSave)
 		{
-			LoadManager::Get().SaveMap(Bird, SlingShot);
+			//LoadManager::Get().SaveMap(Bird, SlingShot);
 		}
 
 		for (ACollider* Collider : CM.colliders)
