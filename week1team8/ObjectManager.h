@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "UObject.h"
+#include "CollisionManager.h"
 
 //모든 UObject를 관리하는 클래스, Main 초기에 Get 호출
 class UObjectManager
@@ -24,6 +25,12 @@ public:
 				std::swap(AllObjects[i], AllObjects.back());
 				AllObjects.pop_back();
 				delete(temp);
+
+				if (ACollider* Collider = dynamic_cast<ACollider*>(Target))
+				{
+					CollisionManager::GetInstance().DeleteColider(Collider->GetID());
+				}
+				break;
 			}
 		}
 	}
@@ -38,6 +45,8 @@ public:
 		static UObjectManager Manager;
 		return Manager;
 	}
+	UObjectManager(const UObjectManager&) = delete;
+	UObjectManager& operator=(const UObjectManager&) = delete;
 
 private:
 	UObjectManager(){}
