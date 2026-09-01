@@ -25,7 +25,7 @@ void FVector::Normalize()
 	}
 }
 
-float FVector::DotProduct(const FVector& other)
+float FVector::DotProduct(const FVector& other) const
 {
 	return x * other.x + y * other.y + z * other.z;
 }

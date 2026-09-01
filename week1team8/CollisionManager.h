@@ -2,11 +2,20 @@
 
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 #include "UObject.h"
 
 class CollisionManager
 {
+	struct CollisionInfo
+	{
+		FVector contactPoint = FVector();
+		FVector normal = FVector();
+		float penetration = 0.0f;
+		bool isCollision = false;
+	};
+
 public:
 	static CollisionManager& GetInstance() // 싱글톤 패턴으로 관리
 	{
@@ -21,99 +30,108 @@ public:
 
 	std::vector<ACollider*> colliders;
 
+	float InvMass(float mass)
+	{
+		if (mass <= 0.0f)
+		{
+			return 0.0f;
+		}
+
+		return 1.0f / mass;
+	}
+
 	void CheckCollisionAll()
 	{
-		int n = colliders.size();
+		size_t n = colliders.size();
 
-		for (int i = 0; i < n; i++)
+		for (size_t i = 0; i < n; i++)
 		{
-			for (int j = i + 1; j < n; j++)
+			for (size_t j = i + 1; j < n; j++)
 			{
-				CheckCollision(colliders[i], colliders[j]);
+				CollisionInfo info = CheckCollision(colliders[i], colliders[j]);
+
+				if (info.isCollision)
+				{
+					ResolveCollision(colliders[i], colliders[j], info);
+				}
 			}
 		}
 	}
 
-	// 충돌 감지 및 해결
-	void CheckCollision(ACollider* a, ACollider* b)
+	// 충돌 감지
+	CollisionInfo CheckCollision(ACollider* a, ACollider* b)
 	{
 		if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
 		{
-			CheckCollisionCircleCircle(a, b);
+			return CheckCollisionCircleCircle(a, b);
 		}
 		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Rectangle)
 		{
-			CheckCollisionRectangleRectangle(a, b);
+			return CheckCollisionRectangleRectangle(a, b);
 		}
 		else if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Rectangle)
 		{
-			CheckCollisionCircleRectangle(a, b);
+			return CheckCollisionCircleRectangle(a, b);
 		}
 		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Circle)
 		{
-			CheckCollisionCircleRectangle(b, a);
+			CollisionInfo info = CheckCollisionCircleRectangle(b, a);
+
+			info.normal = info.normal * -1.0f;
+
+			return info;
 		}
+
+		return CollisionInfo();
 	}
 
 	// 위치, 크기(가로, 세로, 반지름), 회전, 속도, 무게 필요
-	void CheckCollisionCircleCircle(ACollider* a, ACollider* b)
+	CollisionInfo CheckCollisionCircleCircle(ACollider* a, ACollider* b)
 	{
 		// 충돌 감지
 		FVector diff = a->GetLocation() - b->GetLocation();
 		float dist = diff.Length();
-		float radiusSum = (a->GetScale().x + b->GetScale().x);
+		float radiusSum = (a->GetScale().x / 2 + b->GetScale().x / 2);
 		bool isCollision = dist < radiusSum;
 
-		// 충돌 없음 || 중심이 매우 겹침
-		if (!isCollision || dist <= 0.0001f)
+		// 중심이 매우 겹침 (추후 수정)
+		if (dist <= 0.0001f || !isCollision)
 		{
-			return;
+			return CollisionInfo();
 		}
 
 		// 충돌 법선 단위 벡터
 		FVector normal = diff;
 		normal.Normalize();
 
-		// 겹침 해결
+		// 침투
 		float penetration = radiusSum - dist;
-		float invMassA = 1.0f / a->GetMass();
-		float invMassB = 1.0f / b->GetMass();
 
-		if (penetration <= 0.0001f) // 매우 작은 겹침 무시
+		// 충돌 지점
+		FVector pointA = a->GetLocation() - normal * a->GetScale().x / 2;
+		FVector pointB = b->GetLocation() + normal * b->GetScale().x / 2;
+		FVector contactPoint = (pointA + pointB) / 2;
+
+		CollisionInfo info
 		{
-			return;
-		}
+			contactPoint,
+			normal,
+			penetration,
+			isCollision
+		};
 
-		FVector correction = normal * penetration / (invMassA + invMassB);
-		a->SetLocation(a->GetLocation() + correction * invMassA);
-		b->SetLocation(b->GetLocation() - correction * invMassB);
-
-		FVector relativeVelocity = a->GetVelocity() - b->GetVelocity(); // 상대 속도
-		float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
-
-		// 충돌 지점에서 멀어지는 중 (내적의 결과가 양수 = 충돌 방향과 상대 속도가 예각을 이룸
-		if (relativeVelocityNormal >= 0)
-		{
-			return;
-		}
-
-		float restitution = 0.8f; // 반발계수
-		float impulse = -(1.0f + restitution) * relativeVelocityNormal / (invMassA + invMassB); // 충격량
-
-		// 충격량 적용
-		a->SetVelocity(a->GetVelocity() + normal * (impulse * invMassA));
-		b->SetVelocity(b->GetVelocity() - normal * (impulse * invMassB));
+		return info;
 	}
 
-	void CheckCollisionRectangleRectangle(ACollider* a, ACollider* b)
+	CollisionInfo CheckCollisionRectangleRectangle(ACollider* a, ACollider* b)
 	{
+		// 충돌 감지
 		float widthA = a->GetScale().x;
 		float heightA = a->GetScale().y;
 
 		float widthB = b->GetScale().x;
 		float heightB = b->GetScale().y;
 
-		// 충돌 감지
 		float leftA = a->GetLocation().x - widthA / 2;
 		float rightA = a->GetLocation().x + widthA / 2;
 		float upA = a->GetLocation().y + heightA / 2;
@@ -126,10 +144,9 @@ public:
 
 		bool isCollision = !(leftA >= rightB || rightA <= leftB || upA <= downB || downA >= upB);
 
-		// 충돌 없음
 		if (!isCollision)
 		{
-			return;
+			return CollisionInfo();
 		}
 
 		float overlapX = (widthA + widthB) / 2 - std::fabs(a->GetLocation().x - b->GetLocation().x);
@@ -138,13 +155,18 @@ public:
 		// 매우 작은 겹침 무시
 		if (overlapX <= 0.0001f || overlapY <= 0.0001f)
 		{
-			return;
+			return CollisionInfo();
 		}
 
 		// 충돌 법선 단위 벡터
 		FVector normal;
+		float penetration;
+		FVector pointA;
+		FVector pointB;
+
 		if (overlapX < overlapY)
 		{
+			penetration = overlapX;
 			if (b->GetLocation().x > a->GetLocation().x)
 			{
 				normal = FVector(-1.0f, 0.0f, 0.0f);
@@ -153,9 +175,12 @@ public:
 			{
 				normal = FVector(1.0f, 0.0f, 0.0f);
 			}
+			pointA = a->GetLocation() - normal * a->GetScale().x / 2;
+			pointB = b->GetLocation() + normal * b->GetScale().x / 2;
 		}
 		else
 		{
+			penetration = overlapY;
 			if (b->GetLocation().y > a->GetLocation().y)
 			{
 				normal = FVector(0.0f, -1.0f, 0.0f);
@@ -164,13 +189,91 @@ public:
 			{
 				normal = FVector(0.0f, 1.0f, 0.0f);
 			}
+			pointA = a->GetLocation() - normal * a->GetScale().y / 2;
+			pointB = b->GetLocation() + normal * b->GetScale().y / 2;
 		}
 
-		// 겹침 해결
-		float penetration = std::fmin(overlapX, overlapY);
-		float invMassA = 1.0f / a->GetMass();
-		float invMassB = 1.0f / b->GetMass();
+		// 충돌 지점
+		FVector contactPoint = (pointA + pointB) / 2;
 
+		CollisionInfo info
+		{
+			contactPoint,
+			normal,
+			penetration,
+			isCollision
+		};
+
+		return info;
+	}
+
+	// a == Circle, b == Rectangle
+	CollisionInfo CheckCollisionCircleRectangle(ACollider* a, ACollider* b)
+	{
+		// 충돌 감지
+		float widthB = b->GetScale().x;
+		float heightB = b->GetScale().y;
+
+		float leftB = b->GetLocation().x - widthB / 2;
+		float rightB = b->GetLocation().x + widthB / 2;
+		float upB = b->GetLocation().y + heightB / 2;
+		float downB = b->GetLocation().y - heightB / 2;
+
+		float x = std::clamp(a->GetLocation().x, leftB, rightB);
+		float y = std::clamp(a->GetLocation().y, downB, upB);
+
+		// 사각형 내부의 점 중 원과 가장 가까운 점
+		FVector closest(x, y);
+		FVector diff = a->GetLocation() - closest;
+		float dist = diff.Length();
+
+		bool isCollision = dist < a->GetScale().x / 2;
+
+		// 원이 사각형 내부에 들어감
+		if (dist <= 0.0001f)
+		{
+			return CollisionInfo();
+		}
+
+		// 충돌 법선 단위 벡터
+		FVector normal = diff;
+		normal.Normalize();
+
+		// 침투
+		float penetration = a->GetScale().x / 2 - dist;
+
+		// 충돌 지점
+		FVector pointA = a->GetLocation() - normal * a->GetScale().x / 2;
+		FVector pointB = closest;
+		FVector contactPoint = (pointA + pointB) / 2;
+
+		CollisionInfo info
+		{
+			contactPoint,
+			normal,
+			penetration,
+			isCollision
+		};
+
+		return info;
+	}
+
+	// 충돌해결
+	void ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
+	{
+		FVector normal = info.normal;
+		float penetration = info.penetration;
+
+		float invMassA = InvMass(a->GetMass());
+		float invMassB = InvMass(b->GetMass());
+
+		// 스태틱 충돌 (추후 수정)
+		if (invMassA + invMassB <= 0.0f)
+		{
+			return;
+		}
+
+		// 위치 보정
 		FVector correction = normal * penetration / (invMassA + invMassB);
 		a->SetLocation(a->GetLocation() + correction * invMassA);
 		b->SetLocation(b->GetLocation() - correction * invMassB);
@@ -190,10 +293,5 @@ public:
 		// 충격량 적용
 		a->SetVelocity(a->GetVelocity() + normal * (impulse * invMassA));
 		b->SetVelocity(b->GetVelocity() - normal * (impulse * invMassB));
-	}
-
-	void CheckCollisionCircleRectangle(ACollider* a, ACollider* b)
-	{
-
 	}
 };
