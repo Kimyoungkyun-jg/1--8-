@@ -17,7 +17,7 @@ void ACollider::Move(float t)
 
 	if (Primitive == EPrimitive::Circle)
 	{
-		float Radius = Scale.x;
+		float Radius = Scale.x / 2;
 		// 공-벽 충돌 감지 및 해결
 		if (Location.x < Global::leftBorder + Radius)
 		{
