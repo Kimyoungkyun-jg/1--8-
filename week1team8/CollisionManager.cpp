@@ -49,7 +49,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 	for (int i = (int)pendingkills.size() - 1; i >= 0; i--)
 	{
-		UObjectManager::Get().Destroy(pendingkills[i]);
+		UObjectManager::GetInstance().Destroy(pendingkills[i]);
 	}
 
 	pendingkills.clear();
