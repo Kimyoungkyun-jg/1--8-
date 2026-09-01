@@ -1,6 +1,6 @@
 #include "UObject.h"
 #include "Global.h"
-#include "enums.h"
+
 
 void ACollider::Move(float t, bool bUseGravity)
 {
