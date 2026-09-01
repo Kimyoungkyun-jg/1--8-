@@ -2,6 +2,7 @@
 #include <d3d11.h>
 #include "Renderer.h"
 #include <vector>
+#include "enums.h"
 
 class UObject
 {
@@ -50,17 +51,18 @@ public:
 	virtual void ResolveCollision(UObject* Other);	// 충돌 해결 (속도 변화, 겹침 해결)
 	void SetVelocity ( FVector _Vel ) { Velocity = _Vel; }
 	FVector GetVelocity ( ) const { return Velocity; }
+	EColliderId GetColId() const { return colId; }
 
 protected:
 	FVector Velocity;			// 속도
 	float Mass;					// 질량
-
+	EColliderId colId = EColliderId::NONE; // collider 종류
 };
 
 class ABird : public ACollider
 {
 public:
-	ABird() {}
+	ABird() { colId = EColliderId::BIRD; }
 	virtual ~ABird() {}
 };
 
@@ -77,13 +79,13 @@ protected:
 class APig : public AObstacle
 {
 public:
-	APig() : AObstacle(1.0f) {}
+	APig() : AObstacle(1.0f) { colId = EColliderId::PIG; }
 	virtual ~APig() {}
 };
 
 class ABlock : public AObstacle
 {
 public:
-	ABlock() : AObstacle(1.0f) {}
+	ABlock() : AObstacle(1.0f) { colId = EColliderId::BLOCK; }
 	virtual ~ABlock() {}
 };

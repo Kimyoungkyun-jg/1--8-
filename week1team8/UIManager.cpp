@@ -33,7 +33,6 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain)
 	hr = D2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &Brush);
 	if (FAILED(hr)) return false;
 
-	// 고정 HUD용 폰트
 	hr = DWriteFactory->CreateTextFormat(
 		L"맑은 고딕",
 		nullptr,
@@ -46,7 +45,6 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain)
 	);
 	if (FAILED(hr)) return false;
 
-	// 튀어나오는 점수용 폰트
 	hr = DWriteFactory->CreateTextFormat(
 		L"맑은 고딕",
 		nullptr,
@@ -61,27 +59,7 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain)
 
 	bInitialized = true;
 
-
-
-	//디버그용 
-	FFloatingText fttest;
-	
-	fttest.Text = L"100";
-	fttest.X = 500.0f;
-	fttest.Y = 500.0f;
-	
-	fttest.VelocityY = -30.0f;
-	
-	fttest.LifeTime = 3.0f;
-	fttest.MaxLifeTime = 3.0f;
-	
-	fttest.Scale = 1.0f;
-	
-	fttest.Color = D2D1::ColorF(D2D1::ColorF::Yellow);
-	
-	FloatingTexts.push_back(fttest);
-
-
+	SpawnFloatingText(100.0f, 500.0f, 500.0f, nullptr, D2D1::ColorF(D2D1::ColorF::Yellow));
 
 	return true;
 }
@@ -91,39 +69,45 @@ void UIManager::AddScore(int points)
 	TargetScore += points;
 }
 
+void UIManager::SpawnFloatingText(float score, float screenX, float screenY, void* targetID, D2D1_COLOR_F color)
+{
+	if (targetID != nullptr)
+	{
+		for (auto& ft : FloatingTexts)
+		{
+			if (ft.TargetID == targetID && ft.LifeTime > 0.0f)
+			{
+				ft.AddScore(score);
+				AddScore(static_cast<int>(score));
+				return;
+			}
+		}
+	}
+
+	FloatingTexts.emplace_back(score, screenX, screenY, targetID, color);
+	AddScore(static_cast<int>(score));
+}
+
 void UIManager::SpawnFloatingText(const wchar_t* text, float screenX, float screenY, D2D1_COLOR_F color)
 {
-	FFloatingText ft;
-	ft.Text = text ? text : L"";
-	ft.X = screenX;
-	ft.Y = screenY;
-	ft.VelocityY = -60.0f;
-	ft.LifeTime = 1.2f;
-	ft.MaxLifeTime = 1.2f;
-	ft.Color = color;
-	ft.Scale = 1.0f;
-
-	FloatingTexts.push_back(ft);
+	FloatingTexts.emplace_back(text, screenX, screenY, color);
 }
 
 void UIManager::Update(float deltaTime)
 {
-	// ① 점수 부드럽게 카운트업 (Lerp)
 	if (DisplayScore < TargetScore)
 	{
 		float speed = 10.0f;
 		DisplayScore += (TargetScore - DisplayScore) * (speed * deltaTime);
 		if (std::abs(TargetScore - DisplayScore) < 1.0f)
 		{
-			DisplayScore = (float)TargetScore;
+			DisplayScore = static_cast<float>(TargetScore);
 		}
 	}
 
-	// ② 플로팅 텍스트 이동 및 수명 깎기
 	for (auto it = FloatingTexts.begin(); it != FloatingTexts.end(); )
 	{
-		it->Y += it->VelocityY * deltaTime;
-		it->LifeTime -= deltaTime;
+		it->Update(deltaTime);
 
 		if (it->LifeTime <= 0.0f)
 		{
@@ -143,10 +127,7 @@ void UIManager::Render(int birdsLeft)
 
 	D2DRenderTarget->BeginDraw();
 
-
-	// 상단 고정 HUD
 	wchar_t scoreText[128];
-
 	swprintf_s(
 		scoreText,
 		L"SCORE: %06d   BIRDS: %d",
@@ -154,17 +135,8 @@ void UIManager::Render(int birdsLeft)
 		birdsLeft
 	);
 
-	Brush->SetColor(
-		D2D1::ColorF(D2D1::ColorF::White)
-	);
-
-	D2D1_RECT_F hudRect =
-		D2D1::RectF(
-			30.0f,
-			30.0f,
-			600.0f,
-			80.0f
-		);
+	Brush->SetColor(D2D1::ColorF(D2D1::ColorF::White));
+	D2D1_RECT_F hudRect = D2D1::RectF(30.0f, 30.0f, 600.0f, 80.0f);
 
 	D2DRenderTarget->DrawText(
 		scoreText,
@@ -176,37 +148,48 @@ void UIManager::Render(int birdsLeft)
 		DWRITE_MEASURING_MODE_NATURAL
 	);
 
-
-	for (const FFloatingText& floatingText : FloatingTexts)
+	for (const FFloatingText& ft : FloatingTexts)
 	{
-		float alpha =
-			floatingText.LifeTime /
-			floatingText.MaxLifeTime;
-
-		D2D1_COLOR_F drawColor =
-			floatingText.Color;
-
+		float alpha = ft.LifeTime / ft.MaxLifeTime;
+		D2D1_COLOR_F drawColor = ft.Color;
 		drawColor.a = alpha;
 
 		Brush->SetColor(drawColor);
 
-		D2D1_RECT_F rect =
-			D2D1::RectF(
-				floatingText.X,
-				floatingText.Y,
-				floatingText.X + 200.0f,
-				floatingText.Y + 50.0f
-			);
-
-		D2DRenderTarget->DrawText(
-			floatingText.Text.c_str(),
-			static_cast<UINT32>(floatingText.Text.length()),
-			FloatingFont,
-			&rect,
-			Brush,
-			D2D1_DRAW_TEXT_OPTIONS_NONE,
-			DWRITE_MEASURING_MODE_NATURAL
+		D2D1_RECT_F rect = D2D1::RectF(
+			ft.X,
+			ft.Y,
+			ft.X + 250.0f,
+			ft.Y + 60.0f
 		);
+
+		if (!ft.CustomText.empty())
+		{
+			D2DRenderTarget->DrawText(
+				ft.CustomText.c_str(),
+				static_cast<UINT32>(ft.CustomText.length()),
+				FloatingFont,
+				&rect,
+				Brush,
+				D2D1_DRAW_TEXT_OPTIONS_NONE,
+				DWRITE_MEASURING_MODE_NATURAL
+			);
+		}
+		else
+		{
+			wchar_t dynamicScoreStr[32];
+			swprintf_s(dynamicScoreStr, L"%d", static_cast<int>(ft.CurrentScore));
+
+			D2DRenderTarget->DrawText(
+				dynamicScoreStr,
+				static_cast<UINT32>(wcslen(dynamicScoreStr)),
+				FloatingFont,
+				&rect,
+				Brush,
+				D2D1_DRAW_TEXT_OPTIONS_NONE,
+				DWRITE_MEASURING_MODE_NATURAL
+			);
+		}
 	}
 
 	D2DRenderTarget->EndDraw();
@@ -221,4 +204,39 @@ void UIManager::Release()
 	if (DWriteFactory) { DWriteFactory->Release(); DWriteFactory = nullptr; }
 	if (D2DFactory) { D2DFactory->Release(); D2DFactory = nullptr; }
 	bInitialized = false;
+}
+
+void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp, void* targetID)
+{
+	float score = 0.0f;
+	D2D1_COLOR_F color = D2D1::ColorF(D2D1::ColorF::Gold);
+
+	if ((colAId == EColliderId::BIRD && colBId == EColliderId::PIG) ||
+		(colAId == EColliderId::PIG  && colBId == EColliderId::BIRD))
+	{
+		score = hp * 1000.0f;
+		color = D2D1::ColorF(D2D1::ColorF::Gold);
+	}
+	else if ((colAId == EColliderId::BIRD  && colBId == EColliderId::BLOCK) ||
+		     (colAId == EColliderId::BLOCK && colBId == EColliderId::BIRD))
+	{
+		score = hp * 500.0f;
+		color = D2D1::ColorF(D2D1::ColorF::Yellow);
+	}
+	else if ((colAId == EColliderId::BLOCK && colBId == EColliderId::PIG) ||
+		     (colAId == EColliderId::PIG   && colBId == EColliderId::BLOCK))
+	{
+		score = hp * 2000.0f;
+		color = D2D1::ColorF(D2D1::ColorF::LightGreen);
+	}
+	else
+	{
+		return;
+	}
+
+	SpawnFloatingText(score, colposx, colposy, targetID, color);
+}
+
+void UIManager::CalScore()
+{
 }

@@ -7,7 +7,8 @@
 #include <dwrite.h>
 #include <vector>
 #include <string>
-#include <set>
+#include <utility>
+#include <cmath>
 #include "TotalManager.h"
 
 #pragma comment(lib, "d2d1.lib")
@@ -17,45 +18,109 @@ using namespace std;
 
 struct FFloatingText
 {
-	std::wstring Text;
-	float X;
-	float Y;
-	float VelocityY;
-	float LifeTime;
-	float MaxLifeTime;
-	float Scale;
-	D2D1_COLOR_F Color;
+	float TargetScore = 0.0f;
+	float CurrentScore = 0.0f;
+	std::wstring CustomText = L"";
+
+	float X = 0.0f;
+	float Y = 0.0f;
+	float VelocityY = -60.0f;
+	float LifeTime = 1.2f;
+	float MaxLifeTime = 1.2f;
+	float Scale = 1.0f;
+	D2D1_COLOR_F Color = { 1.0f, 0.843f, 0.0f, 1.0f }; // Gold
+
+	void* TargetID = nullptr;
 
 	FFloatingText()
-		: Text(L"")
-		, X(0.0f)
-		, Y(0.0f)
+		: Color({ 1.0f, 1.0f, 1.0f, 1.0f })
+	{
+	}
+
+	FFloatingText(float score, float x, float y, void* target = nullptr, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f })
+		: TargetScore(score)
+		, CurrentScore(0.0f)
+		, X(x)
+		, Y(y)
 		, VelocityY(-60.0f)
 		, LifeTime(1.2f)
 		, MaxLifeTime(1.2f)
 		, Scale(1.0f)
-		, Color(D2D1::ColorF(D2D1::ColorF::White))
+		, Color(color)
+		, TargetID(target)
 	{
+	}
+
+	FFloatingText(const wchar_t* text, float x, float y, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f })
+		: CustomText(text ? text : L"")
+		, X(x)
+		, Y(y)
+		, VelocityY(-60.0f)
+		, LifeTime(1.2f)
+		, MaxLifeTime(1.2f)
+		, Scale(1.0f)
+		, Color(color)
+	{
+	}
+
+	void AddScore(float additionalScore)
+	{
+		TargetScore += additionalScore;
+		LifeTime = MaxLifeTime;
+		Scale = 1.2f;
+	}
+
+	void Update(float deltaTime)
+	{
+		Y += VelocityY * deltaTime;
+		LifeTime -= deltaTime;
+
+		if (CurrentScore < TargetScore)
+		{
+			float speed = 15.0f;
+			CurrentScore += (TargetScore - CurrentScore) * (speed * deltaTime);
+			if (std::abs(TargetScore - CurrentScore) < 1.0f)
+			{
+				CurrentScore = TargetScore;
+			}
+		}
+
+		if (Scale > 1.0f)
+		{
+			Scale -= 1.0f * deltaTime;
+		}
 	}
 };
 
-class UIManager : public TotalManager
+class UIManager
 {
 public:
-	UIManager() : TotalManager() {}
-	virtual ~UIManager() override;
+	UIManager() {};
+
+	static UIManager& GetInstance() // 싱글톤 패턴으로 관리
+	{
+		static UIManager instance;
+		return instance;
+	}
+
+	UIManager(const UIManager&) = delete;
+	UIManager& operator=(const UIManager&) = delete;
+
+protected:
+
 
 	bool Initialize(IDXGISwapChain* swapChain);
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
-	void SpawnFloatingText(const wchar_t* text, float screenX, float screenY, D2D1_COLOR_F color = D2D1::ColorF(D2D1::ColorF::Gold));
+
+	void SpawnFloatingText(float score, float screenX, float screenY, void* targetID = nullptr, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
+	void SpawnFloatingText(const wchar_t* text, float screenX, float screenY, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
+
 	void Release();
 
-	set<int, int> CalDistance(int x, int y) //
-	{
-
-	}
+	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp, void* targetID = nullptr);
+	void CalScore();
 
 private:
 	ID2D1Factory* D2DFactory = nullptr;
@@ -70,8 +135,5 @@ private:
 	vector<FFloatingText> FloatingTexts;
 	bool bInitialized = false;
 
-	vector<set<int, int>> floatingPositions; //새와 부딪혔을 때 점수 뜨는 위치
-	
-	
-
+	vector<pair<float, float>> blockcolPoses;
 };
