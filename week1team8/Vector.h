@@ -14,6 +14,7 @@ struct FVector
 	FVector operator+(const FVector& other) const;
 	FVector operator-(const FVector& other) const;
 	FVector operator*(float scalar) const;
+	FVector operator/(float scalar) const;
 	FVector& operator+=(const FVector& other);
 	FVector& operator-=(const FVector& other);
 };
