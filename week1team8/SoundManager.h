@@ -33,7 +33,7 @@ class SoundManager
 {
 public:
 	// 싱글톤 접근점
-	static SoundManager& Get()
+	static SoundManager& GetInstance()
 	{
 		static SoundManager instance;
 		return instance;

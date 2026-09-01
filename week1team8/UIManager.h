@@ -144,7 +144,7 @@ struct FFloatingText
 class UIManager
 {
 public:
-	static UIManager& Get()
+	static UIManager& GetInstance()
 	{
 		static UIManager UIManager;
 		return UIManager;
@@ -181,7 +181,6 @@ private:
 	int TargetScore = 0;
 	float DisplayScore = 0.0f;
 	vector<FFloatingText> FloatingTexts;
-
 
 	vector<pair<float, float>> blockcolPoses;
 
