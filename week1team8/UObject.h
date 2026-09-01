@@ -130,7 +130,7 @@ public:
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 
-	ABird* EquippedBird;
+	ABird* EquippedBird = nullptr;
 
 	//새총 발사 지점
 	FVector ShotPoint;

@@ -125,9 +125,9 @@ FSpawnInfo MakeSpawnInfo(std::string str, bool bIsActor)
 	return { Loc, Primitive, Scale, Mass, ColliderId };
 }
 
-bool LoadManager::LoadMap(int num, ASlingShot* SlingShot, ABird* Bird)
+bool LoadManager::LoadMap(int num, ASlingShot*& SlingShot, ABird*& Bird)
 {
-	ClearMap();
+	ClearMap(SlingShot, Bird);
 
 	std::string filePath = "Map/map_" + std::to_string(num) + ".txt";
 	std::ifstream savedfile;
@@ -135,12 +135,6 @@ bool LoadManager::LoadMap(int num, ASlingShot* SlingShot, ABird* Bird)
 
 	if (savedfile.is_open())
 	{
-		SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
-		Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
-
-		SlingShot->EquippedBird = Bird;
-		SlingShot->ShotPoint = Bird->GetLocation();
-
 		std::string str;
 		while (getline(savedfile, str))
 		{
@@ -164,7 +158,13 @@ bool LoadManager::LoadMap(int num, ASlingShot* SlingShot, ABird* Bird)
 	return false;
 }
 
-void LoadManager::ClearMap()
+void LoadManager::ClearMap(ASlingShot*& SlingShot, ABird*& Bird)
 {
 	UObjectManager::GetInstance().DistroyAllActors();
+
+	SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
+	Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
+
+	SlingShot->EquippedBird = Bird;
+	SlingShot->ShotPoint = Bird->GetLocation();
 }
