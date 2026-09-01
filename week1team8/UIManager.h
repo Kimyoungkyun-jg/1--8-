@@ -158,7 +158,6 @@ private:
 	float DisplayScore = 0.0f;
 	vector<FFloatingText> FloatingTexts;
 
-
 	vector<pair<float, float>> blockcolPoses;
 
 private:
