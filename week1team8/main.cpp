@@ -6,6 +6,7 @@
 #include <d3dcompiler.h>
 #include <vector>
 #include <cstdlib>
+#include <fstream>
 
 #include "ImGui/imgui.h"				
 #include "ImGui/imgui_internal.h"		
@@ -121,26 +122,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	FVector WorldMouseXY;
 	ACollider* PressedCollider = nullptr;
 
+	float BlockWidth = 0.6;
+	float BlockHeight = 0.05;
+	bool bButtonPressed = false;
+	bool bSave = false;
+
 	UObjectManager &ObjectManager = UObjectManager::Get();
 	CollisionManager& CM = CollisionManager::GetInstance();
 
 
-	//테스트용
-	/*AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
-	block->SetVelocity(0);
-
-	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });*/
-
-
-	//테스트용
-	AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
-	block->SetVelocity(0);
-
-	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.5, 0.5, 1 });
-
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	ASlingShot *SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
-	ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.05, 0.05, 0.1 });
+	ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
 
 	SlingShot->EquippedBird = Bird;	
 	SlingShot->ShotPoint = Bird->GetLocation();
@@ -244,6 +237,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
+		//EDITOR : 블록 생성
+		if (bButtonPressed)
+		{
+			ABlock *Block = SpawnColider<ABlock>({ 0, 0, 1 }, EPrimitive::Rectangle, true, { BlockWidth, BlockHeight, 1 }, 70);
+			Block->bEditing = true;
+		}
 
 		renderer.Prepare();
 		renderer.PrepareShader();
@@ -256,8 +255,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 충돌 검사
 		CollisionManager& ColManager = CollisionManager::GetInstance();
 		ColManager.CheckCollisionAll();
-
-		
 
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)
@@ -296,17 +293,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		ImGui::Begin("Jungle Property Window");
-		ImGui::Text("Hello Jungle World!");
-		ImGui::SetNextItemWidth(100);
-		ImGui::SetNextItemWidth(100);
-		ImGui::End();
-
 		ImGui::Begin("Screen Info");
 		ImGui::Text("Mouse Coord : %d %d", MouseX, MouseY);
 		ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
 		ImGui::Text("PressedColliderID %s", s.c_str());
 		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
+		ImGui::SetNextItemWidth(100);
+		ImGui::SetNextItemWidth(100);
+		ImGui::End();
+
+		ImGui::Begin("Castle Editor");
+		ImGui::InputFloat("Width", &BlockWidth);
+		ImGui::InputFloat("Height", &BlockHeight);
+		bButtonPressed = ImGui::Button("Spawn Box", ImVec2(100, 20));
+		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
+		ImGui::SetNextItemWidth(100);
+		ImGui::SetNextItemWidth(100);
 		ImGui::End();
 
 

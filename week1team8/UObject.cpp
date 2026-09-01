@@ -274,3 +274,23 @@ void ASlingShot::Released(FVector _Location)
 		EquippedBird->Released(_Location);
 	}
 }
+
+void ABlock::Pressed(FVector _Location)
+{
+	if (bEditing)
+	{
+		Location = _Location;
+		Velocity = 0.f;
+		bUseGravity = false;
+	}
+}
+
+void ABlock::Released(FVector _Location)
+{
+	if (bEditing)
+	{
+		Location = _Location;
+		Velocity = 0.f;
+		bUseGravity = true;
+	}
+}
