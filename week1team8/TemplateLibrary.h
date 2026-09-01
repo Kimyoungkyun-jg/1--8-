@@ -13,7 +13,7 @@ inline T* NewObject()
 	static_assert(std::is_base_of_v<UObject, T>);
 
 	T* Obj = new T;
-	UObjectManager::Get().AllObjects.push_back(Obj);
+	UObjectManager::GetInstance().AllObjects.push_back(Obj);
 
 	return static_cast<T*>(Obj);
 }

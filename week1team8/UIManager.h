@@ -126,7 +126,7 @@ struct FFloatingText
 class UIManager
 {
 public:
-	static UIManager& Get()
+	static UIManager& GetInstance()
 	{
 		static UIManager UIManager;
 		return UIManager;

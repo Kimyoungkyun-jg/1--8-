@@ -51,7 +51,7 @@ public:
 		return nullptr;
 	}
 
-	static UObjectManager& Get()
+	static UObjectManager& GetInstance()
 	{
 		static UObjectManager Manager;
 		return Manager;

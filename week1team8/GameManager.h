@@ -12,7 +12,7 @@ enum class GameState
 class GameManager
 {
 public:
-	static GameManager& getInstance()
+	static GameManager& GetInstance()
 	{
 		static GameManager instance;
 		return instance;
@@ -24,7 +24,7 @@ public:
 	GameManager(GameManager&&) = delete;					// 이동생성자
 	GameManager& operator=(GameManager&&) = delete;			// 이동 대입 연산자
 
-	void Init()
+	void Initialize()
 	{
 
 	}
