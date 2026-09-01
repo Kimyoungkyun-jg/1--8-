@@ -133,17 +133,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//테스트용
-	AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
+	ABlock* block = SpawnColider<ABlock>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
 	block->SetVelocity(0);
 
-	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });
+	ABird* NewBall = SpawnColider<ABird>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.1, 0.1, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
-	ASlingShot *SlingShot = SpawnColider<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, false, { 0.05, 0.3, 1 });
-	ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.05, 0.05, 0.1 });
+	//ASlingShot *SlingShot = SpawnColider<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, false, { 0.05, 0.3, 1 });
+	//ABird * Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.05, 0.05, 0.1 });
 
-	SlingShot->EquippedBird = Bird;
-	SlingShot->ShotPoint = Bird->GetLocation();
+	//SlingShot->EquippedBird = Bird;
+	//SlingShot->ShotPoint = Bird->GetLocation();
 	//AActor* ShotPoint = SpawnActor<AActor>(SlingShot->ShotPoint, EPrimitive::Circle);
 
 	while (bIsExit == false)
@@ -221,7 +221,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					if (PressedCollider->GetColliderId() == EColliderId::BIRD)
 					{
-						SlingShot->Released(WorldMouseXY);
+						//SlingShot->Released(WorldMouseXY);
 					}
 					else PressedCollider->Released(WorldMouseXY);
 				}
@@ -255,7 +255,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// 충돌 검사
 		CollisionManager& ColManager = CollisionManager::GetInstance();
-		ColManager.CheckCollisionAll();
+		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
 
 		
 
