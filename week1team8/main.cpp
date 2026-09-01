@@ -284,9 +284,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			case EColliderId::BLOCK:
 				s = "BLOCK";
 				break;
-			case EColliderId::SLINGSHOT:
-				s = "SLINGSHOT";
-				break;
 			case EColliderId::NONE:
 				s = "NONE";
 				break;
