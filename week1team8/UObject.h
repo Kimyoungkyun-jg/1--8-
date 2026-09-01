@@ -53,8 +53,10 @@ protected:
 class ACollider : public AActor
 {
 public:
+	ACollider()
+	{
 
-	ACollider();
+	}
 	virtual ~ACollider()
 	{
 	}

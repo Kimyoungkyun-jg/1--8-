@@ -24,8 +24,7 @@ public:
 	CollisionManager(const CollisionManager&) = delete;
 	CollisionManager& operator=(const CollisionManager&) = delete;
 	CollisionManager();;
-	~CollisionManager();
-	float InvMass(float mass);
+	~CollisionManager();;
 
 	std::vector<ACollider*> colliders;
 
