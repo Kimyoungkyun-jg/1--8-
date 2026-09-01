@@ -49,6 +49,7 @@ protected:
 	EPrimitive Primitive = EPrimitive::Circle;
 	float Rotation;
 	FVector Scale = { 1, 1, 1 };
+	
 };
 
 class ACollider : public AActor
@@ -69,6 +70,10 @@ public:
 	FVector GetVelocity() const { return Velocity; }
 	float GetMass() const { return Mass; }
 	EColliderId GetColliderId() const { return colId; }
+	float GetStaticFriction() const { return StaticFriction; }
+	float GetDynamicFriction() const { return DynamicFriction; }
+	void SetStaticFriction(float _f) { StaticFriction = _f; }
+	void SetdynamicFriction(float _f) { DynamicFriction = _f; }
 
 	bool bUseGravity = true;
 
@@ -76,6 +81,8 @@ protected:
 	FVector Velocity;						// 속도
 	float Mass = 10;						// 질량
 	EColliderId colId = EColliderId::NONE;	// collider 종류
+	float StaticFriction = 0.5f;
+	float DynamicFriction = 0.3f;
 };
 
 class ABird : public ACollider
@@ -107,6 +114,10 @@ public:
 		return hp;
 	}
 
+	virtual void Pressed(FVector _Location) override;
+	virtual void Released(FVector _Location) override;
+	bool bEditing = false;
+
 protected:
 	float hp = 1.0f;
 };
@@ -123,26 +134,39 @@ class ABlock : public AObstacle
 public:
 	ABlock() : AObstacle(1.0f) { colId = EColliderId::BLOCK; }
 	virtual ~ABlock() {}
+};
 
-	virtual void Pressed(FVector _Location) override;
-	virtual void Released(FVector _Location) override;
-	bool bEditing = false;
+class ABand : public  AActor
+{
+public:
+	ABand() {}
+	virtual ~ABand() {}
+
+	void AttachPoint(FVector Point);
+	void Stretched(FVector BirdLoc);
+
+private:
+	FVector AttachedPoint;
 };
 
 class ASlingShot : public AActor
 {
 public:
-	ASlingShot() { }
-	virtual ~ASlingShot() {}
+	ASlingShot(){}
+	virtual ~ASlingShot(){}
 
+	void SpawnBand();
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 
-	ABird* EquippedBird;
+	ABird* EquippedBird = nullptr;
 
 	//새총 발사 지점
 	FVector ShotPoint;
 
 	//새총 강도
-	float Power = 7.f;
+	float Power = 10.f;
+private:
+	ABand* BackBand;
+	ABand* FrontBand;
 };

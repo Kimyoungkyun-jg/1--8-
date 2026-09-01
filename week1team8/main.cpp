@@ -17,7 +17,7 @@
 #include "UObject.h"
 #include "Global.h"
 #include "TemplateLibrary.h"
-//#include "LoadManager.h"
+#include "LoadManager.h"
 
 //모든 매니저 헤더파일
 #include "GameManager.h"
@@ -77,7 +77,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	HWND hWnd = CreateWindowExW(0, WindowClass, Title,
 		WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, 1024, 1024, nullptr, nullptr, hInstance, nullptr);
+		CW_USEDEFAULT, CW_USEDEFAULT, 1400, 1400, nullptr, nullptr, hInstance, nullptr);
 
 	// 렌더러 초기화
 	URenderer renderer;
@@ -109,10 +109,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	FVector WorldMouseXY;
 	ACollider* PressedCollider = nullptr;
 
-	float BlockWidth = 0.6;
+	float BlockWidth = 0.4;
 	float BlockHeight = 0.05;
-	bool bButtonPressed = false;
-	bool bSave = false;
+	float PigWidth = 0.15, PigHeight = 0.15;
+	bool bEditorMode = false;
 
 	// 매니저 초기화
 	GameManager& gameManager = GameManager::GetInstance();
@@ -122,8 +122,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	uiManager.Initialize(renderer.SwapChain, 1024, 1024);
 
 	UObjectManager& ObjectManager = UObjectManager::GetInstance();
-
 	CollisionManager& CM = CollisionManager::GetInstance();
+	LoadManager& LoadManager = LoadManager::Get();
 
 	SoundManager& SM = SoundManager::GetInstance();
 	if (!SM.Initialize())
@@ -137,16 +137,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
-	ASlingShot* SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.3, 1 });
-	ABird* Bird = SpawnColider<ABird>({ -0.5, -0.5, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
+	ASlingShot* SlingShot = nullptr;
+	ABird* Bird = nullptr;
+	bool bResult = LoadManager.LoadMap(1, SlingShot, Bird);
+	if (!bResult)
+	{
+		SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
+		Bird = SpawnColider<ABird>({ -0.5, -0.6, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50);
 
-	SlingShot->EquippedBird = Bird;
-	SlingShot->ShotPoint = Bird->GetLocation();
-	// AActor* ShotPoint = SpawnActor<AActor>(SlingShot->ShotPoint, EPrimitive::Circle);
-
+		SlingShot->EquippedBird = Bird;
+		SlingShot->ShotPoint = Bird->GetLocation();
+	}
+	
 	// 테스트용
-	// AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
-	// ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
+	//AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
+	//ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
 
 	//테스트용
 	ABlock* block = SpawnColider<ABlock>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
@@ -158,11 +163,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	while (bIsExit == false)
 	{
 		// 한 프레임 동작 (게임 매니저는 1 ~ 2를 관리함)
+		// 0. 프레임 시작 기록 
 		// 1. 입력 처리 (GameState 구분)
 		// 2. 게임 루프 (GameState == Play) (이동, 충돌처리, 등)
-		// 3. 렌더 준비
-		// 4. 렌더 실행 (게임 -> UI -> ImGui 순)
-		// 5. 프레임 교체 및 대기
+		// 3. 렌더 준비 및 렌더 실행 (게임 -> UI -> ImGui 순)
+		// 4. 프레임 교체 및 대기
 
 		QueryPerformanceCounter(&startTime);
 
@@ -195,7 +200,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					if (Primitive == EPrimitive::Circle)
 					{
 						float dist = (ColLoc - WorldMouseXY).Length();
-						if (dist <= Collider->GetScale().x)
+						if (dist <= Collider->GetScale().x/ 2.f)
 						{
 							//원 모양 객체를 클릭 중
 							PressedCollider = Collider;
@@ -206,11 +211,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 					else if (Primitive == EPrimitive::Rectangle)
 					{
-						float half = Collider->GetScale().x / 2.f;
-						if (WorldMouseXY.x >= ColLoc.x - half
-							&& WorldMouseXY.x <= ColLoc.x + half
-							&& WorldMouseXY.y >= ColLoc.y - half
-							&& WorldMouseXY.y <= ColLoc.y + half
+						float halfx = Collider->GetScale().x / 2.f;
+						float halfy = Collider->GetScale().y / 2.f;
+						if (WorldMouseXY.x >= ColLoc.x - halfx
+							&& WorldMouseXY.x <= ColLoc.x + halfx
+							&& WorldMouseXY.y >= ColLoc.y - halfy
+							&& WorldMouseXY.y <= ColLoc.y + halfy
 							)
 						{
 							//직사각형 모양의 객체를 클릭 중
@@ -261,17 +267,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		// EDITOR : 블록 생성 ??
-		if (bButtonPressed)
-		{
-			ABlock* Block = SpawnColider<ABlock>({ 0, 0, 1 }, EPrimitive::Rectangle, true, { BlockWidth, BlockHeight, 1 }, 70);
-			Block->bEditing = true;
-		}
-
-		if (bSave)
-		{
-			//LoadManager::Get().SaveMap(Bird, SlingShot);
-		}
 
 		for (ACollider* Collider : CM.colliders)
 		{
@@ -321,7 +316,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		// UI 그리기
-		uiManager.Render(4); 
+		uiManager.Render(4);
 		uiManager.Update(elapsedTime * 0.001);
 
 		// ImGui
@@ -339,13 +334,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::End();
 
 		ImGui::Begin("Castle Editor");
-		ImGui::InputFloat("Width", &BlockWidth);
-		ImGui::InputFloat("Height", &BlockHeight);
-		bButtonPressed = ImGui::Button("Spawn Box", ImVec2(100, 20));
-		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
-		if (bSave)
+		ImGui::InputFloat("CastleWidth", &BlockWidth);
+		ImGui::InputFloat("CastleHeight", &BlockHeight);
+		if (ImGui::Button("Rotate", ImVec2(100, 20)))
 		{
-			//LoadManager::Get().SaveMap(Bird, SlingShot);
+			std::swap(BlockWidth, BlockHeight);
+		}
+		if (ImGui::Button("Spawn Box", ImVec2(100, 20)))
+		{
+			ABlock* Block = SpawnColider<ABlock>({ 0, 0, 0 }, EPrimitive::Rectangle, true, { BlockWidth, BlockHeight, 0 }, 70);
+			Block->bEditing = true;
+		}
+		ImGui::InputFloat("PigWidth", &PigWidth);
+		ImGui::InputFloat("PigHeight", &PigHeight);
+		if (ImGui::Button("Spawn Pig", ImVec2(100, 20)))
+		{
+			APig* Pig = SpawnColider<APig>({ 0, 0, 0 }, EPrimitive::Circle, true, { PigWidth, PigHeight, 0 }, 30);
+			Pig->bEditing = true;
+		}
+		if (ImGui::Button("Clear Map", ImVec2(100, 20)))
+		{
+			LoadManager.ClearMap(SlingShot, Bird);
+		}
+		if (ImGui::Button("Save Map", ImVec2(100, 20)))
+		{
+			LoadManager.SaveMap();
+		}
+		if (ImGui::Checkbox("EditorMode", &bEditorMode))
+		{
+			CollisionManager::GetInstance().SetAllCollisionFriction(1.f, 1.f);
+		}
+		else
+		{
+			CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
 		}
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);

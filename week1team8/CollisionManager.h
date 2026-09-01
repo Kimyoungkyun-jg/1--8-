@@ -20,7 +20,6 @@ struct CollisionInfo
 class CollisionManager
 {
 public:
-
 	static CollisionManager& GetInstance();
 
 	CollisionManager(const CollisionManager&) = delete;
@@ -53,6 +52,7 @@ public:
 		return false;
 	}
 
+	void SetAllCollisionFriction(float _dynamic, float _static);
 
 	std::vector<CollisionInfo> CheckCollisionAll();
 
@@ -66,6 +66,8 @@ public:
 
 	// a == Circle, b == Rectangle
 	CollisionInfo CheckCollisionCircleRectangle(ACollider* a, ACollider* b);
+
+	void ResolvePosition(ACollider* a, ACollider* b, const CollisionInfo& info);
 
 	// 충돌해결
 	float ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info);

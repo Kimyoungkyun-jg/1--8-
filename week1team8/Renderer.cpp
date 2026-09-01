@@ -279,7 +279,7 @@ void URenderer::UpdateConstant(FVector Offset, float Rotation, FVector Scale)
 
 void URenderer::UpdateConstant(FVector Offset, FVector Scale)
 {
-	// Scale.y *= ViewportInfo.Width / ViewportInfo.Height;
+	//Scale.y *= ViewportInfo.Width / ViewportInfo.Height;
 	UpdateConstant(Offset, 0.0f, Scale);
 }
 

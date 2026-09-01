@@ -2,6 +2,7 @@
 #include "Global.h"
 #include "CollisionManager.h"
 #include "ObjectManager.h"
+#include "TemplateLibrary.h"
 
 void ACollider::Move(float t)
 {
@@ -22,22 +23,22 @@ void ACollider::Move(float t)
 		// 공-벽 충돌 감지 및 해결
 		if (Location.x < Global::leftBorder + Radius)
 		{
-			Velocity.x *= -1.0f;
+			Velocity.x *= -0.8f;
 			Location.x = Global::leftBorder + Radius;
 		}
 		if (Location.x > Global::rightBorder - Radius)
 		{
-			Velocity.x *= -1.0f;
+			Velocity.x *= -0.8f;
 			Location.x = Global::rightBorder - Radius;
 		}
 		if (Location.y < Global::bottomBorder + Radius)
 		{
-			Velocity.y *= -1.0f;
+			Velocity.y *= -0.8f;
 			Location.y = Global::bottomBorder + Radius;
 		}
 		if (Location.y > Global::topBorder - Radius)
 		{
-			Velocity.y *= -1.0f;
+			Velocity.y *= -0.8f;
 			Location.y = Global::topBorder - Radius;
 		}
 	}
@@ -49,24 +50,24 @@ void ACollider::Move(float t)
 		// 좌/우 벽 충돌 
 		if (Location.x < Global::leftBorder + halfWidth)
 		{
-			Velocity.x *= -1.0f;
+			Velocity.x *= -0.8f;
 			Location.x = Global::leftBorder + halfWidth;
 		}
 		if (Location.x > Global::rightBorder - halfWidth)
 		{
-			Velocity.x *= -1.0f;
+			Velocity.x *= -0.8f;
 			Location.x = Global::rightBorder - halfWidth;
 		}
 
 		// 상/하 벽 충돌
 		if (Location.y < Global::bottomBorder + halfHeight)
 		{
-			Velocity.y *= -1.0f;
+			Velocity.y *= -0.8f;
 			Location.y = Global::bottomBorder + halfHeight;
 		}
 		if (Location.y > Global::topBorder - halfHeight)
 		{
-			Velocity.y *= -1.0f;
+			Velocity.y *= -0.8f;
 			Location.y = Global::topBorder - halfHeight;
 		}
 	}
@@ -261,6 +262,19 @@ void ABird::Released(FVector _Location)
 	bUseGravity = true;
 }
 
+void ASlingShot::SpawnBand()
+{
+	BackBand = SpawnActor<ABand>(Location, EPrimitive::Rectangle);
+	FrontBand = SpawnActor<ABand>(Location, EPrimitive::Rectangle);
+
+	//새총의 왼쪽 위를 Back에, 오른쪽 위를 Front에
+	FVector BackPoint = Location + FVector(-Scale.x / 2, -Scale.y / 2, 0);
+	FVector FrontPoint = Location + FVector(Scale.x / 2, -Scale.y / 2, 0);
+
+	BackBand->AttachPoint(BackPoint);
+	FrontBand->AttachPoint(FrontPoint);
+}
+
 void ASlingShot::Pressed(FVector _Location)
 {
 	if (EquippedBird)
@@ -281,7 +295,7 @@ void ASlingShot::Released(FVector _Location)
 	}
 }
 
-void ABlock::Pressed(FVector _Location)
+void AObstacle::Pressed(FVector _Location)
 {
 	if (bEditing)
 	{
@@ -291,7 +305,7 @@ void ABlock::Pressed(FVector _Location)
 	}
 }
 
-void ABlock::Released(FVector _Location)
+void AObstacle::Released(FVector _Location)
 {
 	if (bEditing)
 	{
@@ -299,4 +313,15 @@ void ABlock::Released(FVector _Location)
 		Velocity = 0.f;
 		bUseGravity = true;
 	}
+}
+
+void ABand::AttachPoint(FVector Point)
+{
+	AttachedPoint = Point;
+	////밴드의 오른쪽 지점을 구한다.
+	//FVector RightPoint
+}
+
+void ABand::Stretched(FVector BirdLoc)
+{
 }
