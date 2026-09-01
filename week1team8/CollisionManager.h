@@ -14,6 +14,8 @@ class CollisionManager
 		FVector normal = FVector();
 		float penetration = 0.0f;
 		bool isCollision = false;
+		ACollider* a;
+		ACollider* b;
 	};
 
 public:
@@ -40,8 +42,9 @@ public:
 		return 1.0f / mass;
 	}
 
-	void CheckCollisionAll()
+	std::vector<CollisionInfo> CheckCollisionAll()
 	{
+		std::vector<CollisionInfo> infos;
 		size_t n = colliders.size();
 
 		for (size_t i = 0; i < n; i++)
@@ -49,6 +52,9 @@ public:
 			for (size_t j = i + 1; j < n; j++)
 			{
 				CollisionInfo info = CheckCollision(colliders[i], colliders[j]);
+				info.a = colliders[i];
+				info.b = colliders[j];
+				infos.push_back(info);
 
 				if (info.isCollision)
 				{
@@ -56,6 +62,8 @@ public:
 				}
 			}
 		}
+
+		return infos;
 	}
 
 	// 충돌 감지
