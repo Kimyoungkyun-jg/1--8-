@@ -49,6 +49,7 @@ protected:
 	EPrimitive Primitive = EPrimitive::Circle;
 	float Rotation;
 	FVector Scale = { 1, 1, 1 };
+	
 };
 
 class ACollider : public AActor
@@ -69,6 +70,8 @@ public:
 	FVector GetVelocity() const { return Velocity; }
 	float GetMass() const { return Mass; }
 	EColliderId GetColliderId() const { return colId; }
+	float GetStaticFriction() const { return StaticFriction; }
+	float GetDynamicFriction() const { return DynamicFriction; }
 
 	bool bUseGravity = true;
 
@@ -76,6 +79,8 @@ protected:
 	FVector Velocity;						// 속도
 	float Mass = 10;						// 질량
 	EColliderId colId = EColliderId::NONE;	// collider 종류
+	float StaticFriction = 0.5f;
+	float DynamicFriction = 0.3f;
 };
 
 class ABird : public ACollider

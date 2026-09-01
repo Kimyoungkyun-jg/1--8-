@@ -19,7 +19,6 @@ struct CollisionInfo
 class CollisionManager
 {
 public:
-
 	static CollisionManager& GetInstance();
 
 	CollisionManager(const CollisionManager&) = delete;
@@ -50,7 +49,6 @@ public:
 
 		return false;
 	}
-
 
 	std::vector<CollisionInfo> CheckCollisionAll();
 

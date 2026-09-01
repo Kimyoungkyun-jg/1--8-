@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "CollisionManager.h"
 
 CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관리
@@ -7,7 +9,6 @@ CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관�
 }
 
 CollisionManager::CollisionManager() {}
-
 CollisionManager::~CollisionManager() {}
 
 float CollisionManager::InvMass(float mass)
@@ -37,11 +38,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 			if (info.isCollision)
 			{
 				float impulse = ResolveCollision(colliders[i], colliders[j], info);
-
 				infos.push_back(info);
-				if (impulse > 0.1f)
-				{
-				}
 			}
 		}
 	}
@@ -265,9 +262,17 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 	}
 
 	// 위치 보정
-	FVector correction = normal * penetration / (invMassA + invMassB);
-	a->SetLocation(a->GetLocation() + correction * invMassA);
-	b->SetLocation(b->GetLocation() - correction * invMassB);
+	const float slop = 0.01f; // 이 정도 침투는 무시
+	const float baumgarte = 0.2f;   // 한 번에 20%만 보정
+
+	float correctionAmount = std::fmax(penetration - slop, 0.0f);
+	if (correctionAmount > 0.0f)
+	{
+		FVector correction = normal * correctionAmount * baumgarte / (invMassA + invMassB);
+		a->SetLocation(a->GetLocation() + correction * invMassA);
+		b->SetLocation(b->GetLocation() - correction * invMassB);
+	}
+
 
 	FVector relativeVelocity = a->GetVelocity() - b->GetVelocity(); // 상대 속도
 	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
@@ -278,12 +283,41 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		return 0.0f;
 	}
 
-	float restitution = 0.8f; // 반발계수
-	float impulse = -(1.0f + restitution) * relativeVelocityNormal / (invMassA + invMassB); // 충격량
+	const float restitutionThreshold = 1.0f; // 튜닝 값
+	float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.8f;
 
 	// 충격량 적용
-	a->SetVelocity(a->GetVelocity() + normal * (impulse * invMassA));
-	b->SetVelocity(b->GetVelocity() - normal * (impulse * invMassB));
+	float impulseMag = -(1.0f + restitution) * relativeVelocityNormal / (invMassA + invMassB); // 충격량
+	a->SetVelocity(a->GetVelocity() + normal * (impulseMag * invMassA));
+	b->SetVelocity(b->GetVelocity() - normal * (impulseMag * invMassB));
 
-	return impulse;
+	// 마찰 적용
+	FVector relativeVelocityAfter = a->GetVelocity() - b->GetVelocity();
+	FVector tangent = relativeVelocityAfter - normal * normal.DotProduct(relativeVelocityAfter); // 접선 방향 상대 속도
+	float tangentLength = tangent.Length(); // 속력
+
+	if (tangentLength > 0.0001f)
+	{
+		tangent = tangent / tangentLength; // 정규화
+
+		float relativeVelocityTangent = tangentLength; // 접선 방향 속력
+		float frictionImpulseMag = -relativeVelocityTangent / (invMassA + invMassB); // 마찰 임펄스 크기
+
+		float staticFriction = std::sqrt(a->GetStaticFriction() * b->GetStaticFriction()); // 정지 마찰 계수
+		float maxStaticFriction = impulseMag * staticFriction;
+
+		if (std::fabs(frictionImpulseMag) > maxStaticFriction)
+		{
+			// 정지 마찰 한계를 넘음 -> 미끄러짐, 운동 마찰로 클램프
+			float dynamicFriction = std::sqrt(a->GetDynamicFriction() * b->GetDynamicFriction());
+			float maxDynamicFriction = impulseMag * dynamicFriction;
+			frictionImpulseMag = std::clamp(frictionImpulseMag, -maxDynamicFriction, maxDynamicFriction);
+		}
+		// else: 정지 마찰 범위 안 -> frictionImpulseMag 그대로 적용, 즉 붙잡혀서 안 미끄러짐
+
+		a->SetVelocity(a->GetVelocity() + tangent * (frictionImpulseMag * invMassA));
+		b->SetVelocity(b->GetVelocity() - tangent * (frictionImpulseMag * invMassB));
+	}
+
+	return impulseMag;
 }

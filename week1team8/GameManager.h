@@ -51,12 +51,13 @@ public:
 	void Menu()
 	{
 		state = GameState::Menu;
+		// UIManager::GetInstance().Menu()
 	}
 
 	// Menu -> Exit
 	void Exit()
 	{
-
+		// 프로그램 종료
 	}
 
 private:
