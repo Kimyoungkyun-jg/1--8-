@@ -209,7 +209,7 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 	else if ((colAId == EColliderId::BIRD  && colBId == EColliderId::BLOCK) ||
 		     (colAId == EColliderId::BLOCK && colBId == EColliderId::BIRD))
 	{
-		score = 500.0f;
+		score = 700.0f;
 		color = D2D1::ColorF(D2D1::ColorF::Yellow);
 	}
 	else if ((colAId == EColliderId::BLOCK && colBId == EColliderId::PIG) ||
@@ -218,26 +218,36 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 		score = 2000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::LightGreen);
 	}
-	else //벽돌끼리 부딪쳤을때는 가장 가까운 floatingtext에 합류
+	else if(colAId == EColliderId::BLOCK && colBId == EColliderId::BLOCK)
 	{
 		FFloatingText* ft = nullptr;
-		float smalldistsq = 9999;
+		float maxMergeDistance = 100.0f;
+		float minDistanceSq = maxMergeDistance * maxMergeDistance;
+
 		for (auto& it : FloatingTexts)
 		{
-			float temp = sqrt(it.X - colposx) + sqrt(it.Y - colposy);
-			if (smalldistsq < temp)
+			if (it.bIsFlyingToHUD || it.bIsFinished) continue;
+			float dx = it.X - colposx;
+			float dy = it.Y - colposy;
+			float distSq = dx * dx + dy * dy; // 거리의 제곱
+
+			if (distSq < minDistanceSq) // 가장 가까운 대상 탐색
 			{
+				minDistanceSq = distSq;
 				ft = &it;
-				smalldistsq = temp;
 			}
 		}
 
 		if (ft)
 		{
 			ft->TargetScore += 500;
-			ft->FloatTimer += 2.0f;
+			ft->FloatTimer += 0.4f;
 		}
 		
+		return;
+	}
+	else
+	{
 		return;
 	}
 
