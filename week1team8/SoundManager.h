@@ -48,15 +48,28 @@ public:
 	bool Initialize()
 	{
 		if (bInitialized) return true;
-
-		if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)))
+		
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+		
+		if (FAILED(hr) && hr != RPC_E_CHANGED_MODE)
+		{
 			return false;
+		}
 
 		if (FAILED(XAudio2Create(&pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR)))
+		{
 			return false;
+		}
 
 		if (FAILED(pXAudio2->CreateMasteringVoice(&pMasterVoice)))
+		{
+			if (pXAudio2)
+			{
+				pXAudio2->Release();
+				pXAudio2 = nullptr;
+			}
 			return false;
+		}
 
 		bInitialized = true;
 		return true;

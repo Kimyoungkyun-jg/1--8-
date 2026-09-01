@@ -21,7 +21,7 @@
 
 //모든 매니저 헤더파일
 #include "GameManager.h"
-#include "UIManager.h"
+#include "UI/UIManager.h"
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "SoundManager.h"
@@ -126,7 +126,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	CollisionManager& CM = CollisionManager::GetInstance();
 
 	SoundManager& SM = SoundManager::GetInstance();
-	SM.Initialize();
+	if (!SM.Initialize())
+	{
+		return 0;
+	}
 
 	// 루프 진입 전 필요한 리소스 생성
 	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
