@@ -37,9 +37,9 @@ std::vector<CollisionManager::CollisionInfo> CollisionManager::CheckCollisionAll
 			{
 				float impulse = ResolveCollision(colliders[i], colliders[j], info);
 
-				if (impulse > 1.0f)
+				infos.push_back(info);
+				if (impulse > 0.1f)
 				{
-					infos.push_back(info);
 				}
 			}
 		}
