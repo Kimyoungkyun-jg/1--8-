@@ -40,7 +40,6 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 				if (impulse > 10.0f)
 				{
-					infos.push_back(info);
 				}
 			}
 		}
