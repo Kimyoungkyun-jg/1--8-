@@ -9,7 +9,7 @@ struct FVector
 	float LengthSquared() const;
 	float Length() const;
 	void Normalize();
-	float DotProduct(const FVector& other);
+	float DotProduct(const FVector& other) const;
 
 	FVector operator+(const FVector& other) const;
 	FVector operator-(const FVector& other) const;
