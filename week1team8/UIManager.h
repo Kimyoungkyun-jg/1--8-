@@ -10,7 +10,7 @@
 #include <utility>
 #include <cmath>
 #include <algorithm>
-#include "TotalManager.h"
+#include "CollisionManager.h"
 
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
@@ -144,7 +144,7 @@ public:
 	void Release();
 
 	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp);
-
+	void GetCollisionInfos(std::vector<CollisionInfo> infos);
 private:
 	ID2D1Factory* D2DFactory = nullptr;
 	IDWriteFactory* DWriteFactory = nullptr;

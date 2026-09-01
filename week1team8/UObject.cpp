@@ -2,10 +2,12 @@
 #include "Global.h"
 #include "CollisionManager.h"
 
+
 ACollider::ACollider()
 {
 	CollisionManager& colMgr = CollisionManager::GetInstance();
 	colMgr.colliders.push_back(this);
+	Mass = sqrt(Scale.x);
 }
 
 void ACollider::Move(float t, bool bUseGravity)

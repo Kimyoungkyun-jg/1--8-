@@ -244,3 +244,8 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 	SpawnFloatingText(score, colposx, colposy, color);
 }
 
+void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
+{
+
+}
+

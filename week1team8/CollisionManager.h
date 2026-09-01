@@ -6,18 +6,19 @@
 
 #include "UObject.h"
 
+struct CollisionInfo
+{
+	FVector contactPoint = FVector();
+	FVector normal = FVector();
+	float penetration = 0.0f;
+	bool isCollision = false;
+	ACollider* a;
+	ACollider* b;
+};
+
 class CollisionManager
 {
 public:
-	struct CollisionInfo
-	{
-		FVector contactPoint = FVector();
-		FVector normal = FVector();
-		float penetration = 0.0f;
-		bool isCollision = false;
-		ACollider* a;
-		ACollider* b;
-	};
 
 	static CollisionManager& GetInstance();
 

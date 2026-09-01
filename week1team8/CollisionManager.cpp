@@ -214,7 +214,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleRectangle(
 	float dist = diff.Length();
 
 	bool isCollision = dist < a->GetScale().x / 2;
-
+	
 	// 원이 사각형 내부에 들어감
 	if (dist <= 0.0001f)
 	{
