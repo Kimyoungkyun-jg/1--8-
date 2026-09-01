@@ -4,6 +4,7 @@
 #include <vector>
 #include "enums.h"
 
+
 class UObject
 {
 public:
@@ -41,10 +42,7 @@ protected:
 class ACollider : public AActor
 {
 public:
-	ACollider()
-	{
-
-	}
+	ACollider();
 	virtual ~ACollider()
 	{
 	}

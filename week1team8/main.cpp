@@ -113,15 +113,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	block->SetVelocity(0);
 
 	ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, { 0.1, 0.1, 1 });
-	//if (ballCount > ObjectManager.AllObjects.size())
-	//{
-	//	
-	//}
-	//else
-	//{
-	//	int randi = rand() % ObjectManager.AllObjects.size();
-	//	ObjectManager.Destroy(ObjectManager.AllObjects[randi]);
-	//}
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)

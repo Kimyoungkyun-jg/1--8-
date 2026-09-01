@@ -42,7 +42,6 @@ inline T* SpawnColider(FVector Location, EPrimitive Primitive, FVector Scale = {
 {
 	static_assert(std::is_base_of_v<ACollider, T>);
 	ACollider* Colider = SpawnActor<T>(Location, Primitive, Scale);
-
 	// 속력
 	float minSpeed = 1.0f;
 	float maxSpeed = 5.0f;

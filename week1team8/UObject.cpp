@@ -1,6 +1,12 @@
 #include "UObject.h"
 #include "Global.h"
+#include "CollisionManager.h"
 
+ACollider::ACollider()
+{
+	CollisionManager& colMgr = CollisionManager::GetInstance();
+	colMgr.colliders.push_back(this);
+}
 
 void ACollider::Move(float t, bool bUseGravity)
 {
