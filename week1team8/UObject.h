@@ -72,7 +72,7 @@ public:
 
 protected:
 	FVector Velocity;						// 속도
-	float Mass;								// 질량
+	float Mass = 10;								// 질량
 	EColliderId colId = EColliderId::NONE;	// collider 종류
 };
 
