@@ -21,15 +21,16 @@ public:
 		{
 			if (AllObjects[i] == Target)
 			{
+				if (ACollider* Collider = dynamic_cast<ACollider*>(Target))
+				{
+					CollisionManager::GetInstance().DeleteColider(Collider->GetID());
+				}
+
 				UObject* temp = AllObjects[i];
 				std::swap(AllObjects[i], AllObjects.back());
 				AllObjects.pop_back();
 				delete(temp);
 
-				if (ACollider* Collider = dynamic_cast<ACollider*>(Target))
-				{
-					CollisionManager::GetInstance().DeleteColider(Collider->GetID());
-				}
 				break;
 			}
 		}

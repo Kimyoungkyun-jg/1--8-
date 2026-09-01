@@ -21,6 +21,7 @@ public:
 	virtual void Pressed(FVector _Location);
 	virtual void Clicked();
 	virtual void Released(FVector _Location);
+	void Destroy();
 
 private:
 	inline static int IDMax = 0;

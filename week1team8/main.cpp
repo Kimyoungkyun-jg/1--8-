@@ -257,6 +257,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			Block->bEditing = true;
 		}
 
+		if (bSave)
+		{
+			LoadManager::Get().SaveMap(Bird, SlingShot);
+		}
+
 		renderer.Prepare();
 		renderer.PrepareShader();
 
@@ -320,10 +325,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::InputFloat("Height", &BlockHeight);
 		bButtonPressed = ImGui::Button("Spawn Box", ImVec2(100, 20));
 		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
-		if (bSave)
-		{
-			LoadManager::Get().SaveMap(Bird, SlingShot);
-		}
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);
 		ImGui::End();
