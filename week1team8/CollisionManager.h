@@ -10,7 +10,7 @@ class CollisionManager : public TotalManager
 public:
 	vector<AColider*> colliders;
 
-	void CheckCollision()
+	void CheckCollisionAll()
 	{
 		int n = colliders.size();
 
@@ -18,51 +18,45 @@ public:
 		{
 			for (int j = i + 1; j < n; j++)
 			{
-				if (IsCollide(colliders[i], colliders[j]))
-				{
-					ResolveCollision(colliders[i], colliders[j]);
-				}
+				CheckCollision(colliders[i], colliders[j]);
 			}
 		}
 	}
 
-	bool IsCollide(AColider* a, AColider* b)
+	// 충돌 감지 및 해결
+	void CheckCollision(AColider* a, AColider* b)
 	{
 		if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
 		{
-
+			CheckCollisionCircleCircle(a, b);
 		}
 		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Rectangle)
 		{
-
+			CheckCollisionRectangleRectangle(a, b);
 		}
 		else if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Rectangle)
 		{
-
+			CheckCollisionCircleRectangle(a, b);
 		}
 		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Circle)
 		{
-
+			CheckCollisionCircleRectangle(b, a);
 		}
 	}
 
-	void ResolveCollision(AColider* a, AColider* b)
+	// 위치, 크기(가로, 세로, 반지름), 회전, 속도, 무게
+	void CheckCollisionCircleCircle(AColider* a, AColider* b)
 	{
-		if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
-		{
 
-		}
-		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Rectangle)
-		{
+	}
 
-		}
-		else if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Rectangle)
-		{
+	void CheckCollisionRectangleRectangle(AColider* a, AColider* b)
+	{
 
-		}
-		else if (a->GetPrimitive() == EPrimitive::Rectangle && b->GetPrimitive() == EPrimitive::Circle)
-		{
+	}
 
-		}
+	void CheckCollisionCircleRectangle(AColider* a, AColider* b)
+	{
+
 	}
 };

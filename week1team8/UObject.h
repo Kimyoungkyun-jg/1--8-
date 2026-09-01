@@ -47,6 +47,7 @@ class AColider : public AActor
 public:
 	AColider()
 	{
+
 	}
 	virtual ~AColider()
 	{
@@ -58,7 +59,6 @@ public:
 protected:
 	FVector Velocity;			// 속도
 	float Mass;					// 질량
-
 };
 
 class ABird : public AColider
