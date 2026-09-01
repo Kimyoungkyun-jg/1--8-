@@ -26,6 +26,8 @@ public:
 	CollisionManager();
 	~CollisionManager();
 
+	float InvMass(float mass);
+
 	std::vector<ACollider*> colliders;
 
 	void AddColider(ACollider* col)
