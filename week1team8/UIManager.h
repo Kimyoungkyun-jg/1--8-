@@ -26,7 +26,7 @@ struct FFloatingText
 	float X;
 	float Y;
 	float VelocityY; 
-	float FloatTimer; //유지되는 시간
+	float FloatTimer; //
 	D2D1_COLOR_F Color;
 
 	bool bIsFlyingToHUD; 
@@ -122,11 +122,16 @@ struct FFloatingText
 	}
 };
 
-class UIManager : public TotalManager
+class UIManager
 {
 public:
-	UIManager() : TotalManager() {}
-	virtual ~UIManager() override;
+	static UIManager& Get()
+	{
+		static UIManager UIManager;
+		return UIManager;
+	}
+
+	~UIManager();
 
 	bool Initialize(IDXGISwapChain* swapChain);
 	void Update(float deltaTime);
@@ -154,4 +159,8 @@ private:
 	bool bInitialized = false;
 
 	vector<pair<float, float>> blockcolPoses;
+
+private:
+	UIManager() {};
+	
 };
