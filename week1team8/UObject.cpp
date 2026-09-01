@@ -281,7 +281,7 @@ void ASlingShot::Released(FVector _Location)
 	}
 }
 
-void ABlock::Pressed(FVector _Location)
+void AObstacle::Pressed(FVector _Location)
 {
 	if (bEditing)
 	{
@@ -291,7 +291,7 @@ void ABlock::Pressed(FVector _Location)
 	}
 }
 
-void ABlock::Released(FVector _Location)
+void AObstacle::Released(FVector _Location)
 {
 	if (bEditing)
 	{
