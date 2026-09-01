@@ -10,12 +10,15 @@
 #include <utility>
 #include <cmath>
 #include <algorithm>
-#include "TotalManager.h"
+#include "CollisionManager.h"
 
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 
 using namespace std;
+
+static constexpr float TargetHUD_X = 50.0f;
+static constexpr float TargetHUD_Y = 40.0f;
 
 struct FFloatingText
 {
@@ -32,8 +35,6 @@ struct FFloatingText
 	bool bIsFlyingToHUD; 
 	bool bIsFinished; 
 
-	static constexpr float TargetHUD_X = 50.0f; 
-	static constexpr float TargetHUD_Y = 40.0f;
 
 	FFloatingText()
 		: TargetScore(0.0f)
@@ -42,7 +43,7 @@ struct FFloatingText
 		, X(0.0f)
 		, Y(0.0f)
 		, VelocityY(-30.0f)
-		, FloatTimer(0.7f)
+		, FloatTimer(4.0f)
 		, Color({ 1.0f, 1.0f, 1.0f, 1.0f })
 		, bIsFlyingToHUD(false)
 		, bIsFinished(false)
@@ -56,7 +57,7 @@ struct FFloatingText
 		, X(x)
 		, Y(y)
 		, VelocityY(-30.0f)
-		, FloatTimer(0.7f)
+		, FloatTimer(4.0f)
 		, Color(color)
 		, bIsFlyingToHUD(false)
 		, bIsFinished(false)
@@ -70,7 +71,7 @@ struct FFloatingText
 		, X(x)
 		, Y(y)
 		, VelocityY(-30.0f)
-		, FloatTimer(0.7f)
+		, FloatTimer(4.0f)
 		, Color(color)
 		, bIsFlyingToHUD(false)
 		, bIsFinished(false)
@@ -106,7 +107,7 @@ struct FFloatingText
 			float dy = TargetHUD_Y - Y;
 			float dist = std::sqrt(dx * dx + dy * dy);
 
-			if (dist < 35.0f)
+			if (dist < 100.0f)
 			{
 				bIsFinished = true;
 			}
@@ -133,7 +134,7 @@ public:
 
 	~UIManager();
 
-	bool Initialize(IDXGISwapChain* swapChain);
+	bool Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight);
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
@@ -143,8 +144,8 @@ public:
 
 	void Release();
 
-	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy, float hp);
-
+	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy);
+	void GetCollisionInfos(std::vector<CollisionInfo> infos);
 private:
 	ID2D1Factory* D2DFactory = nullptr;
 	IDWriteFactory* DWriteFactory = nullptr;
@@ -156,11 +157,15 @@ private:
 	int TargetScore = 0;
 	float DisplayScore = 0.0f;
 	vector<FFloatingText> FloatingTexts;
-	bool bInitialized = false;
+
 
 	vector<pair<float, float>> blockcolPoses;
 
 private:
 	UIManager() {};
+	std::pair<float, float> WorldToScreen(const FVector& worldPos);
 	
+	int screenWidth;
+	int screenHeight;
+
 };

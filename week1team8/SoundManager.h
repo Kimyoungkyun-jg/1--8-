@@ -1,11 +1,19 @@
 #pragma once
 
 #include <xaudio2.h>
+#include <fstream>
+#include <vector>
 
 #pragma comment(lib, "xaudio2.lib")
 
 class SoundManager
 {
+	struct SoundData
+	{
+		WAVEFORMATEX waveFormat{};
+		std::vector<BYTE> audioData;
+	};
+
 public:
 	static SoundManager& GetInstance()
 	{
@@ -56,6 +64,13 @@ public:
 		}
 	}
 
+	bool PlayEffect(const wchar_t* filename)
+	{
+
+		return false;
+	}
+
+private:
 	SoundManager() = default;
 	~SoundManager() = default;
 

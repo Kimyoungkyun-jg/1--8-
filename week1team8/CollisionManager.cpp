@@ -20,7 +20,7 @@ float CollisionManager::InvMass(float mass)
 	return 1.0f / mass;
 }
 
-std::vector<CollisionManager::CollisionInfo> CollisionManager::CheckCollisionAll()
+std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 {
 	std::vector<CollisionInfo> infos;
 	size_t n = colliders.size();
@@ -32,11 +32,16 @@ std::vector<CollisionManager::CollisionInfo> CollisionManager::CheckCollisionAll
 			CollisionInfo info = CheckCollision(colliders[i], colliders[j]);
 			info.a = colliders[i];
 			info.b = colliders[j];
-			infos.push_back(info);
+
 
 			if (info.isCollision)
 			{
-				ResolveCollision(colliders[i], colliders[j], info);
+				float impulse = ResolveCollision(colliders[i], colliders[j], info);
+
+				infos.push_back(info);
+				if (impulse > 0.1f)
+				{
+				}
 			}
 		}
 	}
@@ -45,7 +50,7 @@ std::vector<CollisionManager::CollisionInfo> CollisionManager::CheckCollisionAll
 }
 
 // 충돌 감지
-CollisionManager::CollisionInfo CollisionManager::CheckCollision(ACollider* a, ACollider* b)
+CollisionInfo CollisionManager::CheckCollision(ACollider* a, ACollider* b)
 {
 	if (a->GetPrimitive() == EPrimitive::Circle && b->GetPrimitive() == EPrimitive::Circle)
 	{
@@ -72,7 +77,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollision(ACollider* a, A
 }
 
 // 위치, 크기(가로, 세로, 반지름), 회전, 속도, 무게 필요
-CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollider* b)
+CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollider* b)
 {
 	// 충돌 감지
 	FVector diff = a->GetLocation() - b->GetLocation();
@@ -109,7 +114,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACo
 	return info;
 }
 
-CollisionManager::CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, ACollider* b)
+CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, ACollider* b)
 {
 	// 충돌 감지
 	float widthA = a->GetScale().x;
@@ -194,7 +199,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionRectangleRectang
 }
 
 // a == Circle, b == Rectangle
-CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACollider* b)
+CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACollider* b)
 {
 	// 충돌 감지
 	float widthB = b->GetScale().x;
@@ -215,7 +220,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleRectangle(
 
 	bool isCollision = dist < a->GetScale().x / 2;
 
-	// 원이 사각형 내부에 들어감
+	// 원이 사각형 내부에 들어감 (추후 수정)
 	if (dist <= 0.0001f)
 	{
 		return CollisionInfo();
@@ -245,7 +250,7 @@ CollisionManager::CollisionInfo CollisionManager::CheckCollisionCircleRectangle(
 }
 
 // 충돌해결
-void CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
+float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
 {
 	FVector normal = info.normal;
 	float penetration = info.penetration;
@@ -256,7 +261,7 @@ void CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Collis
 	// 스태틱 충돌 (추후 수정)
 	if (invMassA + invMassB <= 0.0f)
 	{
-		return;
+		return 0.0f;
 	}
 
 	// 위치 보정
@@ -270,7 +275,7 @@ void CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Collis
 	// 충돌 지점에서 멀어지는 중 (내적의 결과가 양수 = 충돌 방향과 상대 속도가 예각을 이룸
 	if (relativeVelocityNormal >= 0)
 	{
-		return;
+		return 0.0f;
 	}
 
 	float restitution = 0.8f; // 반발계수
@@ -279,4 +284,6 @@ void CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Collis
 	// 충격량 적용
 	a->SetVelocity(a->GetVelocity() + normal * (impulse * invMassA));
 	b->SetVelocity(b->GetVelocity() - normal * (impulse * invMassB));
+
+	return impulse;
 }
