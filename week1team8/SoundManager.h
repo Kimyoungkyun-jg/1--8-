@@ -1,5 +1,4 @@
 #pragma once
-
 #include <xaudio2.h>
 #include <vector>
 #include <string>
