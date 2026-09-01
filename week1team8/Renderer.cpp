@@ -1,6 +1,7 @@
 #include <DirectXMath.h>
 
 #include "Renderer.h"
+#include "Sphere.h"	
 
 void URenderer::Create(HWND hWindow)
 {
@@ -191,6 +192,19 @@ void URenderer::ReleaseConstantBuffer()
 	}
 }
 
+void URenderer::CreateVertexBufferInfos()
+{
+	UINT numVerticesCube = sizeof(cube_vertices) / sizeof(FVertexSimple);
+	UINT numVerticesSphere = sizeof(sphere_vertices) / sizeof(FVertexSimple);
+
+	ID3D11Buffer* vertexBufferCube = CreateVertexBuffer(cube_vertices, sizeof(cube_vertices));
+	ID3D11Buffer* vertexBufferSphere = CreateVertexBuffer(sphere_vertices, sizeof(sphere_vertices));
+
+	VertexBufferInfos.push_back({ vertexBufferSphere , numVerticesSphere });
+	VertexBufferInfos.push_back({ vertexBufferCube , numVerticesCube });
+}
+
+
 ID3D11Buffer* URenderer::CreateVertexBuffer(FVertexSimple* vertices, UINT byteWidth)
 {
 	D3D11_BUFFER_DESC vertexbufferdesc = {};
@@ -205,6 +219,14 @@ ID3D11Buffer* URenderer::CreateVertexBuffer(FVertexSimple* vertices, UINT byteWi
 	Device->CreateBuffer(&vertexbufferdesc, &vertexbufferSRD, &vertexBuffer);
 
 	return vertexBuffer;
+}
+
+void URenderer::ReleaseVertexBuffers()
+{
+	for (FVertexBufferInfo& vi : VertexBufferInfos)
+	{
+		ReleaseVertexBuffer(vi.vertexBuffer);
+	}
 }
 
 void URenderer::ReleaseVertexBuffer(ID3D11Buffer* vertexBuffer)
@@ -260,9 +282,23 @@ void URenderer::UpdateConstant(FVector Offset, FVector Scale)
 	UpdateConstant(Offset, 0.0f, Scale);
 }
 
-void URenderer::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices)
+void URenderer::RenderPrimitive(EPrimitive Primitive)
 {
 	UINT offset = 0;
+
+	ID3D11Buffer* pBuffer = nullptr;
+	UINT numVertices;
+	if (Primitive == EPrimitive::Circle)
+	{ 
+		pBuffer = VertexBufferInfos[0].vertexBuffer;
+		numVertices = VertexBufferInfos[0].numVertucies;
+	}
+	else if (Primitive == EPrimitive::Rectangle)
+	{
+		pBuffer = VertexBufferInfos[1].vertexBuffer;
+		numVertices = VertexBufferInfos[1].numVertucies;
+	}
+
 	DeviceContext->IASetVertexBuffers(0, 1, &pBuffer, &Stride, &offset);
 	DeviceContext->Draw(numVertices, 0);
 }

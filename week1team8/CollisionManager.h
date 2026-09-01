@@ -8,7 +8,7 @@
 class CollisionManager : public TotalManager
 {
 public:
-	vector<AColider*> colliders;
+	std::vector<ACollider*> colliders;
 
 	void CheckCollisionAll()
 	{
