@@ -6,7 +6,6 @@
 #include <d3dcompiler.h>
 #include <vector>
 #include <cstdlib>
-#include <fstream>
 
 #include "ImGui/imgui.h"				
 #include "ImGui/imgui_internal.h"		
@@ -19,6 +18,7 @@
 #include "UObject.h"
 #include "Global.h"
 #include "TemplateLibrary.h"
+#include "LoadManager.h"
 
 
 //모든 매니저 헤더파일
@@ -94,7 +94,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//UIManager초기화
 	UIManager& uiManager = UIManager::Get();
-	uiManager.Initialize(renderer.SwapChain);
+	uiManager.Initialize(renderer.SwapChain, 1024, 1024);
 
 
 	// 버텍스 버퍼(Vertex Buffer)는 1개만 생성하세요.
@@ -320,8 +320,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::InputFloat("Height", &BlockHeight);
 		bButtonPressed = ImGui::Button("Spawn Box", ImVec2(100, 20));
 		bSave = ImGui::Button("Save Map", ImVec2(100, 20));
-		ImGui::SetNextItemWidth(100);
-		ImGui::SetNextItemWidth(100);
+		if (bSave)
+		{
+			LoadManager::Get().SaveMap(Bird, SlingShot);
+		}
+		ImGui::SetNextItemWidth(200);
+		ImGui::SetNextItemWidth(300);
 		ImGui::End();
 
 
