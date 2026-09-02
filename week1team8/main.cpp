@@ -582,6 +582,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 프레임 교체
 		renderer.SwapBuffer();
 
+		//PendingKill로 삭제 대기중인 UObject들을 삭제
+		ObjectManager.DistroyPendingKills();
+
 		do	// 프레임 대기
 		{
 			Sleep(0);
