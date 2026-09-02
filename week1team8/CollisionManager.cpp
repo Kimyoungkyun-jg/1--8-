@@ -330,7 +330,7 @@ void CollisionManager::UpdateSleep(float t, const std::vector<std::pair<ACollide
 	}
 
 	// 1. 물체별로 '충분히 느린 상태가 이어진 시간'을 갱신한다
-	float deltaTime = t / 1000.0f;
+	float deltaTime = t;
 
 	for (ACollider* c : colliders)
 	{
