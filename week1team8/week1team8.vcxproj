@@ -144,6 +144,7 @@
     <ClCompile Include="UObject.cpp" />
     <ClCompile Include="UI\UPage.cpp" />
     <ClCompile Include="UI\UUIObject.cpp" />
+    <ClCompile Include="UI\UUIBackground.cpp" />
     <ClCompile Include="Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +178,7 @@
     <ClInclude Include="UObject.h" />
     <ClInclude Include="UI\UPage.h" />
     <ClInclude Include="UI\UUIObject.h" />
+    <ClInclude Include="UI\UUIBackground.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="VertexSimple.h" />
   </ItemGroup>
