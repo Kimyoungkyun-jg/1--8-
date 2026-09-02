@@ -167,6 +167,10 @@ bool LoadManager::LoadMap(int num)
 			}
 		}
 		GameManager::GetInstance().SetPigCount(PigCount);
+
+		// 이미 자리를 잡은 배치라, 한 프레임 안에 겹침만 정리하고 바로 잠들게 한다
+		CollisionManager::GetInstance().PrimeSleep();
+
 		return true;
 	}
 

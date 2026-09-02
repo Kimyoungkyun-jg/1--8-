@@ -53,6 +53,12 @@ void ACollider::Move(float deltaTime)
 		return;
 	}
 
+	// 잠든 물체는 중력도 적분도 안 받는다. 감쇠가 0에 도달 못 하는 꼬리를 여기서 끊는다
+	if (bSleeping)
+	{
+		return;
+	}
+
 	// 속도 변화
 	if (bUseGravity)
 	{
@@ -68,14 +74,14 @@ void ACollider::Move(float deltaTime)
 	// 회전
 	Rotation += AngularVelocity * deltaTime;
 
-	// 화면 경계는 SpawnWalls()가 만든 정적 콜라이더가 처리한다.
-	// 예전의 하드코딩 반사는 솔버와 따로 놀아서 마찰도 회전도 안 먹었다.
+	// 화면 경계는 SpawnWalls()가 만든 정적 콜라이더가 처리한다
 }
 
 void ACollider::Pressed(FVector _Location)
 {
 	if (bEditing)
 	{
+		WakeUp();
 		Location = _Location;
 		Velocity = FVector();
 		bUseGravity = false;
@@ -86,6 +92,7 @@ void ACollider::Released(FVector _Location)
 {
 	if (bEditing)
 	{
+		WakeUp();
 		Location = _Location;
 		Velocity = 0.f;
 		bUseGravity = true;
@@ -117,6 +124,7 @@ std::vector<FVector> Points;
 
 void ABird::Pressed(FVector _Location)
 {
+	WakeUp();
 	Velocity = 0.f;
 	bUseGravity = false;
 
@@ -157,6 +165,7 @@ void ABird::Pressed(FVector _Location)
 
 void ABird::Released(FVector _Location)
 {
+	WakeUp();
 	bUseGravity = true;
 	State = EBirdState::Shooting;
 	bEditing = false;

@@ -101,6 +101,13 @@ public:
 	float GetRestitution() const { return Restitution; }
 	void SetRestitution(float _r) { Restitution = _r; }
 
+	// 슬립. 판정은 CollisionManager::UpdateSleep이 한다
+	bool IsSleeping() const { return bSleeping; }
+	void SetSleeping(bool value) { bSleeping = value; }
+	float GetSleepTimer() const { return SleepTimer; }
+	void SetSleepTimer(float value) { SleepTimer = value; }
+	void WakeUp() { bSleeping = false; SleepTimer = 0.0f; }
+
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual float GetInertia() const = 0;
@@ -110,8 +117,6 @@ public:
 
 	bool bEditing = false;
 	bool bUseGravity = true;
-
-
 
 protected:
 	EColliderId colId = EColliderId::NONE;	// collider 종류
@@ -124,6 +129,8 @@ protected:
 	float hp = 1.0f;
 	float LinearDamping = 0.0f;
 	float AngularDamping = 2.0f;
+	bool bSleeping = false;
+	float SleepTimer = 0.0f;	// 충분히 느린 상태가 이어진 시간
 };
 
 class ACircle : public ACollider
