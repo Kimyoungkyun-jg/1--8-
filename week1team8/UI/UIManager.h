@@ -42,6 +42,8 @@ public:
 	void Render(int birdsLeft);
 	void AddScore(int points);
 	void ResetScore();
+	int GetScore();
+	std::wstring GetScoreString();
 
 	void SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
 	void Release();

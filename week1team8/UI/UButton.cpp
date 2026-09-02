@@ -25,6 +25,45 @@ UUIButton::~UUIButton()
 		ButtonBitmap->Release();
 		ButtonBitmap = nullptr;
 	}
+	if (TextFormat)
+	{
+		TextFormat->Release();
+		TextFormat = nullptr;
+	}
+}
+
+void UUIButton::SetText(const std::wstring& text, float offsetX, float offsetY, D2D1_COLOR_F color, float fontSize)
+{
+	Text = text;
+	TextOffsetX = offsetX;
+	TextOffsetY = offsetY;
+	TextColor = color;
+
+	if (TextFormat)
+	{
+		TextFormat->Release();
+		TextFormat = nullptr;
+	}
+
+	IDWriteFactory* dwriteFactory = URenderer::GetInstance().DWriteFactory;
+	if (dwriteFactory)
+	{
+		dwriteFactory->CreateTextFormat(
+			L"Malgun Gothic",
+			nullptr,
+			DWRITE_FONT_WEIGHT_BOLD,
+			DWRITE_FONT_STYLE_NORMAL,
+			DWRITE_FONT_STRETCH_NORMAL,
+			fontSize,
+			L"ko-kr",
+			&TextFormat
+		);
+		if (TextFormat)
+		{
+			TextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+			TextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+		}
+	}
 }
 
 void UUIButton::SetSlideAnimation(bool bEnable, float startOffsetY, float speed)
@@ -185,24 +224,52 @@ void UUIButton::Update(float deltaTime)
 
 void UUIButton::Render(ID2D1RenderTarget* renderTarget)
 {
-	if (ButtonBitmap && renderTarget && GetVisible())
+	if (renderTarget && GetVisible())
 	{
 		float halfW = (BaseWidth * 0.5f) * CurrentScale;
 		float halfH = (BaseHeight * 0.5f) * CurrentScale;
 		float curY = bIsSlideAnimating ? CurrentCenterY : CenterY;
 
-		D2D1_RECT_F drawRect = D2D1::RectF(
-			CenterX - halfW,
-			curY - halfH,
-			CenterX + halfW,
-			curY + halfH
-		);
+		if (ButtonBitmap)
+		{
+			D2D1_RECT_F drawRect = D2D1::RectF(
+				CenterX - halfW,
+				curY - halfH,
+				CenterX + halfW,
+				curY + halfH
+			);
 
-		renderTarget->DrawBitmap(
-			ButtonBitmap,
-			&drawRect,
-			1.0f,
-			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-		);
+			renderTarget->DrawBitmap(
+				ButtonBitmap,
+				&drawRect,
+				1.0f,
+				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+			);
+		}
+
+		if (!Text.empty() && TextFormat)
+		{
+			float textCenterX = CenterX + TextOffsetX;
+			float textCenterY = curY + TextOffsetY;
+			D2D1_RECT_F textRect = D2D1::RectF(
+				textCenterX - halfW,
+				textCenterY - halfH,
+				textCenterX + halfW,
+				textCenterY + halfH
+			);
+
+			ID2D1SolidColorBrush* textBrush = nullptr;
+			if (SUCCEEDED(renderTarget->CreateSolidColorBrush(TextColor, &textBrush)))
+			{
+				renderTarget->DrawText(
+					Text.c_str(),
+					(UINT32)Text.length(),
+					TextFormat,
+					&textRect,
+					textBrush
+				);
+				textBrush->Release();
+			}
+		}
 	}
 }

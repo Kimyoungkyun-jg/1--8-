@@ -212,22 +212,24 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		darkBg->SetTouch(false);
 		stageClearPage->AddChild(darkBg);
 
-		UUIBackground* scoreBoard = new UUIBackground(
+		UUIButton* scoreBoard = new UUIButton(
 			L"Assets/img/Scoreboard.png",
 			screenWidth * 0.5f,
-			screenHeight * 0.42f,
-			550.0f,
-			450.0f,
+			screenHeight * 0.48f,
+			850.0f,
+			650.0f,
 			true,
 			1200.0f
 		);
 		scoreBoard->SetTouch(false);
+
+		scoreBoard->SetText(GetScoreString(), 0.0f, -20.0f, D2D1::ColorF(1.0f, 0.843f, 0.0f), 40.0f);
 		stageClearPage->AddChild(scoreBoard);
 
 		UUIButton* nextBtn = new UUIButton(
 			L"Assets/img/continuebtn.png",
 			screenWidth * 0.5f,
-			screenHeight * 0.68f,
+			screenHeight * 0.56f,
 			250.0f,
 			90.0f,
 			true,
@@ -272,6 +274,22 @@ void UIManager::ResetScore()
 	{
 		inGame->ResetScore();
 	}
+}
+
+int UIManager::GetScore()
+{
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+	{
+		return inGame->GetScore();
+	}
+	return 0;
+}
+
+std::wstring UIManager::GetScoreString()
+{
+	wchar_t buf[32];
+	swprintf_s(buf, L"%06d", GetScore());
+	return std::wstring(buf);
 }
 
 void UIManager::SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color)

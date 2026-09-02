@@ -30,6 +30,13 @@ public:
 	float TargetCenterY = 0.0f;
 	float SlideSpeed = 10.0f;
 
+	// Button Text properties
+	std::wstring Text = L"";
+	float TextOffsetX = 0.0f;
+	float TextOffsetY = 0.0f;
+	D2D1_COLOR_F TextColor = D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f);
+	IDWriteTextFormat* TextFormat = nullptr;
+
 	D2D1_RECT_F ButtonRect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
 	ID2D1Bitmap* ButtonBitmap = nullptr;
 	const wchar_t* imagePath = nullptr;
@@ -40,6 +47,9 @@ public:
 	UUIButton() = default;
 	UUIButton(const wchar_t* url, float centerX, float centerY, float sizeX, float sizeY, bool bAnimate = false, float startOffsetY = 1200.0f);
 	virtual ~UUIButton() override;
+
+	void SetText(const std::wstring& text, float offsetX = 0.0f, float offsetY = 0.0f, D2D1_COLOR_F color = D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), float fontSize = 32.0f);
+	void SetTextString(const std::wstring& text) { Text = text; }
 
 	void SetImagePath(const wchar_t* path)
 	{
