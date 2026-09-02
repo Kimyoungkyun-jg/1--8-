@@ -175,6 +175,7 @@ public:
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit"); }
+	virtual void Ability();
 
 	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;
@@ -189,6 +190,7 @@ public:
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bomb_hit"); }
 
 	virtual float minusHp();
+	virtual void Ability() override;
 };
 
 class APig : public ACircle
