@@ -29,7 +29,7 @@ public:
 
 	void Initialize()
 	{
-		Menu();
+		Play();
 	}
 
 	// Menu -> Play
