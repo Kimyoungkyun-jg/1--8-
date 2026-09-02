@@ -171,12 +171,11 @@ public:
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual void Tick(float deltaTime) override;
-	virtual float minusHp() override { return 1.0f; }
-	virtual void Ability() {}
+	virtual float minusHp() override { return 1.0f; } 
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 1.0f); }
-	virtual void Ability();
+	virtual void Ability() {};
 
 
 	EBirdState State = EBirdState::Idle;
