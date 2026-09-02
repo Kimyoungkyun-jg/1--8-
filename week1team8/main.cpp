@@ -153,7 +153,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	float BlockWidth = 0.4;
 	float BlockHeight = 0.05;
 	float PigWidth = 0.15, PigHeight = 0.15;
-	bool bEditorMode = false;
 
 	// 물리 디버그
 	bool bPausePhysics = false;		// 켜면 물리가 멈춘다 (렌더와 UI는 계속 돈다)
@@ -639,18 +638,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (ImGui::Button("Save Map", ImVec2(100, 20)))
 		{
 			LoadManager.SaveMap(BirdCount);
-		}
-		// Checkbox는 '값이 바뀐 프레임'에만 true다. 매 프레임 마찰을 덮어쓰지 않도록 분리
-		if (ImGui::Checkbox("EditorMode", &bEditorMode))
-		{
-			if (bEditorMode)
-			{
-				CollisionManager::GetInstance().SetAllCollisionFriction(1.f, 1.f);
-			}
-			else
-			{
-				CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
-			}
 		}
 		if (ImGui::Button("Delete Select Object", ImVec2(100, 20)))
 		{

@@ -288,16 +288,6 @@ float CollisionManager::InvInertia(float inertia)
 	return 1.0f / inertia;
 }
 
-void CollisionManager::SetAllCollisionFriction(float _dynamic, float _static)
-{
-	size_t n = colliders.size();
-	for (size_t i = 0; i < n; i++)
-	{
-		colliders[i]->SetdynamicFriction(_dynamic);
-		colliders[i]->SetStaticFriction(_static);
-	}
-}
-
 namespace
 {
 	// union-find. 경로를 압축하며 뿌리를 찾는다

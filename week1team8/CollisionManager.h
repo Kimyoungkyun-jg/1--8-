@@ -134,8 +134,6 @@ public:
 		return false;
 	}
 
-	void SetAllCollisionFriction(float _dynamic, float _static);
-
 	// 둘 다 못 움직이면 풀 필요가 없다 (정적끼리, 잠든 것끼리, 정적-잠듦)
 	static bool IsPairSolvable(const ACollider* a, const ACollider* b)
 	{
