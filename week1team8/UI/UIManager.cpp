@@ -332,7 +332,7 @@ void UIManager::ChangePage(EPageType newPageType)
 		CurrentPage->Hide();
 	}
 
-	auto it = Pages.find(EPageType::Ending);
+	auto it = Pages.find(newPageType);
 	if (it != Pages.end())
 	{
 		CurrentPage = it->second;
