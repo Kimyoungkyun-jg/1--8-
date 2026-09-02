@@ -208,9 +208,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			else if (msg.message == WM_LBUTTONDOWN)
 			{
 				bPressed = true;
+				Global::bIsLButtonPressed = true;
 				MouseX = GET_X_LPARAM(msg.lParam);
 				MouseY = GET_Y_LPARAM(msg.lParam);
+				Global::MouseScreenX = static_cast<float>(MouseX); //글로벌에 다가 마우스 좌표 넘김
+				Global::MouseScreenY = static_cast<float>(MouseY);
 				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+				Global::MouseWorldPos = WorldMouseXY;
 				SetCapture(msg.hwnd);
 
 				bool bFound = false;
@@ -256,9 +260,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (msg.message == WM_LBUTTONUP)
 			{
+				bPressed = false;
+				Global::bIsLButtonPressed = false;
 				MouseX = GET_X_LPARAM(msg.lParam);
 				MouseY = GET_Y_LPARAM(msg.lParam);
+				Global::MouseScreenX = static_cast<float>(MouseX);
+				Global::MouseScreenY = static_cast<float>(MouseY);
 				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+				Global::MouseWorldPos = WorldMouseXY;
 
 				if (PressedCollider)
 				{
@@ -269,24 +278,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					else PressedCollider->Released(WorldMouseXY);
 				}
 
-				bPressed = false;
 				ReleaseCapture();
 				SM.PlaySFX("sfx_bird");
 			}
 			else if (msg.message == WM_MOUSEMOVE)
 			{
-				if (bPressed)
+				MouseX = GET_X_LPARAM(msg.lParam);
+				MouseY = GET_Y_LPARAM(msg.lParam);
+				Global::MouseScreenX = static_cast<float>(MouseX);
+				Global::MouseScreenY = static_cast<float>(MouseY);
+				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+				Global::MouseWorldPos = WorldMouseXY;
+
+				if (bPressed && PressedCollider)
 				{
-					MouseX = GET_X_LPARAM(msg.lParam);
-					MouseY = GET_Y_LPARAM(msg.lParam);
-					WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
-					if (PressedCollider)
-					{
-						PressedCollider->Pressed(WorldMouseXY);
-					}
+					PressedCollider->Pressed(WorldMouseXY);
 				}
 			}
 		}
+
+
+		uiManager.Update(elapsedTime * 0.001);
 
 
 		for (ACollider* Collider : CM.colliders)
@@ -351,7 +363,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// UI 그리기
 		uiManager.Render(4);
-		uiManager.Update(elapsedTime * 0.001);
 
 		// ImGui
 		ImGui_ImplDX11_NewFrame();

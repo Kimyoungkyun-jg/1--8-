@@ -3,11 +3,12 @@
 #include "UFloatingText.h"
 #include "UHUDText.h"
 #include "UButton.h"
+#include "../Global.h"
 
 UUIPage::UUIPage(EPageType type)
 	: PageType(type)
 {
-	SetVisible(false);
+	ChildUIObjects.clear();
 }
 
 UUIPage::~UUIPage()
@@ -45,23 +46,33 @@ void UUIPage::Hide()
 	}
 }
 
-void UUIPage::Update(float deltaTime)
+void UUIPage::Update(float deltaTime, float mouseX, float mouseY)
 {
 	if (!GetVisible()) return;
 
 	for (UUIObject* obj : ChildUIObjects)
 	{
 		if (!obj || !obj->GetVisible()) continue;
+		if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
+		{
+			btn->Update(deltaTime, mouseX, mouseY);
+		}
+		else
+		{
+			obj->Update(deltaTime);
+		}
 	}
 }
 
-
+void UUIPage::Update(float deltaTime)
+{
+	Update(deltaTime, Global::MouseScreenX , Global::MouseScreenY);
+}
 
 void UUIPage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush, IDWriteTextFormat* font)
 {
 	if (!GetVisible() || !renderTarget) return;
 
-	//무조건 배경먼저
 	for (UUIObject* obj : ChildUIObjects)
 	{
 		if (!obj || !obj->GetVisible()) continue;
@@ -72,7 +83,6 @@ void UUIPage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brus
 		}
 	}
 
-	//UI요소 올리기
 	for (UUIObject* obj : ChildUIObjects)
 	{
 		if (!obj || !obj->GetVisible()) continue;
@@ -90,6 +100,52 @@ void UUIPage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brus
 		else if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
 		{
 			btn->Render(renderTarget);
+		}
+	}
+}
+
+void UUIPage::OnMouseMove(float mouseX, float mouseY)
+{
+	if (!GetVisible()) return;
+
+	for (UUIObject* obj : ChildUIObjects)
+	{
+		if (!obj || !obj->GetVisible()) continue;
+		if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
+		{
+			btn->OnMouseMove(mouseX, mouseY);
+		}
+	}
+}
+
+bool UUIPage::OnMouseDown(float mouseX, float mouseY)
+{
+	if (!GetVisible()) return false;
+
+	for (UUIObject* obj : ChildUIObjects)
+	{
+		if (!obj || !obj->GetVisible()) continue;
+		if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
+		{
+			if (btn->OnMouseDown(mouseX, mouseY))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void UUIPage::OnMouseUp(float mouseX, float mouseY)
+{
+	if (!GetVisible()) return;
+
+	for (UUIObject* obj : ChildUIObjects)
+	{
+		if (!obj || !obj->GetVisible()) continue;
+		if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
+		{
+			btn->OnMouseUp(mouseX, mouseY);
 		}
 	}
 }

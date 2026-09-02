@@ -38,9 +38,12 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 	screenWidth = nWidth;
 	screenHeight = nHeight;
 
-	// 시작페이지
+	//시작페이지
 	{
+
 		UUIPage* startPage = new UUIPage(EPageType::Starting);
+		
+		//배경
 		UUIBackground* startBg = new UUIBackground(
 			L"Assets/img/startimg.png",
 			screenWidth * 0.5f,
@@ -49,30 +52,127 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			static_cast<float>(screenHeight)
 		);
 		startPage->AddChild(startBg);
+
+		//게임 시작 버튼
+		UUIButton* startbtn = new UUIButton(
+			L"Assets/img/gamestartbutton.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.45f,
+			500,
+			200
+		);
+		startbtn->SetOnClick([this]() {
+			ChangePage(EPageType::InGame);
+		});
+		startPage->AddChild(startbtn);
+
+		//게임 종료 버튼
+		UUIButton* finishbtn = new UUIButton(
+			L"Assets/img/gameoverbutton.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.63f,
+			500,
+			200
+		);
+		finishbtn->SetOnClick([]() {
+			PostQuitMessage(0);
+		});
+		startPage->AddChild(finishbtn);
+
 		Pages[EPageType::Starting] = startPage;
 	}
 
-	// 인게임페이지
+	//인게임페이지
 	{
 		UUIIngamePage* inGamePage = new UUIIngamePage();
 		ID2D1Bitmap* pauseBtnBmp = renderer.LoadBitmapFromFile(L"Assets/img/pausebtn.png");
 		inGamePage->Initialize(DWriteFactory, D2DRenderTarget, pauseBtnBmp, nullptr, screenWidth, screenHeight);
+		if (inGamePage->PauseBtn)
+		{
+			inGamePage->PauseBtn->SetOnClick([this]() {
+				ChangePage(EPageType::Pause);
+			});
+		}
 		Pages[EPageType::InGame] = inGamePage;
 	}
 
-	// 일시정지페이지
+	//일시정지페이지
 	{
 		UUIPage* pausePage = new UUIPage(EPageType::Pause);
+
+		//반투명 검은색 배경 생성
+		UUIBackground* pauseDimBg = new UUIBackground(
+			0.6f,
+			screenWidth * 0.5f,
+			screenHeight * 0.5f,
+			static_cast<float>(screenWidth),
+			static_cast<float>(screenHeight)
+		);
+		pausePage->AddChild(pauseDimBg);
+
+		//일시정지 팝업
+		UUIBackground* popupBoard = new UUIBackground(
+			L"Assets/img/pauseimg.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.48f,
+			850.0f,
+			750.0f
+		);
+		pausePage->AddChild(popupBoard);
+
+		//계속하기 버튼
+		UUIButton* continueBtn = new UUIButton(
+			L"Assets/img/continuebtn.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.45f,
+			300.0f,
+			110.0f
+		);
+		continueBtn->SetOnClick([this]() {
+			ChangePage(EPageType::InGame);
+		});
+		pausePage->AddChild(continueBtn);
+
+		//재시작 버튼
+		UUIButton* retryBtn = new UUIButton(
+			L"Assets/img/retrybtn.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.55f,
+			300.0f,
+			100.0f
+		);
+
+		retryBtn->SetOnClick([this]() {
+			ChangePage(EPageType::InGame);
+		});
+		pausePage->AddChild(retryBtn);
+
+		//게임 종료 버튼
+		UUIButton* finishbtn = new UUIButton(
+			L"Assets/img/gameoverbutton.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.65f,
+			300.0f,
+			100.0f
+		);
+		finishbtn->SetOnClick([]() {
+			PostQuitMessage(0);
+			});
+
+		pausePage->AddChild(finishbtn);
+
+
+
 		Pages[EPageType::Pause] = pausePage;
 	}
 
-	// 엔딩페이지
+	//엔딩페이지
 	{
 		UUIPage* endPage = new UUIPage(EPageType::Ending);
 		Pages[EPageType::Ending] = endPage;
 	}
 
-	ChangePage(EPageType::Starting);
+	ChangePage(EPageType::Pause);
 
 	return true;
 }
