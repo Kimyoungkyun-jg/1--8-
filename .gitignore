@@ -72,3 +72,4 @@ Testing/
 .vs/
 Debug/
 imgui.ini
+vcxproj.user
