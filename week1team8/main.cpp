@@ -381,14 +381,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
+		// [2단계 확인용] SAT 판정을 기존 AABB 판정과 나란히 돌려서 비교한다.
+		// 물리는 아직 AABB로 돈다. 회전이 0인 블록끼리는 두 결과가 같아야 하고,
+		// 기울어진 블록에서는 SAT만 맞다. 3단계에서 AABB를 걷어내면 이 블록도 사라진다.
+		std::vector<bool> bSatOverlapped(CM.colliders.size(), false);
+		int SatOverlapCount = 0;
+		int AabbOverlapCount = 0;
+		int MismatchCount = 0;
+
+		for (size_t i = 0; i < CM.colliders.size(); i++)
+		{
+			if (CM.colliders[i]->GetPrimitive() != EPrimitive::Rectangle) continue;
+
+			for (size_t j = i + 1; j < CM.colliders.size(); j++)
+			{
+				if (CM.colliders[j]->GetPrimitive() != EPrimitive::Rectangle) continue;
+
+				bool bSat = OverlapOBB(MakeOBB(CM.colliders[i]), MakeOBB(CM.colliders[j]));
+				bool bAabb = CM.CheckCollisionRectangleRectangle(CM.colliders[i], CM.colliders[j]).isCollision;
+
+				if (bSat)
+				{
+					bSatOverlapped[i] = true;
+					bSatOverlapped[j] = true;
+					SatOverlapCount++;
+				}
+				if (bAabb) AabbOverlapCount++;
+				if (bSat != bAabb) MismatchCount++;
+			}
+		}
+
 		// 사각형 콜라이더의 OBB 외곽선.
-		// 물리는 아직 이 값을 안 쓴다. 회전 계산이 맞는지 눈으로 확인하는 용도다.
+		// 물리는 아직 이 값을 안 쓴다. 회전 계산과 SAT 판정을 눈으로 확인하는 용도다.
 		if (bDrawColliders)
 		{
 			ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
 
-			for (ACollider* Collider : CM.colliders)
+			for (size_t c = 0; c < CM.colliders.size(); c++)
 			{
+				ACollider* Collider = CM.colliders[c];
 				if (Collider->GetPrimitive() != EPrimitive::Rectangle)
 				{
 					continue;
@@ -396,15 +427,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				OBB Box = MakeOBB(Collider);
 
+				// SAT가 겹친다고 한 상자는 빨갛게
+				ImU32 Color = bSatOverlapped[c] ? IM_COL32(255, 80, 80, 255) : IM_COL32(80, 200, 255, 255);
+
 				for (int i = 0; i < 4; i++)
 				{
 					DrawList->AddLine(WorldToScreen(Box.vertex[i]),
-						WorldToScreen(Box.vertex[(i + 1) % 4]),
-						IM_COL32(80, 200, 255, 255), 2.0f);
+						WorldToScreen(Box.vertex[(i + 1) % 4]), Color, 2.0f);
 				}
 
 				// 꼭짓점 0이 어디인지 표시. 블록을 돌리면 이 점도 같이 돌아야 한다.
-				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, IM_COL32(80, 200, 255, 255));
+				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, Color);
 			}
 		}
 
@@ -448,6 +481,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::SameLine();
 		ImGui::Checkbox("Draw Colliders", &bDrawColliders);
 		ImGui::SliderFloat("Normal Length", &NormalLength, 10.0f, 120.0f);
+
+		ImGui::SeparatorText("SAT vs AABB");
+		ImGui::Text("SAT %d   AABB %d   mismatch %d",
+			SatOverlapCount, AabbOverlapCount, MismatchCount);
 
 		ImGui::SeparatorText("Contacts");
 		ImGui::Text("count: %d", (int)CM.debugContacts.size());

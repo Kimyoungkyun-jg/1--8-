@@ -38,6 +38,9 @@ struct OBB
 
 OBB MakeOBB(const ACollider* collider);
 
+// 두 OBB가 겹치는지만 판정한다 (SAT). 법선도 침투 깊이도 구하지 않는다.
+bool OverlapOBB(const OBB& a, const OBB& b);
+
 class CollisionManager
 {
 public:

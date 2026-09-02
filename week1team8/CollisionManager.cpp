@@ -34,6 +34,47 @@ OBB MakeOBB(const ACollider* collider)
 	return box;
 }
 
+namespace
+{
+	// box의 네 꼭짓점을 축 dir에 투영했을 때의 [min, max] 구간
+	void ProjectOBB(const OBB& box, const FVector& dir, float& outMin, float& outMax)
+	{
+		outMin = outMax = box.vertex[0].DotProduct(dir);
+
+		for (int i = 1; i < 4; i++)
+		{
+			float d = box.vertex[i].DotProduct(dir);
+			outMin = std::fmin(outMin, d);
+			outMax = std::fmax(outMax, d);
+		}
+	}
+}
+
+bool OverlapOBB(const OBB& a, const OBB& b)
+{
+	// 볼록 도형 둘이 안 겹치면, 둘을 갈라놓는 축이 반드시 하나 있다 (분리축 정리).
+	// 사각형에서 후보가 되는 축은 각 상자의 로컬 축 2개씩, 총 4개다.
+	// 마주보는 두 면은 방향만 반대라 축으로는 같으므로 면 8개를 다 볼 필요가 없다.
+	FVector axes[4] = { a.axis[0], a.axis[1], b.axis[0], b.axis[1] };
+
+	for (int i = 0; i < 4; i++)
+	{
+		float aMin, aMax, bMin, bMax;
+		ProjectOBB(a, axes[i], aMin, aMax);
+		ProjectOBB(b, axes[i], bMin, bMax);
+
+		// 이 축에서 두 구간이 떨어져 있으면 분리축을 찾은 것 -> 안 겹친다.
+		// 딱 붙은 경우(aMax == bMin)를 충돌로 안 치는 건 기존 AABB 판정과 맞춘 것이다.
+		if (aMax <= bMin || bMax <= aMin)
+		{
+			return false;
+		}
+	}
+
+	// 네 축 어디서도 갈라놓지 못했으면 실제로 겹친다
+	return true;
+}
+
 CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관리
 {
 	static CollisionManager instance;
