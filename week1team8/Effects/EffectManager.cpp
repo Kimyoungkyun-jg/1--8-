@@ -8,7 +8,7 @@ bool EffectManager::Initialize()
 	Clear();
 	SpawnColEffect(30, L"Assets/Sprites/coleffects.png", 3, 1, 3, 0.02f);
 	SpawnDisEffect(30, L"Assets/Sprites/boom.png", 5, 1, 5, 0.09f);
-	SpawnExpEffect(5, L"Assets/Sprites/boom.png", 5, 1, 5, 0.06f);
+	SpawnExpEffect(5, L"Assets/Sprites/explosions.png", 6, 1, 6, 0.06f);
 	SpawnParticleEffect(100);
 	return true;
 }
@@ -234,9 +234,10 @@ UEffect* EffectManager::PlayExpEffect(const FVector& worldPos, const FVector& sc
 			return effect;
 		}
 	}
-
+	
+	/* 풀이 부족할 경우 새로 생성하여 풀에 추가 */
 	UEffect* newEffect = new UEffect();
-	newEffect->SetSpriteSheet(L"Assets/Sprites/boom.png", 5, 1, 5, 0.06f, false);
+	newEffect->SetSpriteSheet(L"Assets/Sprites/explosions.png", 6, 1, 6, 0.06f, false);
 	newEffect->Activate(worldPos, FVector(0.0f, 0.0f, 0.0f), scale);
 	expEffects.push_back(newEffect);
 	return newEffect;

@@ -31,7 +31,7 @@ public:
 	virtual void Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush, IDWriteTextFormat* font) override;
 	virtual void Hide() override;
 
-	void ClearFlowtingText();
+	void ClearFloatingText(bool bAddScore = true);
 
 public:
 	UUIHUDText* InGameHUD = nullptr;

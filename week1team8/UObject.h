@@ -172,10 +172,12 @@ public:
 	virtual void Released(FVector _Location) override;
 	virtual void Tick(float deltaTime) override;
 	virtual float minusHp() override { return 1.0f; }
+	virtual void Ability() {}
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 1.0f); }
 	virtual void Ability();
+
 
 	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;
@@ -191,6 +193,23 @@ public:
 
 	virtual float minusHp();
 	virtual void Ability() override;
+};
+
+class AFastBird : public ABird
+{
+public:
+	AFastBird()
+	{
+		StaticFriction = 0.3f;
+		DynamicFriction = 0.2f;
+		Restitution = 0.5f;
+	}
+	virtual ~AFastBird() {}
+
+	virtual void Ability() override;
+	virtual void Clicked() override;
+
+	bool bHasBoosted = false;
 };
 
 class APig : public ACircle
@@ -288,7 +307,7 @@ public:
 	FVector ShotPoint;
 
 	//새총 강도
-	float Power = 10.f;
+	float Power = 5.0f;
 private:
 	ABand* BackBand = nullptr;
 	ABand* FrontBand = nullptr;

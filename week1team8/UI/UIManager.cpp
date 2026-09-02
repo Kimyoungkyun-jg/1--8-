@@ -425,6 +425,27 @@ void UIManager::ChangePage(EPageType newPageType)
 	if (it != Pages.end())
 	{
 		CurrentPage = it->second;
+
+		if (newPageType == EPageType::StageClear)
+		{
+			if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+			{
+				inGame->ClearFloatingText(true);
+			}
+
+			std::wstring totalScoreStr = GetScoreString();
+			for (UUIObject* obj : CurrentPage->ChildUIObjects)
+			{
+				if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
+				{
+					if (btn->imagePath && wcsstr(btn->imagePath, L"Scoreboard"))
+					{
+						btn->SetText(totalScoreStr, 0.0f, -20.0f, D2D1::ColorF(1.0f, 0.843f, 0.0f), 48.0f);
+					}
+				}
+			}
+		}
+
 		CurrentPage->Show();
 	}
 }
@@ -463,8 +484,10 @@ void UIManager::LevelChanged(int curlevel)
 	UUIIngamePage* igpage = dynamic_cast<UUIIngamePage*>(CurrentPage);
 	if (igpage)
 	{
-		igpage->ClearFlowtingText();
+		igpage->ClearFloatingText(true);
 	}
+
+	ChangePage(EPageType::StageClear);
 }
 
 void UIManager::DrawBirdPath(const std::vector<FVector>& vertices)
