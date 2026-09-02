@@ -38,8 +38,17 @@ struct OBB
 
 OBB MakeOBB(const ACollider* collider);
 
-// 두 OBB가 겹치는지만 판정한다 (SAT). 법선도 침투 깊이도 구하지 않는다.
-bool OverlapOBB(const OBB& a, const OBB& b);
+// SAT 판정 결과
+struct SATResult
+{
+	bool overlapped = false;
+	FVector normal;              // B -> A 방향 (a를 밀어낼 방향)
+	float penetration = 0.0f;    // 그 방향으로 겹친 폭
+	FVector contactPoint;
+};
+
+// 두 OBB의 겹침을 판정하고, 가장 얕게 겹친 축을 법선으로 돌려준다 (SAT).
+SATResult OverlapOBB(const OBB& a, const OBB& b);
 
 class CollisionManager
 {

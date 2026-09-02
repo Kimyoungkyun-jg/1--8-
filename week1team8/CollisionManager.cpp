@@ -48,14 +48,38 @@ namespace
 			outMax = std::fmax(outMax, d);
 		}
 	}
+
+	// dir 방향으로 가장 멀리 나간 꼭짓점의 번호
+	int SupportVertex(const OBB& box, const FVector& dir)
+	{
+		int best = 0;
+		float bestDot = box.vertex[0].DotProduct(dir);
+
+		for (int i = 1; i < 4; i++)
+		{
+			float d = box.vertex[i].DotProduct(dir);
+			if (d > bestDot)
+			{
+				bestDot = d;
+				best = i;
+			}
+		}
+
+		return best;
+	}
 }
 
-bool OverlapOBB(const OBB& a, const OBB& b)
+SATResult OverlapOBB(const OBB& a, const OBB& b)
 {
+	SATResult result;
+
 	// 볼록 도형 둘이 안 겹치면, 둘을 갈라놓는 축이 반드시 하나 있다 (분리축 정리).
 	// 사각형에서 후보가 되는 축은 각 상자의 로컬 축 2개씩, 총 4개다.
 	// 마주보는 두 면은 방향만 반대라 축으로는 같으므로 면 8개를 다 볼 필요가 없다.
 	FVector axes[4] = { a.axis[0], a.axis[1], b.axis[0], b.axis[1] };
+
+	float minOverlap = FLT_MAX;
+	int minIndex = 0;
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -63,16 +87,49 @@ bool OverlapOBB(const OBB& a, const OBB& b)
 		ProjectOBB(a, axes[i], aMin, aMax);
 		ProjectOBB(b, axes[i], bMin, bMax);
 
-		// 이 축에서 두 구간이 떨어져 있으면 분리축을 찾은 것 -> 안 겹친다.
-		// 딱 붙은 경우(aMax == bMin)를 충돌로 안 치는 건 기존 AABB 판정과 맞춘 것이다.
+		// 이 축에서 두 구간이 떨어져 있으면 분리축을 찾은 것 -> 안 겹친다
 		if (aMax <= bMin || bMax <= aMin)
 		{
-			return false;
+			return result;
+		}
+
+		// 두 구간이 겹치는 폭
+		float overlap = std::fmin(aMax, bMax) - std::fmax(aMin, bMin);
+
+		if (overlap < minOverlap)
+		{
+			minOverlap = overlap;
+			minIndex = i;
 		}
 	}
 
-	// 네 축 어디서도 갈라놓지 못했으면 실제로 겹친다
-	return true;
+	// 겹침이 가장 얕은 축으로 밀어내는 게 가장 적게 움직이고 빠져나가는 길이다.
+	// 축의 부호는 임의라, a가 b의 반대편으로 가도록(B -> A) 맞춰준다.
+	FVector normal = axes[minIndex];
+	if ((a.center - b.center).DotProduct(normal) < 0.0f)
+	{
+		normal = normal * -1.0f;
+	}
+
+	// 최소 침투 축이 어느 상자의 것이었나에 따라, 그 상자의 면이 '기준면'이고
+	// 반대쪽 상자의 꼭짓점이 그 면을 파고든 점이다. (5단계 클리핑의 출발점)
+	// 접촉점은 아직 하나뿐이라 그 꼭짓점을 그대로 쓴다.
+	if (minIndex < 2)
+	{
+		// 기준면이 a에 있음 -> 파고든 건 b의 꼭짓점. a 쪽(+normal)으로 가장 멀리 간 점.
+		result.contactPoint = b.vertex[SupportVertex(b, normal)];
+	}
+	else
+	{
+		// 기준면이 b에 있음 -> 파고든 건 a의 꼭짓점. b 쪽(-normal)으로 가장 멀리 간 점.
+		result.contactPoint = a.vertex[SupportVertex(a, normal * -1.0f)];
+	}
+
+	result.overlapped = true;
+	result.normal = normal;
+	result.penetration = minOverlap;
+
+	return result;
 }
 
 CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관리
@@ -292,99 +349,25 @@ CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollid
 
 CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, ACollider* b)
 {
-	// 충돌 감지
-	float widthA = a->GetScale().x;
-	float heightA = a->GetScale().y;
+	SATResult result = OverlapOBB(MakeOBB(a), MakeOBB(b));
 
-	float widthB = b->GetScale().x;
-	float heightB = b->GetScale().y;
-
-	float leftA = a->GetLocation().x - widthA / 2;
-	float rightA = a->GetLocation().x + widthA / 2;
-	float upA = a->GetLocation().y + heightA / 2;
-	float downA = a->GetLocation().y - heightA / 2;
-
-	float leftB = b->GetLocation().x - widthB / 2;
-	float rightB = b->GetLocation().x + widthB / 2;
-	float upB = b->GetLocation().y + heightB / 2;
-	float downB = b->GetLocation().y - heightB / 2;
-
-	bool isCollision = !(leftA >= rightB || rightA <= leftB || upA <= downB || downA >= upB);
-
-	if (!isCollision)
+	if (!result.overlapped)
 	{
 		return CollisionInfo();
 	}
-
-	float overlapX = (widthA + widthB) / 2 - std::fabs(a->GetLocation().x - b->GetLocation().x);
-	float overlapY = (heightA + heightB) / 2 - std::fabs(a->GetLocation().y - b->GetLocation().y);
 
 	// 매우 작은 겹침 무시
-	if (overlapX <= 0.0001f || overlapY <= 0.0001f)
+	if (result.penetration <= 0.0001f)
 	{
 		return CollisionInfo();
-	}
-
-	// 충돌 법선 단위 벡터
-	FVector normal;
-	float penetration;
-	FVector pointA;
-	FVector pointB;
-
-	if (overlapX < overlapY)
-	{
-		penetration = overlapX;
-		if (b->GetLocation().x > a->GetLocation().x)
-		{
-			normal = FVector(-1.0f, 0.0f, 0.0f);
-		}
-		else
-		{
-			normal = FVector(1.0f, 0.0f, 0.0f);
-		}
-		pointA = a->GetLocation() - normal * a->GetScale().x / 2;
-		pointB = b->GetLocation() + normal * b->GetScale().x / 2;
-	}
-	else
-	{
-		penetration = overlapY;
-		if (b->GetLocation().y > a->GetLocation().y)
-		{
-			normal = FVector(0.0f, -1.0f, 0.0f);
-		}
-		else
-		{
-			normal = FVector(0.0f, 1.0f, 0.0f);
-		}
-		pointA = a->GetLocation() - normal * a->GetScale().y / 2;
-		pointB = b->GetLocation() + normal * b->GetScale().y / 2;
-	}
-
-	// 충돌 지점
-	FVector contactPoint = (pointA + pointB) / 2;
-
-	// 접촉점을 실제로 겹치는 구간 안으로 옮긴다
-	if (overlapX < overlapY)
-	{
-		// 법선이 x축 -> 접촉면은 세로선. y를 겹치는 구간의 중앙으로
-		float overlapDown = std::fmax(downA, downB);
-		float overlapUp = std::fmin(upA, upB);
-		contactPoint.y = (overlapDown + overlapUp) / 2;
-	}
-	else
-	{
-		// 법선이 y축 -> 접촉면은 가로선. x를 겹치는 구간의 중앙으로
-		float overlapLeft = std::fmax(leftA, leftB);
-		float overlapRight = std::fmin(rightA, rightB);
-		contactPoint.x = (overlapLeft + overlapRight) / 2;
 	}
 
 	CollisionInfo info
 	{
-		contactPoint,
-		normal,
-		penetration,
-		isCollision
+		result.contactPoint,
+		result.normal,
+		result.penetration,
+		true
 	};
 
 
