@@ -13,6 +13,10 @@ struct ContactPoint
 	FVector position = FVector();
 	float penetration = 0.0f;
 
+	// 이 접촉이 어느 면·꼭짓점 조합에서 나왔는지. 프레임이 넘어가도 같은 접촉이면
+	// 같은 값이라, warm starting이 지난 프레임 충격량을 찾는 열쇠가 된다.
+	unsigned int id = 0;
+
 	FVector rA, rB;              // 질량중심 -> 접촉점
 	float normalMass = 0.0f;     // 1 / validMass       (미리 나눠둔 값)
 	float tangentMass = 0.0f;    // 1 / validMassTangent
@@ -54,24 +58,32 @@ struct CollisionInfo
 };
 
 // 회전을 포함한 사각형 (Oriented Bounding Box).
-// 지금은 그리기용으로만 쓰고, 다음 단계에서 SAT 판정의 입력이 된다.
+// 면 i는 vertex[i] -> vertex[(i+1)%4] 선분이고, 그 면의 바깥 방향이 normal[i]다.
 struct OBB
 {
 	FVector center;
 	FVector axis[2];    // 회전한 로컬 x축, y축 (단위벡터)
 	float half[2];      // 반너비, 반높이
 	FVector vertex[4];  // 반시계 방향: 좌하, 우하, 우상, 좌상
+	FVector normal[4];  // 각 면의 바깥 방향
 };
 
 OBB MakeOBB(const ACollider* collider);
 
-// SAT 판정 결과
+// SAT 판정 결과. 면끼리 닿으면 접촉점이 2개 나온다.
+struct SATContact
+{
+	FVector position;
+	float penetration = 0.0f;   // 이 점이 기준면을 파고든 깊이
+	unsigned int id = 0;        // 프레임 간 추적용
+};
+
 struct SATResult
 {
 	bool overlapped = false;
-	FVector normal;              // B -> A 방향 (a를 밀어낼 방향)
-	float penetration = 0.0f;    // 그 방향으로 겹친 폭
-	FVector contactPoint;
+	FVector normal;             // B -> A 방향 (a를 밀어낼 방향)
+	int pointCount = 0;
+	SATContact points[2];
 };
 
 // 두 OBB의 겹침을 판정하고, 가장 얕게 겹친 축을 법선으로 돌려준다 (SAT).

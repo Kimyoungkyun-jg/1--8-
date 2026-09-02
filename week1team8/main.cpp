@@ -462,8 +462,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			for (int k = 0; k < Contact.pointCount; k++)
 			{
 				const ContactPoint& Point = Contact.points[k];
-				ImGui::Text("[%2d.%d] n=(%+.2f, %+.2f)  pen=%.4f  Pn=%.3f  Pt=%+.3f",
-					i, k, Contact.normal.x, Contact.normal.y,
+				ImGui::Text("[%2d.%d] id=%08X  n=(%+.2f, %+.2f)  pen=%.4f  Pn=%.3f  Pt=%+.3f",
+					i, k, Point.id, Contact.normal.x, Contact.normal.y,
 					Point.penetration, Point.normalImpulse, Point.tangentImpulse);
 			}
 		}

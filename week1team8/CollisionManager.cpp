@@ -31,6 +31,12 @@ OBB MakeOBB(const ACollider* collider)
 	box.vertex[2] = box.center + ex + ey;
 	box.vertex[3] = box.center - ex + ey;
 
+	// 면 i는 vertex[i] -> vertex[i+1]. 꼭짓점이 반시계 순서라 바깥 방향이 이렇게 정해진다.
+	box.normal[0] = box.axis[1] * -1.0f;   // 아래 (v0 -> v1)
+	box.normal[1] = box.axis[0];           // 오른쪽 (v1 -> v2)
+	box.normal[2] = box.axis[1];           // 위 (v2 -> v3)
+	box.normal[3] = box.axis[0] * -1.0f;   // 왼쪽 (v3 -> v0)
+
 	return box;
 }
 
@@ -49,15 +55,15 @@ namespace
 		}
 	}
 
-	// dir 방향으로 가장 멀리 나간 꼭짓점의 번호
-	int SupportVertex(const OBB& box, const FVector& dir)
+	// box의 면 중 dir과 가장 잘 맞는(내적이 가장 큰) 면의 번호
+	int BestFace(const OBB& box, const FVector& dir)
 	{
 		int best = 0;
-		float bestDot = box.vertex[0].DotProduct(dir);
+		float bestDot = box.normal[0].DotProduct(dir);
 
 		for (int i = 1; i < 4; i++)
 		{
-			float d = box.vertex[i].DotProduct(dir);
+			float d = box.normal[i].DotProduct(dir);
 			if (d > bestDot)
 			{
 				bestDot = d;
@@ -66,6 +72,49 @@ namespace
 		}
 
 		return best;
+	}
+
+	// 클리핑을 거치는 동안 '어디서 나온 점인지'를 위치와 함께 들고 다닌다
+	struct ClipVertex
+	{
+		FVector position;
+		unsigned int id = 0;
+	};
+
+	// 접촉점의 출처를 정수 하나로 압축한다.
+	// 기준면 / 상대면 / 어느 꼭짓점(또는 어느 옆면에서 잘렸는지) / 기준이 뒤집혔는지.
+	// 이 넷이 같으면 프레임이 넘어가도 물리적으로 같은 접촉이다.
+	unsigned int MakeContactId(int referenceFace, int incidentFace, int feature, bool flip)
+	{
+		return (unsigned int)referenceFace
+			| ((unsigned int)incidentFace << 8)
+			| ((unsigned int)feature << 16)
+			| ((unsigned int)(flip ? 1 : 0) << 24);
+	}
+
+	// 선분 in을 반평면 (n·x <= offset) 안쪽만 남기고 자른다.
+	// 밖으로 나간 끝점은 평면과 만나는 지점으로 옮겨지고, 그 점은 clipId를 갖는다.
+	int ClipSegment(ClipVertex out[2], const ClipVertex in[2], const FVector& n, float offset, unsigned int clipId)
+	{
+		int count = 0;
+
+		// 평면 기준 부호 있는 거리. 음수면 안쪽.
+		float d0 = n.DotProduct(in[0].position) - offset;
+		float d1 = n.DotProduct(in[1].position) - offset;
+
+		if (d0 <= 0.0f) out[count++] = in[0];
+		if (d1 <= 0.0f) out[count++] = in[1];
+
+		// 한쪽만 밖에 있으면 선분이 평면을 가로지른다. 그 교점을 추가한다.
+		if (d0 * d1 < 0.0f && count < 2)
+		{
+			float t = d0 / (d0 - d1);
+			out[count].position = in[0].position + (in[1].position - in[0].position) * t;
+			out[count].id = clipId;
+			count++;
+		}
+
+		return count;
 	}
 }
 
@@ -78,8 +127,11 @@ SATResult OverlapOBB(const OBB& a, const OBB& b)
 	// 마주보는 두 면은 방향만 반대라 축으로는 같으므로 면 8개를 다 볼 필요가 없다.
 	FVector axes[4] = { a.axis[0], a.axis[1], b.axis[0], b.axis[1] };
 
-	float minOverlap = FLT_MAX;
-	int minIndex = 0;
+	// a의 축들과 b의 축들에서 각각 가장 얕은 겹침을 따로 찾는다
+	float overlapA = FLT_MAX;
+	float overlapB = FLT_MAX;
+	int indexA = 0;
+	int indexB = 2;
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -96,14 +148,28 @@ SATResult OverlapOBB(const OBB& a, const OBB& b)
 		// 두 구간이 겹치는 폭
 		float overlap = std::fmin(aMax, bMax) - std::fmax(aMin, bMin);
 
-		if (overlap < minOverlap)
+		if (i < 2)
 		{
-			minOverlap = overlap;
-			minIndex = i;
+			if (overlap < overlapA) { overlapA = overlap; indexA = i; }
+		}
+		else
+		{
+			if (overlap < overlapB) { overlapB = overlap; indexB = i; }
 		}
 	}
 
 	// 겹침이 가장 얕은 축으로 밀어내는 게 가장 적게 움직이고 빠져나가는 길이다.
+	// 다만 두 값이 비슷할 때는 a를 기준으로 붙잡아 둔다. 바닥과 블록처럼 둘 다
+	// 회전이 없으면 y축 겹침이 완전히 같아서, 그냥 작은 쪽을 고르면 미세한 오차로
+	// 프레임마다 기준이 뒤집힌다. 그러면 아래에서 만드는 ID도 같이 뒤집혀서
+	// warm starting이 매 프레임 캐시를 놓친다.
+	const float relativeTolerance = 0.95f;
+	const float absoluteTolerance = 0.0001f;
+	bool flip = overlapB < overlapA * relativeTolerance - absoluteTolerance;
+
+	int minIndex = flip ? indexB : indexA;
+	float minOverlap = flip ? overlapB : overlapA;
+
 	// 축의 부호는 임의라, a가 b의 반대편으로 가도록(B -> A) 맞춰준다.
 	FVector normal = axes[minIndex];
 	if ((a.center - b.center).DotProduct(normal) < 0.0f)
@@ -111,23 +177,84 @@ SATResult OverlapOBB(const OBB& a, const OBB& b)
 		normal = normal * -1.0f;
 	}
 
-	// 최소 침투 축이 어느 상자의 것이었나에 따라, 그 상자의 면이 '기준면'이고
-	// 반대쪽 상자의 꼭짓점이 그 면을 파고든 점이다. (5단계 클리핑의 출발점)
-	// 접촉점은 아직 하나뿐이라 그 꼭짓점을 그대로 쓴다.
-	if (minIndex < 2)
+	// 최소 침투 축을 낸 상자의 면이 '기준면'이고, 반대쪽 상자에서 그 면을
+	// 가장 마주보는 면이 '상대면'이다.
+	// normal은 B -> A니까, a의 면은 b를 향하고(-normal) b의 면은 a를 향한다(+normal).
+	const OBB& reference = flip ? b : a;
+	const OBB& incident = flip ? a : b;
+	FVector referenceNormal = flip ? normal : normal * -1.0f;
+
+	int referenceFace = BestFace(reference, referenceNormal);
+
+	// 기준면과 가장 마주보는 면 = 법선이 가장 반대인 면
+	int incidentFace = BestFace(incident, referenceNormal * -1.0f);
+
+	// 상대면(선분)을 기준면의 양옆 평면으로 잘라낸다.
+	// 기준면 밖으로 삐져나간 부분은 실제로 닿은 게 아니기 때문이다.
+	FVector v0 = reference.vertex[referenceFace];
+	FVector v1 = reference.vertex[(referenceFace + 1) % 4];
+
+	FVector sideDir = v1 - v0;
+	sideDir.Normalize();
+
+	int incidentNext = (incidentFace + 1) % 4;
+
+	// 상대면의 두 끝점은 각자 어느 꼭짓점인지로 구분한다
+	ClipVertex segment[2];
+	segment[0].position = incident.vertex[incidentFace];
+	segment[0].id = MakeContactId(referenceFace, incidentFace, incidentFace, flip);
+	segment[1].position = incident.vertex[incidentNext];
+	segment[1].id = MakeContactId(referenceFace, incidentFace, incidentNext, flip);
+
+	// v0 쪽 옆면: sideDir·x >= sideDir·v0  <=>  (-sideDir)·x <= -(sideDir·v0)
+	// 여기서 잘려 생긴 점은 '꼭짓점'이 아니라 '옆면 4번에서 잘린 점'이라는 뜻의 ID를 받는다
+	ClipVertex clipped[2];
+	if (ClipSegment(clipped, segment, sideDir * -1.0f, -sideDir.DotProduct(v0),
+		MakeContactId(referenceFace, incidentFace, 4, flip)) < 2)
 	{
-		// 기준면이 a에 있음 -> 파고든 건 b의 꼭짓점. a 쪽(+normal)으로 가장 멀리 간 점.
-		result.contactPoint = b.vertex[SupportVertex(b, normal)];
+		return result;
 	}
-	else
+
+	// v1 쪽 옆면
+	ClipVertex kept[2];
+	if (ClipSegment(kept, clipped, sideDir, sideDir.DotProduct(v1),
+		MakeContactId(referenceFace, incidentFace, 5, flip)) < 2)
 	{
-		// 기준면이 b에 있음 -> 파고든 건 a의 꼭짓점. b 쪽(-normal)으로 가장 멀리 간 점.
-		result.contactPoint = a.vertex[SupportVertex(a, normal * -1.0f)];
+		return result;
+	}
+
+	// 남은 두 점 중 기준면에 닿은 것만 진짜 접촉이다.
+	// 깊이를 점마다 따로 재는 게 핵심이다. 기울어진 블록은 한쪽 모서리가
+	// 더 깊이 박혀 있고, 그 차이가 블록을 평평하게 눕히는 회전을 만든다.
+	//
+	// 딱 붙은(separation == 0) 기준으로 자르면 안 된다. 위치 보정이 slop 근처에서
+	// 멈추기 때문에 놓인 블록은 침투가 0 언저리에서 떨리고, 그때마다 한쪽 점이
+	// 사라졌다 생겼다 한다. 조금 떨어진 점까지 접촉으로 유지해서 개수를 안정시킨다.
+	// 실제로 안 닿았으면 솔버가 충격량을 0으로 클램프하므로 힘은 안 생긴다.
+	const float contactTolerance = 0.005f;
+	float referenceOffset = referenceNormal.DotProduct(v0);
+
+	for (int i = 0; i < 2; i++)
+	{
+		float separation = referenceNormal.DotProduct(kept[i].position) - referenceOffset;
+		if (separation > contactTolerance)
+		{
+			continue;
+		}
+
+		result.points[result.pointCount].position = kept[i].position;
+		result.points[result.pointCount].penetration = std::fmax(-separation, 0.0f);
+		result.points[result.pointCount].id = kept[i].id;
+		result.pointCount++;
+	}
+
+	if (result.pointCount == 0)
+	{
+		return result;
 	}
 
 	result.overlapped = true;
 	result.normal = normal;
-	result.penetration = minOverlap;
 
 	return result;
 }
@@ -362,8 +489,14 @@ CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, A
 		return CollisionInfo();
 	}
 
-	// 매우 작은 겹침 무시
-	if (result.penetration <= 0.0001f)
+	// 매우 작은 겹침 무시 (가장 깊은 점 기준)
+	float deepest = 0.0f;
+	for (int i = 0; i < result.pointCount; i++)
+	{
+		deepest = std::fmax(deepest, result.points[i].penetration);
+	}
+
+	if (deepest <= 0.0001f)
 	{
 		return CollisionInfo();
 	}
@@ -371,9 +504,14 @@ CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, A
 	CollisionInfo info;
 	info.normal = result.normal;
 	info.isCollision = true;
-	info.pointCount = 1;
-	info.points[0].position = result.contactPoint;
-	info.points[0].penetration = result.penetration;
+	info.pointCount = result.pointCount;
+
+	for (int i = 0; i < result.pointCount; i++)
+	{
+		info.points[i].position = result.points[i].position;
+		info.points[i].penetration = result.points[i].penetration;
+		info.points[i].id = result.points[i].id;
+	}
 
 	return info;
 }
@@ -394,6 +532,13 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 	// 사각형 안에서 원 중심과 가장 가까운 점 (로컬 좌표)
 	float clampedX = std::clamp(localX, -box.half[0], box.half[0]);
 	float clampedY = std::clamp(localY, -box.half[1], box.half[1]);
+
+	// 원이 사각형의 어느 영역(어느 면 / 어느 모서리)에 붙어 있는지.
+	// clamp에 걸린 축과 그 부호가 곧 영역이다. 원이 같은 면 위에 머무는 동안은
+	// 굴러가도 이 값이 안 바뀌므로 프레임 간 추적에 쓸 수 있다.
+	unsigned int regionId = 0;
+	if (localX != clampedX) regionId |= (localX > 0.0f) ? 0x1u : 0x2u;
+	if (localY != clampedY) regionId |= (localY > 0.0f) ? 0x4u : 0x8u;
 
 	// 다시 월드 좌표로. 중심에서 두 축 방향으로 그만큼 간 점이다.
 	FVector closest = box.center + box.axis[0] * clampedX + box.axis[1] * clampedY;
@@ -426,6 +571,7 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 	info.pointCount = 1;
 	info.points[0].position = (pointA + pointB) / 2;
 	info.points[0].penetration = penetration;
+	info.points[0].id = regionId;
 
 	return info;
 }
@@ -434,16 +580,10 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 {
 	FVector normal = info.normal;
 
-	// 접촉점이 여러 개여도 겹침은 하나다. 가장 깊은 값으로 한 번만 민다.
-	// 점마다 밀면 같은 겹침을 중복해서 밀어내게 된다.
-	float penetration = 0.0f;
-	for (int i = 0; i < info.pointCount; i++)
-	{
-		penetration = std::fmax(penetration, info.points[i].penetration);
-	}
-
 	float invMassA = InvMass(a->GetMass());
 	float invMassB = InvMass(b->GetMass());
+	float invIA = InvInertia(a->GetInertia());
+	float invIB = InvInertia(b->GetInertia());
 
 	// 스태틱 충돌 (추후 수정)
 	if (invMassA + invMassB <= 0.0f)
@@ -455,12 +595,40 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 	const float slop = 0.001f; // 이 정도 침투는 무시
 	const float baumgarte = 0.5f;   // 나중에 dt 기반으로 변경
 
-	float correctionAmount = std::fmax(penetration - slop, 0.0f);
-	if (correctionAmount > 0.0f)
+	// 접촉점마다 따로 보정한다.
+	// 예전엔 가장 깊은 값 하나로 물체를 통째로 평행이동했는데, 그러면 기울어진
+	// 블록의 얕은 쪽 모서리가 바닥에서 들려버린다. 속도 솔버와 똑같이 r x n 항을
+	// 넣어서 회전까지 보정하면, 깊은 쪽이 더 내려가면서 블록이 평평해진다.
+	for (int i = 0; i < info.pointCount; i++)
 	{
-		FVector correction = normal * correctionAmount * baumgarte / (invMassA + invMassB);
-		a->SetLocation(a->GetLocation() + correction * invMassA);
-		b->SetLocation(b->GetLocation() - correction * invMassB);
+		const ContactPoint& point = info.points[i];
+
+		float correctionAmount = std::fmax(point.penetration - slop, 0.0f);
+		if (correctionAmount <= 0.0f)
+		{
+			continue;
+		}
+
+		// 앞 접촉점을 보정하면서 위치와 각도가 이미 바뀌었으므로 매번 다시 구한다
+		FVector rA = point.position - a->GetLocation();
+		FVector rB = point.position - b->GetLocation();
+
+		float raxn = FVector::Cross(rA, normal);
+		float rbxn = FVector::Cross(rB, normal);
+
+		// 이 접촉점을 법선 방향으로 밀 때의 유효 질량 (회전 저항 포함)
+		float validMass = invMassA + invMassB + raxn * raxn * invIA + rbxn * rbxn * invIB;
+		if (validMass <= 0.0f)
+		{
+			continue;
+		}
+
+		float correction = baumgarte * correctionAmount / validMass;
+
+		a->SetLocation(a->GetLocation() + normal * (correction * invMassA));
+		b->SetLocation(b->GetLocation() - normal * (correction * invMassB));
+		a->SetRotation(a->GetRotation() + raxn * correction * invIA);
+		b->SetRotation(b->GetRotation() - rbxn * correction * invIB);
 	}
 }
 
