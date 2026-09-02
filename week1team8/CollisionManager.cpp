@@ -78,7 +78,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		InitContact(ab.first, ab.second, info);
 	}
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		for (auto& [ab, info] : abinfos)
 		{
@@ -87,7 +87,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		}
 	}
 
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		for (auto& [ab, info] : abinfos)
 		{
@@ -102,14 +102,37 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 			}
 		}
 	}
-	
+
 	// infos 채우기
+	bool bCanDamage = false;
+	float MinDamageSpeed = 0.1f;
+	if (ABird* Bird = GameManager::GetInstance().GetReloadedBird())
+	{
+		bCanDamage = (Bird->State == EBirdState::Shooting);
+	}
+
+	auto TryKill = [&](ACollider* c)
+		{
+			if (!c || c->GetMass() <= 0.0f) return;     // 정적 물체(바닥)는 제외
+			if (c->minusHp() != 0) return;              // 아직 안 죽음
+			for (auto* p : pendingkills)                // 중복 방지
+			{
+				if (p == c) return;
+			}
+			pendingkills.push_back(c);
+		};
+
 	for (auto& [ab, info] : abinfos)
 	{
-		if (info.initialNormalVelocity > 0.1f && info.normalImpulse > 10.0f)
-		{
-			infos.push_back(info);
-		}
+		if (info.initialNormalVelocity > -MinDamageSpeed) continue;  // 충분히 빠르게 부딪혔나
+		if (info.normalImpulse <= CollisionThreshold)    continue;   // 충분히 셌나
+
+		infos.push_back(info);
+
+		if (!bCanDamage) continue;
+
+		TryKill(ab.first);
+		TryKill(ab.second);
 	}
 
 	for (int i = (int)pendingkills.size() - 1; i >= 0; i--)
@@ -357,9 +380,7 @@ void CollisionManager::SolveContact(ACollider* a, ACollider* b, CollisionInfo& i
 {
 	FVector rA = info.rA;
 	FVector rB = info.rB;
-
 	FVector normal = info.normal;
-	float penetration = info.penetration;
 
 	float invMassA = InvMass(a->GetMass());
 	float invMassB = InvMass(b->GetMass());
@@ -373,94 +394,48 @@ void CollisionManager::SolveContact(ACollider* a, ACollider* b, CollisionInfo& i
 	// 충격량 적용
 	float raxn = FVector::Cross(rA, normal);
 	float rbxn = FVector::Cross(rB, normal);
-	float validMass = info.normalMass;
-	float impulseMag = -(1.0f + restitution) * relativeVelocityNormal / (validMass); // 충격량
-	a->SetVelocity(a->GetVelocity() + normal * (impulseMag * invMassA));
-	b->SetVelocity(b->GetVelocity() - normal * (impulseMag * invMassB));
-	a->SetAngularVelocity(a->GetAngularVelocity() + raxn * impulseMag * invIA);
-	b->SetAngularVelocity(b->GetAngularVelocity() - rbxn * impulseMag * invIB);
+
+	float delta = -(relativeVelocityNormal - info.velocityBias) * info.normalMass;
+	float oldImpulse = info.normalImpulse;
+	info.normalImpulse = std::fmax(oldImpulse + delta, 0.0f);
+	float applied = info.normalImpulse - oldImpulse;
+
+	a->SetVelocity(a->GetVelocity() + normal * (applied * invMassA));
+	b->SetVelocity(b->GetVelocity() - normal * (applied * invMassB));
+	a->SetAngularVelocity(a->GetAngularVelocity() + raxn * applied * invIA);
+	b->SetAngularVelocity(b->GetAngularVelocity() - rbxn * applied * invIB);
 
 	// 마찰 적용
 	FVector relativeVelocityAfter = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
 		(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB));
-	FVector tangent = relativeVelocityAfter - normal * normal.DotProduct(relativeVelocityAfter); // 접선 방향 상대 속도
-	float tangentLength = tangent.Length(); // 속력
 
-	if (tangentLength > 0.0001f)
+	float raxt = FVector::Cross(rA, info.tangent);
+	float rbxt = FVector::Cross(rB, info.tangent);
+
+	float vt = info.tangent.DotProduct(relativeVelocityAfter);   // 음수 가능
+	float deltaT = -vt * info.tangentMass;                        // 여기도 곱셈
+	float oldT = info.tangentImpulse;
+	float newT = oldT + deltaT;
+
+	float staticFriction = std::sqrt(a->GetStaticFriction() * b->GetStaticFriction()); // 정지 마찰 계수
+	float maxStaticFriction = info.normalImpulse * staticFriction;
+
+	if (std::fabs(newT) > maxStaticFriction)
 	{
-		tangent = tangent / tangentLength; // 정규화
-
-		float relativeVelocityTangent = tangentLength; // 접선 방향 속력
-
-		float raxt = FVector::Cross(rA, tangent);
-		float rbxt = FVector::Cross(rB, tangent);
-		float validMassTangent = info.tangentMass;
-		float frictionImpulseMag = -relativeVelocityTangent / (validMassTangent); // 마찰 임펄스 크기
-
-		float staticFriction = std::sqrt(a->GetStaticFriction() * b->GetStaticFriction()); // 정지 마찰 계수
-		float maxStaticFriction = impulseMag * staticFriction;
-
-		if (std::fabs(frictionImpulseMag) > maxStaticFriction)
-		{
-			// 정지 마찰 한계를 넘음 -> 미끄러짐, 운동 마찰로 클램프
-			float dynamicFriction = std::sqrt(a->GetDynamicFriction() * b->GetDynamicFriction());
-			float maxDynamicFriction = impulseMag * dynamicFriction;
-			frictionImpulseMag = std::clamp(frictionImpulseMag, -maxDynamicFriction, maxDynamicFriction);
-		}
-		// else: 정지 마찰 범위 안 -> frictionImpulseMag 그대로 적용, 즉 붙잡혀서 안 미끄러짐
-
-		a->SetVelocity(a->GetVelocity() + tangent * (frictionImpulseMag * invMassA));
-		b->SetVelocity(b->GetVelocity() - tangent * (frictionImpulseMag * invMassB));
-		a->SetAngularVelocity(a->GetAngularVelocity() + raxt * frictionImpulseMag * invIA);
-		b->SetAngularVelocity(b->GetAngularVelocity() - rbxt * frictionImpulseMag * invIB);
+		// 정지 마찰 한계를 넘음 -> 미끄러짐, 운동 마찰로 클램프
+		float dynamicFriction = std::sqrt(a->GetDynamicFriction() * b->GetDynamicFriction());
+		float maxDynamicFriction = info.normalImpulse * dynamicFriction;
+		newT = std::clamp(newT, -maxDynamicFriction, maxDynamicFriction);
 	}
+	// else: 정지 마찰 범위 안 -> frictionImpulseMag 그대로 적용, 즉 붙잡혀서 안 미끄러짐
 
-	if (ABird * Bird = GameManager::GetInstance().GetReloadedBird())
-	{
-		if (Bird->State == EBirdState::Shooting)
-		{
-			if (impulseMag > CollisionThreshold)
-			{
-				ACollider* oba = dynamic_cast<ACollider*>(a);
-				ACollider* obb = dynamic_cast<ACollider*>(b);
+	info.tangentImpulse = newT;
+	float appliedT = newT - oldT;
 
-				if (oba)
-				{
-					if (oba->minusHp() == 0)
-					{
-						bool alreadyPending = false;
-						for (auto* p : pendingkills)
-						{
-							if (p == oba) { alreadyPending = true; break; }
-						}
-						if (!alreadyPending)
-						{
-							pendingkills.push_back(oba);
-						}
-					}
-				}
-
-				if (obb)
-				{
-					if (obb->minusHp() == 0)
-					{
-						bool alreadyPending = false;
-						for (auto* p : pendingkills)
-						{
-							if (p == obb) { alreadyPending = true; break; }
-						}
-						if (!alreadyPending)
-						{
-							pendingkills.push_back(obb);
-						}
-					}
-				}
-			}
-		}
-
-	}
-
-	return impulseMag;
+	a->SetVelocity(a->GetVelocity() + info.tangent * (appliedT * invMassA));
+	b->SetVelocity(b->GetVelocity() - info.tangent * (appliedT * invMassB));
+	a->SetAngularVelocity(a->GetAngularVelocity() + raxt * appliedT * invIA);
+	b->SetAngularVelocity(b->GetAngularVelocity() - rbxt * appliedT * invIB);
 }
 
 void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& info)
@@ -505,5 +480,5 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 	info.normalMass = 1.0f / validMass;
 	info.tangentMass = 1.0f / validMassTangent;
 	info.initialNormalVelocity = relativeVelocityNormal;
-	info.velocityBias = (relativeVelocityNormal < -restitutionThreshold) ? -restitution * vn0 : 0.0f;
+	info.velocityBias = (relativeVelocityNormal < -restitutionThreshold) ? -restitution * relativeVelocityNormal : 0.0f;
 }
