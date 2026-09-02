@@ -416,16 +416,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			for (const CollisionInfo& Contact : CM.debugContacts)
 			{
-				ImVec2 Point = WorldToScreen(Contact.contactPoint);
+				// 법선은 접촉점들이 공유하고, 점만 여러 개일 수 있다
+				for (int i = 0; i < Contact.pointCount; i++)
+				{
+					ImVec2 Point = WorldToScreen(Contact.points[i].position);
 
-				// 법선은 방향이라 위치와 달리 y를 뒤집기만 하면 된다.
-				// (화면 y는 아래로, 월드 y는 위로 증가)
-				ImVec2 Tip = ImVec2(Point.x + Contact.normal.x * NormalLength,
-					Point.y - Contact.normal.y * NormalLength);
+					// 법선은 방향이라 위치와 달리 y를 뒤집기만 하면 된다.
+					// (화면 y는 아래로, 월드 y는 위로 증가)
+					ImVec2 Tip = ImVec2(Point.x + Contact.normal.x * NormalLength,
+						Point.y - Contact.normal.y * NormalLength);
 
-				// 법선은 B -> A 방향. 즉 A를 밀어내는 쪽을 가리켜야 한다.
-				DrawList->AddLine(Point, Tip, IM_COL32(255, 64, 64, 255), 2.0f);
-				DrawList->AddCircleFilled(Point, 4.0f, IM_COL32(255, 220, 0, 255));
+					// 법선은 B -> A 방향. 즉 A를 밀어내는 쪽을 가리켜야 한다.
+					DrawList->AddLine(Point, Tip, IM_COL32(255, 64, 64, 255), 2.0f);
+					DrawList->AddCircleFilled(Point, 4.0f, IM_COL32(255, 220, 0, 255));
+				}
 			}
 		}
 
@@ -454,9 +458,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		for (int i = 0; i < (int)CM.debugContacts.size(); i++)
 		{
 			const CollisionInfo& Contact = CM.debugContacts[i];
-			ImGui::Text("[%2d] n=(%+.2f, %+.2f)  pen=%.4f  Pn=%.3f  Pt=%+.3f",
-				i, Contact.normal.x, Contact.normal.y,
-				Contact.penetration, Contact.normalImpulse, Contact.tangentImpulse);
+
+			for (int k = 0; k < Contact.pointCount; k++)
+			{
+				const ContactPoint& Point = Contact.points[k];
+				ImGui::Text("[%2d.%d] n=(%+.2f, %+.2f)  pen=%.4f  Pn=%.3f  Pt=%+.3f",
+					i, k, Contact.normal.x, Contact.normal.y,
+					Point.penetration, Point.normalImpulse, Point.tangentImpulse);
+			}
 		}
 
 		ImGui::SeparatorText("Bodies");

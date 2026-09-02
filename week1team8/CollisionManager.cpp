@@ -198,7 +198,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 	}
 
 	std::sort(abinfos.begin(), abinfos.end(), [](const auto& a, const auto& b) {
-		return a.second.contactPoint.y < b.second.contactPoint.y;
+		return a.second.AverageContactPoint().y < b.second.AverageContactPoint().y;
 		});
 
 	for (auto& [ab, info] : abinfos)
@@ -259,8 +259,17 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 	for (auto& [ab, info] : abinfos)
 	{
-		if (info.initialNormalVelocity > -MinDamageSpeed) continue;  // 충분히 빠르게 부딪혔나
-		if (info.normalImpulse <= CollisionThreshold)    continue;   // 충분히 셌나
+		// 접촉점이 여러 개면 가장 빠르게 부딪힌 점과 충격량 합으로 판단한다
+		float approachSpeed = 0.0f;
+		float totalNormalImpulse = 0.0f;
+		for (int i = 0; i < info.pointCount; i++)
+		{
+			approachSpeed = std::fmin(approachSpeed, info.points[i].initialNormalVelocity);
+			totalNormalImpulse += info.points[i].normalImpulse;
+		}
+
+		if (approachSpeed > -MinDamageSpeed)          continue;   // 충분히 빠르게 부딪혔나
+		if (totalNormalImpulse <= CollisionThreshold) continue;   // 충분히 셌나
 
 		infos.push_back(info);
 
@@ -333,16 +342,13 @@ CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollid
 	// 충돌 지점
 	FVector pointA = a->GetLocation() - normal * a->GetScale().x / 2;
 	FVector pointB = b->GetLocation() + normal * b->GetScale().x / 2;
-	FVector contactPoint = (pointA + pointB) / 2;
 
-	CollisionInfo info
-	{
-		contactPoint,
-		normal,
-		penetration,
-		isCollision
-	};
-
+	CollisionInfo info;
+	info.normal = normal;
+	info.isCollision = isCollision;
+	info.pointCount = 1;
+	info.points[0].position = (pointA + pointB) / 2;
+	info.points[0].penetration = penetration;
 
 	return info;
 }
@@ -362,14 +368,12 @@ CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, A
 		return CollisionInfo();
 	}
 
-	CollisionInfo info
-	{
-		result.contactPoint,
-		result.normal,
-		result.penetration,
-		true
-	};
-
+	CollisionInfo info;
+	info.normal = result.normal;
+	info.isCollision = true;
+	info.pointCount = 1;
+	info.points[0].position = result.contactPoint;
+	info.points[0].penetration = result.penetration;
 
 	return info;
 }
@@ -415,15 +419,13 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 	// 충돌 지점
 	FVector pointA = a->GetLocation() - normal * radius;
 	FVector pointB = closest;
-	FVector contactPoint = (pointA + pointB) / 2;
 
-	CollisionInfo info
-	{
-		contactPoint,
-		normal,
-		penetration,
-		isCollision
-	};
+	CollisionInfo info;
+	info.normal = normal;
+	info.isCollision = isCollision;
+	info.pointCount = 1;
+	info.points[0].position = (pointA + pointB) / 2;
+	info.points[0].penetration = penetration;
 
 	return info;
 }
@@ -431,7 +433,14 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const CollisionInfo& info)
 {
 	FVector normal = info.normal;
-	float penetration = info.penetration;
+
+	// 접촉점이 여러 개여도 겹침은 하나다. 가장 깊은 값으로 한 번만 민다.
+	// 점마다 밀면 같은 겹침을 중복해서 밀어내게 된다.
+	float penetration = 0.0f;
+	for (int i = 0; i < info.pointCount; i++)
+	{
+		penetration = std::fmax(penetration, info.points[i].penetration);
+	}
 
 	float invMassA = InvMass(a->GetMass());
 	float invMassB = InvMass(b->GetMass());
@@ -458,8 +467,6 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 // 충돌해결 (법선 B->A)
 void CollisionManager::SolveContact(ACollider* a, ACollider* b, CollisionInfo& info)
 {
-	FVector rA = info.rA;
-	FVector rB = info.rB;
 	FVector normal = info.normal;
 
 	float invMassA = InvMass(a->GetMass());
@@ -467,68 +474,73 @@ void CollisionManager::SolveContact(ACollider* a, ACollider* b, CollisionInfo& i
 	float invIA = InvInertia(a->GetInertia());
 	float invIB = InvInertia(b->GetInertia());
 
-	FVector relativeVelocity = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
-		(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB)); // 상대 속도
-	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
-
-	// 충격량 적용
-	float raxn = FVector::Cross(rA, normal);
-	float rbxn = FVector::Cross(rB, normal);
-
-	float delta = -(relativeVelocityNormal - info.velocityBias) * info.normalMass;
-	float oldImpulse = info.normalImpulse;
-	info.normalImpulse = std::fmax(oldImpulse + delta, 0.0f);
-	float applied = info.normalImpulse - oldImpulse;
-
-	a->SetVelocity(a->GetVelocity() + normal * (applied * invMassA));
-	b->SetVelocity(b->GetVelocity() - normal * (applied * invMassB));
-	a->SetAngularVelocity(a->GetAngularVelocity() + raxn * applied * invIA);
-	b->SetAngularVelocity(b->GetAngularVelocity() - rbxn * applied * invIB);
-
-	// 마찰 적용
-	FVector relativeVelocityAfter = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
-		(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB));
-
-	float raxt = FVector::Cross(rA, info.tangent);
-	float rbxt = FVector::Cross(rB, info.tangent);
-
-	float vt = info.tangent.DotProduct(relativeVelocityAfter);   // 음수 가능
-	float deltaT = -vt * info.tangentMass;                        // 여기도 곱셈
-	float oldT = info.tangentImpulse;
-	float newT = oldT + deltaT;
-
+	// 마찰 계수는 물체 쌍이 정하는 거라 접촉점마다 다르지 않다. 루프 밖에서 한 번만 구한다.
 	float staticFriction = std::sqrt(a->GetStaticFriction() * b->GetStaticFriction()); // 정지 마찰 계수
-	float maxStaticFriction = info.normalImpulse * staticFriction;
+	float dynamicFriction = std::sqrt(a->GetDynamicFriction() * b->GetDynamicFriction());
 
-	if (std::fabs(newT) > maxStaticFriction)
+	for (int i = 0; i < info.pointCount; i++)
 	{
-		// 정지 마찰 한계를 넘음 -> 미끄러짐, 운동 마찰로 클램프
-		float dynamicFriction = std::sqrt(a->GetDynamicFriction() * b->GetDynamicFriction());
-		float maxDynamicFriction = info.normalImpulse * dynamicFriction;
-		newT = std::clamp(newT, -maxDynamicFriction, maxDynamicFriction);
+		ContactPoint& point = info.points[i];
+
+		FVector rA = point.rA;
+		FVector rB = point.rB;
+
+		FVector relativeVelocity = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
+			(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB)); // 상대 속도
+		float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
+
+		// 충격량 적용
+		float raxn = FVector::Cross(rA, normal);
+		float rbxn = FVector::Cross(rB, normal);
+
+		float delta = -(relativeVelocityNormal - point.velocityBias) * point.normalMass;
+		float oldImpulse = point.normalImpulse;
+		point.normalImpulse = std::fmax(oldImpulse + delta, 0.0f);
+		float applied = point.normalImpulse - oldImpulse;
+
+		a->SetVelocity(a->GetVelocity() + normal * (applied * invMassA));
+		b->SetVelocity(b->GetVelocity() - normal * (applied * invMassB));
+		a->SetAngularVelocity(a->GetAngularVelocity() + raxn * applied * invIA);
+		b->SetAngularVelocity(b->GetAngularVelocity() - rbxn * applied * invIB);
+
+		// 마찰 적용
+		FVector relativeVelocityAfter = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
+			(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB));
+
+		float raxt = FVector::Cross(rA, info.tangent);
+		float rbxt = FVector::Cross(rB, info.tangent);
+
+		float vt = info.tangent.DotProduct(relativeVelocityAfter);   // 음수 가능
+		float deltaT = -vt * point.tangentMass;                       // 여기도 곱셈
+		float oldT = point.tangentImpulse;
+		float newT = oldT + deltaT;
+
+		float maxStaticFriction = point.normalImpulse * staticFriction;
+
+		if (std::fabs(newT) > maxStaticFriction)
+		{
+			// 정지 마찰 한계를 넘음 -> 미끄러짐, 운동 마찰로 클램프
+			float maxDynamicFriction = point.normalImpulse * dynamicFriction;
+			newT = std::clamp(newT, -maxDynamicFriction, maxDynamicFriction);
+		}
+		// else: 정지 마찰 범위 안 -> 그대로 적용, 즉 붙잡혀서 안 미끄러짐
+
+		point.tangentImpulse = newT;
+		float appliedT = newT - oldT;
+
+		a->SetVelocity(a->GetVelocity() + info.tangent * (appliedT * invMassA));
+		b->SetVelocity(b->GetVelocity() - info.tangent * (appliedT * invMassB));
+		a->SetAngularVelocity(a->GetAngularVelocity() + raxt * appliedT * invIA);
+		b->SetAngularVelocity(b->GetAngularVelocity() - rbxt * appliedT * invIB);
 	}
-	// else: 정지 마찰 범위 안 -> frictionImpulseMag 그대로 적용, 즉 붙잡혀서 안 미끄러짐
-
-	info.tangentImpulse = newT;
-	float appliedT = newT - oldT;
-
-	a->SetVelocity(a->GetVelocity() + info.tangent * (appliedT * invMassA));
-	b->SetVelocity(b->GetVelocity() - info.tangent * (appliedT * invMassB));
-	a->SetAngularVelocity(a->GetAngularVelocity() + raxt * appliedT * invIA);
-	b->SetAngularVelocity(b->GetAngularVelocity() - rbxt * appliedT * invIB);
 }
 
 void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& info)
 {
-	info.normalImpulse = 0.0f;
-	info.tangentImpulse = 0.0f;
-	info.normalMass = 0.0f;
-	info.tangentMass = 0.0f;
-
-	FVector rA = info.contactPoint - a->GetLocation();
-	FVector rB = info.contactPoint - b->GetLocation();
-
 	FVector normal = info.normal;
+
+	// 접선은 법선에서 나오므로 접촉점과 무관하다. 쌍마다 한 번만 구한다.
+	info.tangent = FVector::Cross(normal, 1.0f);
 
 	float invMassA = InvMass(a->GetMass());
 	float invMassB = InvMass(b->GetMass());
@@ -537,28 +549,39 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 
 	if (invMassA + invMassB <= 0.0f) return; // 스태틱 충돌
 
-	FVector relativeVelocity = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
-		(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB)); // 상대 속도
-	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
+	for (int i = 0; i < info.pointCount; i++)
+	{
+		ContactPoint& point = info.points[i];
 
-	const float restitutionThreshold = 1.0f; // 튜닝 값
-	float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.2f;
+		point.normalImpulse = 0.0f;
+		point.tangentImpulse = 0.0f;
+		point.normalMass = 0.0f;
+		point.tangentMass = 0.0f;
 
-	// 충격량
-	float raxn = FVector::Cross(rA, normal);
-	float rbxn = FVector::Cross(rB, normal);
-	float validMass = invMassA + invMassB + raxn * raxn * invIA + rbxn * rbxn * invIB;
+		FVector rA = point.position - a->GetLocation();
+		FVector rB = point.position - b->GetLocation();
 
-	info.tangent = FVector::Cross(normal, 1.0f);
+		FVector relativeVelocity = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
+			(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB)); // 상대 속도
+		float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
 
-	float raxt = FVector::Cross(rA, info.tangent);
-	float rbxt = FVector::Cross(rB, info.tangent);
-	float validMassTangent = invMassA + invMassB + raxt * raxt * invIA + rbxt * rbxt * invIB;
+		const float restitutionThreshold = 1.0f; // 튜닝 값
+		float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.2f;
 
-	info.rA = rA;
-	info.rB = rB;
-	info.normalMass = 1.0f / validMass;
-	info.tangentMass = 1.0f / validMassTangent;
-	info.initialNormalVelocity = relativeVelocityNormal;
-	info.velocityBias = (relativeVelocityNormal < -restitutionThreshold) ? -restitution * relativeVelocityNormal : 0.0f;
+		// 충격량
+		float raxn = FVector::Cross(rA, normal);
+		float rbxn = FVector::Cross(rB, normal);
+		float validMass = invMassA + invMassB + raxn * raxn * invIA + rbxn * rbxn * invIB;
+
+		float raxt = FVector::Cross(rA, info.tangent);
+		float rbxt = FVector::Cross(rB, info.tangent);
+		float validMassTangent = invMassA + invMassB + raxt * raxt * invIA + rbxt * rbxt * invIB;
+
+		point.rA = rA;
+		point.rB = rB;
+		point.normalMass = 1.0f / validMass;
+		point.tangentMass = 1.0f / validMassTangent;
+		point.initialNormalVelocity = relativeVelocityNormal;
+		point.velocityBias = (relativeVelocityNormal < -restitutionThreshold) ? -restitution * relativeVelocityNormal : 0.0f;
+	}
 }

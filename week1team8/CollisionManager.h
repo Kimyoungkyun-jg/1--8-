@@ -7,16 +7,13 @@
 #include "UObject.h"
 
 
-struct CollisionInfo
+// 접촉점 하나. 솔버가 푸는 단위다.
+struct ContactPoint
 {
-	FVector contactPoint = FVector();
-	FVector normal = FVector();
+	FVector position = FVector();
 	float penetration = 0.0f;
-	bool isCollision = false;
-	EColliderId colAId;
-	EColliderId colBId;
-	FVector rA, rB;              // 질량중심 -> 접촉점 (지금 매번 계산하던 것)
-	FVector tangent;             // 접선 방향 (고정)
+
+	FVector rA, rB;              // 질량중심 -> 접촉점
 	float normalMass = 0.0f;     // 1 / validMass       (미리 나눠둔 값)
 	float tangentMass = 0.0f;    // 1 / validMassTangent
 	float velocityBias = 0.0f;   // 목표 분리 속도
@@ -24,6 +21,36 @@ struct CollisionInfo
 	float normalImpulse = 0.0f;  // 누적 충격량 1: 법선
 	float tangentImpulse = 0.0f; // 누적 충격량 2: 마찰
 	float initialNormalVelocity = 0.0f;
+};
+
+// 한 쌍의 충돌. 법선은 두 물체가 공유하고, 접촉점만 여러 개가 될 수 있다.
+// 지금은 항상 1개이고, 5단계에서 면끼리 닿을 때 2개가 된다.
+struct CollisionInfo
+{
+	FVector normal = FVector();  // B -> A 방향
+	FVector tangent = FVector(); // 접선 방향 (고정)
+	bool isCollision = false;
+	EColliderId colAId = EColliderId::NONE;
+	EColliderId colBId = EColliderId::NONE;
+
+	int pointCount = 0;
+	ContactPoint points[2];
+
+	FVector AverageContactPoint() const
+	{
+		if (pointCount == 0)
+		{
+			return FVector();
+		}
+
+		FVector sum;
+		for (int i = 0; i < pointCount; i++)
+		{
+			sum += points[i].position;
+		}
+
+		return sum / (float)pointCount;
+	}
 };
 
 // 회전을 포함한 사각형 (Oriented Bounding Box).

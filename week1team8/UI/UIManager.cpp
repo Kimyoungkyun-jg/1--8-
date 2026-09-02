@@ -201,7 +201,7 @@ void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
 	{
 		for (auto& it : infos)
 		{
-			pair<float, float> pos = WorldToScreen(it.contactPoint);
+			pair<float, float> pos = WorldToScreen(it.AverageContactPoint());
 			CalPos(it.colAId, it.colBId, pos.first, pos.second);
 		}
 	}
