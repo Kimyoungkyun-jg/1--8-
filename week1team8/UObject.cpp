@@ -297,7 +297,7 @@ float ABombBird::minusHp()
 				FVector Direction = (Col->GetLocation() - Location);
 				Direction.Normalize();
 				Col->SetVelocity(Col->GetVelocity() + Direction * 0.4f);
-				Col->minusHp();
+				CollisionManager::GetInstance().TryKill(Col);
 			}
 		}
 	}
