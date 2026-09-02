@@ -13,8 +13,16 @@ void GameManager::Restart()
 	SlingShot = nullptr;
 	ReloadedBird = nullptr;
 
-	state = GameState::Play;
-	LoadManager::Get().LoadMap(0);
+	if (LoadManager::Get().LoadMap(0))
+	{
+		state = GameState::Play;
+		return;
+	}
+
+	// 맵 파일이 없어도 벽과 새총은 세워둔다 (SlingShot이 null로 남으면 안 된다).
+	// 다만 Play로는 안 넘어간다. 돼지가 0마리라 CheckGameState가 바로 다음 레벨을 찾는다.
+	LoadManager::Get().ClearMap();
+	state = GameState::Menu;
 }
 
 void GameManager::SpawnWalls()

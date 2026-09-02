@@ -181,14 +181,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 인게임 배경화면 로드
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
-	/*bool bResult = LoadManager.LoadMap(0);
-	if (!bResult)
-	{
-		gameManager.SpawnBirdAndSlingShot();
-	}*/
-
-	// 화면 경계 벽 (Clear Map 해도 ClearMap()이 다시 만든다)
-	gameManager.SpawnWalls();
+	// 레벨 0으로 시작. state를 Play로 올려야 CheckGameState가 돈다.
+	// 벽과 새총은 Restart -> ClearMap 안에서 같이 만들어진다.
+	gameManager.Restart();
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
