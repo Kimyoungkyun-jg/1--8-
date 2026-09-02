@@ -204,7 +204,7 @@ public:
 		Restitution = 0.2f;
 	}
 	virtual ~APig() {}
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_pig", 0.0f); }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_pig", 2.0f); }
 
 	virtual float minusHp() override;
 };
@@ -224,7 +224,7 @@ public:
 		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
 	}
 	virtual ~ABlock() {}
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_rock", 0.0f); }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_rock", 0.5f); }
 };
 
 // 화면 경계 벽. 질량 0으로 생성해서 움직이지 않는다.
