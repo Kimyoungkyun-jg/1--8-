@@ -166,6 +166,7 @@ void ABird::Released(FVector _Location)
 {
 	WakeUp();
 	bUseGravity = true;
+	isInvalid = false;
 	State = EBirdState::Shooting;
 	bEditing = false;
 
@@ -200,6 +201,7 @@ void ABird::SetWait()
 {
 	State = EBirdState::Waiting;
 	bUseGravity = false;
+	isInvalid = true;
 }
 
 void ASlingShot::SpawnBand()
@@ -279,7 +281,6 @@ float APig::minusHp()
 
 	return hp;
 }
-
 
 float ABombBird::minusHp()
 {
