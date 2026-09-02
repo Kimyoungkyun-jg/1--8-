@@ -12,6 +12,7 @@ void GameManager::Restart()
 	CurrentLevel = 0;
 	SlingShot = nullptr;
 	ReloadedBird = nullptr;
+	UIManager::GetInstance().ResetScore();
 
 	if (LoadManager::Get().LoadMap(0))
 	{
@@ -96,6 +97,7 @@ void GameManager::CheckGameState()
 			if (LoadManager::Get().LoadMap(CurrentLevel + 1))
 			{
 				CurrentLevel += 1;
+				UIManager::GetInstance().LevelChanged(CurrentLevel);
 			}
 			else
 			{

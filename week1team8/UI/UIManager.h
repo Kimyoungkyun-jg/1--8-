@@ -18,6 +18,7 @@
 #include "UUIObject.h"
 #include "UPage.h"
 #include "UUIIngamePage.h"
+#include "../GameManager.h"
 
 using namespace std;
 

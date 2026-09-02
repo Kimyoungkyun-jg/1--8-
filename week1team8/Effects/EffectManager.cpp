@@ -7,7 +7,7 @@ bool EffectManager::Initialize()
 	bInitialized = true;
 	Clear();
 	SpawnColEffect(30, L"Assets/Sprites/coleffects.png", 3, 1, 3, 0.02f);
-	SpawnDisEffect(30, L"Assets/Sprites/boom.png", 5, 1, 5, 0.06f);
+	SpawnDisEffect(30, L"Assets/Sprites/boom.png", 5, 1, 5, 0.09f);
 	return true;
 }
 
@@ -73,7 +73,7 @@ UEffect* EffectManager::PlayColEffect(const FVector& worldPos, AActor* targetAct
 	{
 		if (effect && !effect->IsActive())
 		{
-			effect->Activate(worldPos, FVector(0.0f, 0.0f, 0.0f), scale);
+			effect->Activate(worldPos, FVector(0.0f, 0.0f, 0.0f), scale* 1.5f);
 			if (targetActor)
 			{
 				effect->AttachToActor(targetActor);
@@ -85,7 +85,7 @@ UEffect* EffectManager::PlayColEffect(const FVector& worldPos, AActor* targetAct
 	/* 풀이 부족할 경우 새로 생성하여 풀에 추가 */
 	UEffect* newEffect = new UEffect();
 	newEffect->SetSpriteSheet(L"Assets/Sprites/coleffects.png", 3, 1, 3, 0.05f, false);
-	newEffect->Activate(worldPos, FVector(0.0f, 0.0f, 0.0f), scale);
+	newEffect->Activate(worldPos, FVector(0.0f, 0.0f, 0.0f), scale * 2.0f);
 	if (targetActor)
 	{
 		newEffect->AttachToActor(targetActor);

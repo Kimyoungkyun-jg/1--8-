@@ -68,6 +68,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			// 페이지만 바꾸면 state가 Menu에 머물러서 CheckGameState가 통째로 안 돈다.
 			// 맵 로드도 클리어 판정도 거기 들어 있다.
 			GameManager::GetInstance().Restart();
+			ResetScore();
 			ChangePage(EPageType::InGame);
 		});
 		startPage->AddChild(startbtn);
@@ -150,6 +151,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 
 		retryBtn->SetOnClick([this]() {
 			LoadManager::Get().LoadMap(GameManager::GetInstance().GetCurlvl());
+			ResetScore();
 			ChangePage(EPageType::InGame);
 		});
 		pausePage->AddChild(retryBtn);
@@ -185,6 +187,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 
 		Resultbtn->SetOnClick([this]() {
+			ResetScore();
 			ChangePage(EPageType::Starting);
 			});
 
@@ -333,7 +336,7 @@ void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
 	for (const auto& it : infos)
 	{
 		pair<float, float> pos = WorldToScreen(it.AverageContactPoint());
-		CalPos(it.colAId, it.colBId, pos.first, pos.second);
+		CalPos(it.colAId, it.colBId, pos.first, pos.second -50.0f);
 	}
 }
 
@@ -356,6 +359,8 @@ void UIManager::ChangePage(EPageType newPageType)
 
 void UIManager::GotoEnding(GameState gs)
 {
+	ResetScore();
+
 	if (CurrentPage)
 	{
 		CurrentPage->Hide();
@@ -378,6 +383,15 @@ void UIManager::GotoEnding(GameState gs)
 			break;
 		}
 		
+	}
+}
+
+void UIManager::LevelChanged(int curlevel)
+{
+	UUIIngamePage* igpage = dynamic_cast<UUIIngamePage*>(CurrentPage);
+	if (igpage)
+	{
+		igpage->ClearFlowtingText();
 	}
 }
 

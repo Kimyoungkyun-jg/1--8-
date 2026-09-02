@@ -437,11 +437,11 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 		if (ab.first->GetColliderId() == EColliderId::BIRD)
 		{
-			EffectManager::GetInstance().PlayColEffect(info.contactPoint, ab.first);
+			EffectManager::GetInstance().PlayColEffect(info.AverageContactPoint(), ab.first);
 		}
 		else if (ab.second->GetColliderId() == EColliderId::BIRD)
 		{
-			EffectManager::GetInstance().PlayColEffect(info.contactPoint, ab.second);
+			EffectManager::GetInstance().PlayColEffect(info.AverageContactPoint(), ab.second);
 		}
 
 		if (!bCanDamage) continue;

@@ -137,6 +137,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LARGE_INTEGER startTime, endTime;
 	double elapsedTime = 0.0;
+	float deltaTime = 0.0f;
 
 	bool bIsExit = false;
 	bool bPressed = false;
@@ -312,19 +313,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		bool bAdvancePhysics = !bPausePhysics || bStepOnce;
 		bStepOnce = false;
 
-		uiManager.Update(elapsedTime * 0.001);
-		effectManager.Update(elapsedTime * 0.001);
+		deltaTime = static_cast<float>(elapsedTime * 0.001);
 
-		for (ACollider* Collider : CM.colliders)
-		{
-			Collider->Move(elapsedTime);
-		}
+		uiManager.Update(deltaTime);
+		effectManager.Update(deltaTime);
 
 		if (bAdvancePhysics)
 		{
 			for (ACollider* Collider : CM.colliders)
 			{
-				Collider->Move(elapsedTime);
+				Collider->Move(deltaTime);
 			}
 
 			// 충돌 검사
@@ -336,7 +334,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//매 프레임 UObject에 Tick 호출
 		for (int i = ObjectManager.AllObjects.size() - 1; i >= 0; --i)
 		{
-			ObjectManager.AllObjects[i]->Tick(elapsedTime * 0.001);
+			ObjectManager.AllObjects[i]->Tick(deltaTime);
 		}
 
 		// 렌더 준비

@@ -46,10 +46,8 @@ void AActor::Draw(URenderer& renderer)
 	}
 }
 
-void ACollider::Move(float t)
+void ACollider::Move(float deltaTime)
 {
-	float deltaTime = t / 1000.0f;
-
 	if (Mass <= 0.0f)
 	{
 		return;

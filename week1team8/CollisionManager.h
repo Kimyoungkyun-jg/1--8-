@@ -26,11 +26,11 @@ struct ContactPoint
 	float initialNormalVelocity = 0.0f;
 };
 
-// 한 쌍의 충돌. 법선은 공유하고 접촉점만 여러 개 (면끼리 닿으면 2개)
+
 struct CollisionInfo
 {
-	FVector normal = FVector();  // B -> A 방향
-	FVector tangent = FVector(); // 접선 방향 (고정)
+	FVector normal = FVector(); 
+	FVector tangent = FVector(); 
 	bool isCollision = false;
 	EColliderId colAId = EColliderId::NONE;
 	EColliderId colBId = EColliderId::NONE;
