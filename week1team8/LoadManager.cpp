@@ -151,20 +151,19 @@ bool LoadManager::LoadMap(int num)
 		{
 			if (savedfile.eof()) break;
 			FSpawnInfo ObstacleInfo = MakeSpawnInfo(str, false);
-			switch (ObstacleInfo.ColliderId)
+			if (ObstacleInfo.ColliderId == EColliderId::BLOCK)
 			{
-			case EColliderId::BLOCK :
-				SpawnColider<ABlock>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass);
-				break;
-			case EColliderId::PIG :
+				ABlock* Block = SpawnColider<ABlock>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass);
+				if (ObstacleInfo.Scale.x >= ObstacleInfo.Scale.y)
+					Block->SetImage(L"Assets/img/plank.png");
+				else
+					Block->SetImage(L"Assets/img/plank_v.png");
+			}
+			else if (ObstacleInfo.ColliderId == EColliderId::PIG)
 			{
 				APig* pig = SpawnColider<APig>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass);
 				pig->SetImage(L"Assets/img/pig.png");
 				PigCount++;
-				break;
-			}
-			default:
-				break;
 			}
 		}
 		GameManager::GetInstance().SetPigCount(PigCount);
