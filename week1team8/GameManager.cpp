@@ -9,6 +9,7 @@ void GameManager::ReloadBird()
 	if (BirdCount > 0)
 	{
 		ReloadedBird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+		ReloadedBird->SetImage(L"Assets/img/bird.png");
 		SlingShot->EquippedBird = ReloadedBird;
 		ReloadedBird->SlingShot = SlingShot;
 	}
