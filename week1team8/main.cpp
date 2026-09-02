@@ -91,7 +91,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		CW_USEDEFAULT, CW_USEDEFAULT, windowWidth, windowHeight, nullptr, nullptr, hInstance, nullptr);
 
 	// 렌더러 초기화
-	URenderer renderer;
+	URenderer& renderer = URenderer::GetInstance();
 	renderer.Create(hWnd);
 	renderer.CreateShader();
 	renderer.CreateConstantBuffer();

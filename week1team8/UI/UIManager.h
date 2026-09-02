@@ -31,13 +31,16 @@ public:
 
 	~UIManager();
 
-	bool Initialize(URenderer& renderer, int nWidth, int nHeight);
+	bool Initialize(int nWidth, int nHeight);
+	bool Initialize(URenderer& renderer, int nWidth, int nHeight) { return Initialize(nWidth, nHeight); }
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
 
 	void SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
 	void Release();
+
+	static ID2D1Bitmap* LoadBitmapFromFile(const wchar_t* uri);
 
 	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy);
 	void GetCollisionInfos(std::vector<CollisionInfo> infos);

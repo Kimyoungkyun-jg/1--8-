@@ -6,8 +6,15 @@ UIManager::~UIManager()
 	Release();
 }
 
-bool UIManager::Initialize(URenderer& renderer, int nWidth, int nHeight)
+ID2D1Bitmap* UIManager::LoadBitmapFromFile(const wchar_t* uri)
 {
+	if (!uri) return nullptr;
+	return URenderer::GetInstance().LoadBitmapFromFile(uri);
+}
+
+bool UIManager::Initialize(int nWidth, int nHeight)
+{
+	URenderer& renderer = URenderer::GetInstance();
 	D2DRenderTarget = renderer.D2DRenderTarget;
 	DWriteFactory = renderer.DWriteFactory;
 	if (!D2DRenderTarget || !DWriteFactory) return false;
@@ -17,7 +24,7 @@ bool UIManager::Initialize(URenderer& renderer, int nWidth, int nHeight)
 	if (FAILED(hr)) return false;
 
 	hr = DWriteFactory->CreateTextFormat(
-		L"맑은 고딕",
+		L"Malgun Gothic",
 		nullptr,
 		DWRITE_FONT_WEIGHT_EXTRA_BOLD,
 		DWRITE_FONT_STYLE_NORMAL,
@@ -31,43 +38,41 @@ bool UIManager::Initialize(URenderer& renderer, int nWidth, int nHeight)
 	screenWidth = nWidth;
 	screenHeight = nHeight;
 
-	for (int i = 0; i < 4; i++)
+	// 시작페이지
 	{
-		EPageType pageType = static_cast<EPageType>(i);
-
-		switch (pageType)
-		{
-		case EPageType::Starting:
-		{
-			UUIPage* startPage = new UUIPage(pageType);
-			Pages[pageType] = startPage;
-			break;
-		}
-		case EPageType::InGame:
-		{
-			UUIIngamePage* inGamePage = new UUIIngamePage();
-			const wchar_t* pauseBtnPath = L"Assets/img/pausebtn.png";
-			ID2D1Bitmap* pauseBtnBmp = renderer.LoadBitmapFromFile(pauseBtnPath);
-			inGamePage->Initialize(DWriteFactory, D2DRenderTarget, pauseBtnBmp, nullptr, screenWidth, screenHeight);
-			Pages[pageType] = inGamePage;
-			break;
-		}
-		case EPageType::Pause:
-		{
-			UUIPage* pausePage = new UUIPage(pageType);
-			Pages[pageType] = pausePage;
-			break;
-		}
-		case EPageType::Ending:
-		{
-			UUIPage* endPage = new UUIPage(pageType);
-			Pages[pageType] = endPage;
-			break;
-		}
-		}
+		UUIPage* startPage = new UUIPage(EPageType::Starting);
+		UUIBackground* startBg = new UUIBackground(
+			L"Assets/img/startimg.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.5f,
+			static_cast<float>(screenWidth),
+			static_cast<float>(screenHeight)
+		);
+		startPage->AddChild(startBg);
+		Pages[EPageType::Starting] = startPage;
 	}
 
-	ChangePage(EPageType::InGame);
+	// 인게임페이지
+	{
+		UUIIngamePage* inGamePage = new UUIIngamePage();
+		ID2D1Bitmap* pauseBtnBmp = renderer.LoadBitmapFromFile(L"Assets/img/pausebtn.png");
+		inGamePage->Initialize(DWriteFactory, D2DRenderTarget, pauseBtnBmp, nullptr, screenWidth, screenHeight);
+		Pages[EPageType::InGame] = inGamePage;
+	}
+
+	// 일시정지페이지
+	{
+		UUIPage* pausePage = new UUIPage(EPageType::Pause);
+		Pages[EPageType::Pause] = pausePage;
+	}
+
+	// 엔딩페이지
+	{
+		UUIPage* endPage = new UUIPage(EPageType::Ending);
+		Pages[EPageType::Ending] = endPage;
+	}
+
+	ChangePage(EPageType::Starting);
 
 	return true;
 }
@@ -138,7 +143,7 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 	if ((colAId == EColliderId::BIRD && colBId == EColliderId::PIG) ||
 		(colAId == EColliderId::PIG  && colBId == EColliderId::BIRD))
 	{
-		score += 1000.0f;
+		score = 1000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::Gold);
 	}
 	else if ((colAId == EColliderId::BIRD  && colBId == EColliderId::BLOCK) ||
@@ -195,21 +200,18 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 
 void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos) 
 {
-	if (infos.size() > 0)
+	for (const auto& it : infos)
 	{
-		for (auto& it : infos)
-		{
-			pair<float, float> pos = WorldToScreen(it.contactPoint);
-			CalPos(it.colAId, it.colBId, pos.first, pos.second);
-		}
+		pair<float, float> pos = WorldToScreen(it.contactPoint);
+		CalPos(it.colAId, it.colBId, pos.first, pos.second);
 	}
 }
 
 std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos) 
 {
-	float aspect = (screenHeight > 0) ? ((float)screenWidth / (float)screenHeight) : (16.0f / 9.0f);
-	float screenX = (worldPos.x / aspect + 1.0f) * 0.5f * screenWidth;
-	float screenY = (1.0f - worldPos.y) * 0.5f * screenHeight;
+	float aspect = (screenHeight > 0) ? (static_cast<float>(screenWidth) / static_cast<float>(screenHeight)) : (16.0f / 9.0f);
+	float screenX = (worldPos.x / aspect + 1.0f) * 0.5f * static_cast<float>(screenWidth);
+	float screenY = (1.0f - worldPos.y) * 0.5f * static_cast<float>(screenHeight);
 
 	return { screenX, screenY };
 }

@@ -61,7 +61,7 @@ void UUIPage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brus
 {
 	if (!GetVisible() || !renderTarget) return;
 
-	// 1. Backgrounds rendered first (bottom-most layer)
+	//무조건 배경먼저
 	for (UUIObject* obj : ChildUIObjects)
 	{
 		if (!obj || !obj->GetVisible()) continue;
@@ -72,7 +72,7 @@ void UUIPage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brus
 		}
 	}
 
-	// 2. Foreground UI elements (HUD, Buttons, etc.)
+	//UI요소 올리기
 	for (UUIObject* obj : ChildUIObjects)
 	{
 		if (!obj || !obj->GetVisible()) continue;

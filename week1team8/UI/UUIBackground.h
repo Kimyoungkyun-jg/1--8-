@@ -3,19 +3,12 @@
 #include <d2d1.h>
 #include "UUIObject.h"
 
-
 class UUIBackground : public UUIObject
 {
 public:
 	UUIBackground() = default;
-	virtual ~UUIBackground() override
-	{
-		if (bgBitmap)
-		{
-			bgBitmap->Release();
-			bgBitmap = nullptr;
-		}
-	}
+	UUIBackground(const wchar_t* url, float centerX = 960.0f, float centerY = 540.0f, float sizeX = 1920.0f, float sizeY = 1080.0f);
+	virtual ~UUIBackground() override;
 
 	void SetImagePath(const wchar_t* path)
 	{
@@ -27,6 +20,13 @@ public:
 		bgRect = D2D1::RectF(left, top, left + width, top + height);
 	}
 
+	void SetCenterPoisition(float centerX, float centerY, float sizeX, float sizeY)
+	{
+		float halfW = sizeX * 0.5f;
+		float halfH = sizeY * 0.5f;
+		bgRect = D2D1::RectF(centerX - halfW, centerY - halfH, centerX + halfW, centerY + halfH);
+	}
+
 	void Render(ID2D1RenderTarget* renderTarget);
 
 public:
@@ -35,4 +35,3 @@ public:
 	const wchar_t* imagePath = nullptr;
 	float alpha = 1.0f;
 };
-
