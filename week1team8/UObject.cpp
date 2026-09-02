@@ -19,14 +19,14 @@ void UObject::Released(FVector _Location)
 	//empty
 }
 
-//void UObject::Destroy()
-//{
-//	UObjectManager::Get().Destroy(this);
-//}
+void UObject::Tick(float deltaTime)
+{
+
+}
 
 void AActor::Draw(URenderer& renderer)
 {
-	renderer.UpdateConstant(Location, Scale);
+	renderer.UpdateConstant(Location, Rotation, Scale);
 	renderer.RenderPrimitive(Primitive);
 }
 
@@ -133,8 +133,8 @@ void ABird::Clicked()
 		ABand* FrontBand = SlingShot->GetFrontBand();
 		if (BackBand && FrontBand)
 		{
-			BackBand->SetState(EBandState::Stretching);
-			FrontBand->SetState(EBandState::Stretching);
+			BackBand->State = EBandState::Stretching;
+			FrontBand->State = EBandState::Stretching;
 			BackBand->Scaley = Scale.y;
 			FrontBand->Scaley = Scale.y;
 		}
@@ -175,8 +175,12 @@ void ABird::Released(FVector _Location)
 		ABand* FrontBand = SlingShot->GetFrontBand();
 		if (BackBand && FrontBand)
 		{
-			BackBand->SetState(EBandState::Snapping);
-			FrontBand->SetState(EBandState::Snapping);
+			BackBand->State = EBandState::Snapping;
+			FrontBand->State = EBandState::Snapping;
+			BackBand->TipLocation = Location;
+			FrontBand->TipLocation = Location;
+			BackBand->TipVelocity = 0;
+			FrontBand->TipVelocity = 0;
 		}
 	}
 }
@@ -187,12 +191,15 @@ void ASlingShot::SpawnBand()
 	//새총의 왼쪽 위를 Back에, 오른쪽 위를 Front에
 	FVector BackPoint = Location + FVector(-Scale.x / 2, Scale.y / 2, 0);
 	FVector FrontPoint = Location + FVector(Scale.x / 2, Scale.y / 2, 0);
+	FVector RestPoint = (BackPoint + FrontPoint) / 2;
 
 	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, {0.05, 0.05, 1});
 	FrontBand = SpawnActor<ABand>(FrontPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
 
 	BackBand->AttachedPoint = BackPoint;
 	FrontBand->AttachedPoint = FrontPoint;
+	BackBand->RestPoint = RestPoint;
+	FrontBand->RestPoint = RestPoint;
 }
 
 void ASlingShot::Pressed(FVector _Location)
@@ -231,6 +238,19 @@ void ABand::Stretched(FVector BirdLoc, float StretchedRate)
 	Rotation = DirectX::XMConvertToDegrees(radian);
 }
 
-void ABand::Tick()
+void ABand::Tick(float deltaTime)
 {
+	if (State == EBandState::Snapping)
+	{
+		TipVelocity += (RestPoint - TipLocation) * k * deltaTime;
+		TipVelocity -= TipVelocity * c * deltaTime;
+		TipLocation += TipVelocity * deltaTime;
+		float Length = (RestPoint - TipLocation).Length();
+		Stretched(TipLocation, Length / 0.6);
+
+		/*if (TipVelocity.LengthSquared() < 0.0025f && Length < 0.05f)
+		{
+			State = EBandState::Idle;
+		}*/
+	}
 }

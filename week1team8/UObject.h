@@ -25,7 +25,7 @@ public:
 	virtual void Clicked();
 	virtual void Released(FVector _Location);
 	void Destroy();
-	virtual void Tick();
+	virtual void Tick(float deltaTime);
 
 private:
 	inline static int IDMax = 0;
@@ -153,15 +153,15 @@ public:
 	virtual ~ABand() {}
 
 	void Stretched(FVector BirdLoc, float StretchedRate);
-	float Scaley;
-	FVector AttachedPoint;
-	virtual void Tick() override;
+	virtual void Tick(float deltaTime) override;
 
-private:
+	float Scaley = 0.f;
 	EBandState State = EBandState::Idle;
+	FVector AttachedPoint;
 	FVector TipLocation;
 	FVector TipVelocity;
 	FVector RestPoint;
+	float k = 300, c = 8;
 };
 
 class ASlingShot : public AActor
