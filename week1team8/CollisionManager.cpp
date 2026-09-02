@@ -377,24 +377,27 @@ CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, A
 // a == Circle, b == Rectangle
 CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACollider* b)
 {
-	// 충돌 감지
-	float widthB = b->GetScale().x;
-	float heightB = b->GetScale().y;
+	OBB box = MakeOBB(b);
+	float radius = a->GetScale().x / 2;
 
-	float leftB = b->GetLocation().x - widthB / 2;
-	float rightB = b->GetLocation().x + widthB / 2;
-	float upB = b->GetLocation().y + heightB / 2;
-	float downB = b->GetLocation().y - heightB / 2;
+	// 원 중심을 사각형의 로컬 좌표계로 옮긴다.
+	// 축에 내적하면 '그 축 방향으로 얼마나 갔는지'가 나오고, 이 좌표계에서는
+	// 사각형이 축 정렬 상태가 되므로 회전을 신경 쓸 필요가 없어진다.
+	FVector toCenter = a->GetLocation() - box.center;
+	float localX = toCenter.DotProduct(box.axis[0]);
+	float localY = toCenter.DotProduct(box.axis[1]);
 
-	float x = std::clamp(a->GetLocation().x, leftB, rightB);
-	float y = std::clamp(a->GetLocation().y, downB, upB);
+	// 사각형 안에서 원 중심과 가장 가까운 점 (로컬 좌표)
+	float clampedX = std::clamp(localX, -box.half[0], box.half[0]);
+	float clampedY = std::clamp(localY, -box.half[1], box.half[1]);
 
-	// 사각형 내부의 점 중 원과 가장 가까운 점
-	FVector closest(x, y);
+	// 다시 월드 좌표로. 중심에서 두 축 방향으로 그만큼 간 점이다.
+	FVector closest = box.center + box.axis[0] * clampedX + box.axis[1] * clampedY;
+
 	FVector diff = a->GetLocation() - closest;
 	float dist = diff.Length();
 
-	bool isCollision = dist < a->GetScale().x / 2;
+	bool isCollision = dist < radius;
 
 	// 원이 사각형 내부에 들어감 (추후 수정)
 	if (dist <= 0.0001f)
@@ -407,10 +410,10 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 	normal.Normalize();
 
 	// 침투
-	float penetration = a->GetScale().x / 2 - dist;
+	float penetration = radius - dist;
 
 	// 충돌 지점
-	FVector pointA = a->GetLocation() - normal * a->GetScale().x / 2;
+	FVector pointA = a->GetLocation() - normal * radius;
 	FVector pointB = closest;
 	FVector contactPoint = (pointA + pointB) / 2;
 
