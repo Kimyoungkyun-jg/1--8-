@@ -22,6 +22,7 @@
 //모든 매니저 헤더파일
 #include "GameManager.h"
 #include "UI/UIManager.h"
+#include "UI/UUIBackground.h"
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "SoundManager.h"
@@ -82,7 +83,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	WNDCLASSW wndclass = { 0, WndProc, 0, 0, 0, 0, 0, 0, 0, WindowClass };
 	RegisterClassW(&wndclass);
 
-	int windowWidth = 1980;
+	int windowWidth = 1920;
 	int windowHeight = 1080; //해상도
 
 	HWND hWnd = CreateWindowExW(0, WindowClass, Title,
@@ -129,7 +130,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gameManager.Initialize();
 
 	UIManager& uiManager = UIManager::GetInstance();
-	uiManager.Initialize(renderer.SwapChain, 1980, 1980);
+	uiManager.Initialize(renderer, windowWidth, windowHeight);
 
 	UObjectManager& ObjectManager = UObjectManager::GetInstance();
 	CollisionManager& CM = CollisionManager::GetInstance();
@@ -146,6 +147,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SM.LoadSound("sfx_bird", L"Assets/sfx_bird.wav");
 
 	SM.PlayBGM("bgm_main", true, 0.5f);
+
+
+
+	// 인게임 배경화면 로드
+	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
+
+	
+
 
 	ASlingShot* SlingShot = nullptr;
 	ABird* Bird = nullptr;
@@ -297,6 +306,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// 렌더 준비
 		renderer.Prepare();
+
+		// 배경화면 그리기 (모든 게임 객체 뒤에 먼저 렌더링)
+		if (InGameBackgroundBitmap)
+		{
+			renderer.DrawBitmap(InGameBackgroundBitmap, 0.0f, 0.0f, (float)windowWidth, (float)windowHeight);
+		}
+
 		renderer.PrepareShader();
 
 		// 그리기
@@ -416,6 +432,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	renderer.ReleaseConstantBuffer();
 	renderer.ReleaseShader();
 	renderer.Release();
+
+	// 배경 비트맵 해제
+	if (InGameBackgroundBitmap)
+	{
+		InGameBackgroundBitmap->Release();
+		InGameBackgroundBitmap = nullptr;
+	}
 
 	// 사운드 매니저 해제
 	SM.Shutdown();

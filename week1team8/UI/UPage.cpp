@@ -1,4 +1,5 @@
 #include "UPage.h"
+#include "UUIBackground.h"
 #include "UFloatingText.h"
 #include "UHUDText.h"
 #include "UButton.h"
@@ -54,13 +55,29 @@ void UUIPage::Update(float deltaTime)
 	}
 }
 
+
+
 void UUIPage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush, IDWriteTextFormat* font)
 {
 	if (!GetVisible() || !renderTarget) return;
 
+	// 1. Backgrounds rendered first (bottom-most layer)
 	for (UUIObject* obj : ChildUIObjects)
 	{
 		if (!obj || !obj->GetVisible()) continue;
+
+		if (UUIBackground* bg = dynamic_cast<UUIBackground*>(obj))
+		{
+			bg->Render(renderTarget);
+		}
+	}
+
+	// 2. Foreground UI elements (HUD, Buttons, etc.)
+	for (UUIObject* obj : ChildUIObjects)
+	{
+		if (!obj || !obj->GetVisible()) continue;
+
+		if (dynamic_cast<UUIBackground*>(obj)) continue;
 
 		if (UUIHUDText* hud = dynamic_cast<UUIHUDText*>(obj))
 		{

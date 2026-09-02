@@ -145,6 +145,7 @@
     <ClCompile Include="UI\UPage.cpp" />
     <ClCompile Include="UI\UUIObject.cpp" />
     <ClCompile Include="UI\UUIBackground.cpp" />
+    <ClCompile Include="UI\UUIIngamePage.cpp" />
     <ClCompile Include="Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -179,6 +180,7 @@
     <ClInclude Include="UI\UPage.h" />
     <ClInclude Include="UI\UUIObject.h" />
     <ClInclude Include="UI\UUIBackground.h" />
+    <ClInclude Include="UI\UUIIngamePage.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="VertexSimple.h" />
   </ItemGroup>
