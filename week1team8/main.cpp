@@ -133,7 +133,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// 물리는 프레임과 분리해 항상 같은 크기로 진행한다.
 	// 큰 걸음 한 번 대신 작은 걸음 여러 번이라 물체가 접촉을 뛰어넘지 않는다.
-	const double fixedDeltaTime = 1000.0 / 144.0;
+	const double fixedDeltaTime = 1.0 / 144.0;
 	const double maxAccumulated = fixedDeltaTime * 5.0;
 	double accumulator = 0.0;
 
@@ -348,7 +348,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 		else
 		{
-			accumulator += elapsedTime;
+			accumulator += deltaTime;
 
 			while (accumulator >= fixedDeltaTime)
 			{
@@ -685,7 +685,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// 크게 튄 프레임을 한 번에 갚으려다 더 밀리는 악순환을 막는다.
 		// 대신 물리가 잠깐 느려진다.
-		elapsedTime = min(elapsedTime, maxAccumulated);
+		elapsedTime = min(elapsedTime, maxAccumulated * 1000.0);
 	}
 
 	//ImGui 리소스 해제
