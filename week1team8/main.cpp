@@ -51,10 +51,9 @@ FVector ScreenToWorld(HWND hwnd, int MouseX, int MouseY)
 	return FVector(worldX, worldY, 0.0f);
 }
 
-// ScreenToWorld의 역변환. 물리 값은 월드 좌표인데 ImGui는 화면 좌표로 그리므로 필요하다.
-// 크기를 GetClientRect가 아니라 ImGui의 DisplaySize에서 가져오는 게 중요하다.
-// DPI 배율이 걸린 화면에서는 둘이 다르고(예: 150%면 1.5배), 물리 픽셀을 넘기면
-// 그린 게 그만큼 밀린다. 종횡비는 배율과 무관하니 aspect는 그대로 쓸 수 있다.
+// ScreenToWorld의 역변환.
+// 크기는 GetClientRect가 아니라 ImGui의 DisplaySize에서 가져와야 한다.
+// DPI 배율이 걸리면 둘이 달라서(150%면 1.5배) 그린 게 그만큼 밀린다.
 ImVec2 WorldToScreen(const FVector& World)
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -311,19 +310,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		// 일시정지 중에는 Step을 누른 프레임에만 한 번 진행한다.
-		// 물리를 멈춰도 아래 렌더와 ImGui는 계속 도니까, 터지는 순간의 접촉을
-		// 화면에 띄워놓고 들여다볼 수 있다.
+		// 일시정지 중에는 Step을 누른 프레임에만 한 번 진행. 렌더와 ImGui는 계속 돈다
 		bool bAdvancePhysics = !bPausePhysics || bStepOnce;
 		bStepOnce = false;
 
 		uiManager.Update(elapsedTime * 0.001);
-
-
-		for (ACollider* Collider : CM.colliders)
-		{
-			Collider->Move(elapsedTime);
-		}
 
 		if (bAdvancePhysics)
 		{
@@ -397,8 +388,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		// 사각형 콜라이더의 OBB 외곽선.
-		// 이제 물리도 이 OBB를 쓴다. 외곽선과 스프라이트가 어긋나면 물리도 같이 어긋난다.
+		// 사각형 콜라이더의 OBB 외곽선. 스프라이트와 어긋나면 물리도 같이 어긋난 것
 		if (bDrawColliders)
 		{
 			ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
@@ -419,30 +409,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						IM_COL32(80, 200, 255, 255), 2.0f);
 				}
 
-				// 꼭짓점 0이 어디인지 표시. 블록을 돌리면 이 점도 같이 돌아야 한다.
+				// 꼭짓점 0. 블록을 돌리면 이 점도 같이 돌아야 한다
 				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, IM_COL32(80, 200, 255, 255));
 			}
 		}
 
-		// 접촉점과 법선 그리기.
-		// 배경 draw list라서 게임 화면 위, ImGui 창 아래에 그려진다.
+		// 접촉점과 법선. 배경 draw list라 게임 화면 위, ImGui 창 아래에 그려진다
 		if (bDrawContacts)
 		{
 			ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
 
 			for (const CollisionInfo& Contact : CM.debugContacts)
 			{
-				// 법선은 접촉점들이 공유하고, 점만 여러 개일 수 있다
 				for (int i = 0; i < Contact.pointCount; i++)
 				{
 					ImVec2 Point = WorldToScreen(Contact.points[i].position);
 
-					// 법선은 방향이라 위치와 달리 y를 뒤집기만 하면 된다.
-					// (화면 y는 아래로, 월드 y는 위로 증가)
+					// 법선은 방향 벡터라 y 부호만 뒤집으면 된다 (화면 y는 아래로 증가)
 					ImVec2 Tip = ImVec2(Point.x + Contact.normal.x * NormalLength,
 						Point.y - Contact.normal.y * NormalLength);
 
-					// 법선은 B -> A 방향. 즉 A를 밀어내는 쪽을 가리켜야 한다.
+					// B -> A 방향, 즉 A를 밀어내는 쪽을 가리켜야 한다
 					DrawList->AddLine(Point, Tip, IM_COL32(255, 64, 64, 255), 2.0f);
 					DrawList->AddCircleFilled(Point, 4.0f, IM_COL32(255, 220, 0, 255));
 				}
@@ -468,6 +455,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::SameLine();
 		ImGui::Checkbox("Draw Colliders", &bDrawColliders);
 		ImGui::SliderFloat("Normal Length", &NormalLength, 10.0f, 120.0f);
+		ImGui::Checkbox("Warm Starting", &CM.bWarmStarting);
+
+		ImGui::SeparatorText("Solver");
+		ImGui::SliderInt("Velocity Iter", &CM.velocityIterations, 1, 20);
+		ImGui::SliderInt("Position Iter", &CM.positionIterations, 1, 20);
+		ImGui::SliderFloat("Baumgarte", &CM.baumgarte, 0.05f, 1.0f);
+		ImGui::SliderFloat("Slop", &CM.slop, 0.0f, 0.02f, "%.4f");
+
+		// slop 근처에서 평평하면 수렴한 것
+		ImGui::Text("max penetration %.5f  (slop %.5f)", CM.maxPenetration, CM.slop);
+		{
+			static float PenHistory[240] = {};
+			static int PenIndex = 0;
+			PenHistory[PenIndex] = CM.maxPenetration;
+			PenIndex = (PenIndex + 1) % 240;
+			ImGui::PlotLines("##pen", PenHistory, 240, PenIndex, nullptr, 0.0f, 0.02f, ImVec2(0, 60));
+		}
 
 		ImGui::SeparatorText("Contacts");
 		ImGui::Text("count: %d", (int)CM.debugContacts.size());
@@ -555,13 +559,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			LoadManager.SaveMap(BirdCount);
 		}
+		// Checkbox는 '값이 바뀐 프레임'에만 true다. 매 프레임 마찰을 덮어쓰지 않도록 분리
 		if (ImGui::Checkbox("EditorMode", &bEditorMode))
 		{
-			CollisionManager::GetInstance().SetAllCollisionFriction(1.f, 1.f);
-		}
-		else
-		{
-			CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
+			if (bEditorMode)
+			{
+				CollisionManager::GetInstance().SetAllCollisionFriction(1.f, 1.f);
+			}
+			else
+			{
+				CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
+			}
 		}
 		if (ImGui::Button("Delete Select Object", ImVec2(100, 20)))
 		{

@@ -19,22 +19,23 @@ void GameManager::Restart()
 
 void GameManager::SpawnWalls()
 {
-	// 두께. 빠른 물체가 한 프레임에 통과해버리지 않을 만큼은 있어야 한다.
+	// 빠른 물체가 한 프레임에 통과하지 않을 만큼의 두께
 	const float thickness = 0.5f;
 
-	const float left = Global::leftBorder;
-	const float right = Global::rightBorder;
+	// 셰이더가 x를 종횡비로 나누므로, 보이는 x 범위가 곧 ±wAspectRatio다.
+	// 고정값을 쓰면 벽이 화면 밖이나 안쪽에 생긴다.
+	const float right = URenderer::GetInstance().wAspectRatio;
+	const float left = -right;
 	const float top = Global::topBorder;
 	const float bottom = Global::bottomBorder;
 
-	// 안쪽 면이 경계선에 딱 맞도록 경계 바깥으로 반 두께만큼 밀어서 놓는다.
-	// 모서리에서 서로 겹치도록 가로/세로를 두께만큼씩 키운다.
+	// 안쪽 면이 경계선에 맞도록 바깥으로 반 두께만큼 밀고, 모서리에서 서로 겹치게 키운다
 	const float width = (right - left) + thickness * 2.0f;
 	const float height = (top - bottom) + thickness * 2.0f;
 	const float centerX = (left + right) * 0.5f;
 	const float centerY = (top + bottom) * 0.5f;
 
-	// 질량 0 = 정적. Move()가 바로 return하고, 솔버도 InvMass 0으로 보고 안 민다.
+	// 질량 0 = 정적
 	SpawnColider<AGround>({ centerX, bottom - thickness * 0.5f, 0 }, EPrimitive::Rectangle, false, { width, thickness, 0 }, 0.0f);
 	SpawnColider<AGround>({ centerX, top + thickness * 0.5f, 0 }, EPrimitive::Rectangle, false, { width, thickness, 0 }, 0.0f);
 	SpawnColider<AGround>({ left - thickness * 0.5f, centerY, 0 }, EPrimitive::Rectangle, false, { thickness, height, 0 }, 0.0f);
