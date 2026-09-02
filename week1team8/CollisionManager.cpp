@@ -565,17 +565,6 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 		bCanDamage = (Bird->State == EBirdState::Shooting);
 	}
 
-	auto TryKill = [&](ACollider* c)
-		{
-			if (!c || c->GetMass() <= 0.0f) return;     // 정적 물체(바닥)는 제외
-			if (c->minusHp() != 0) return;              // 아직 안 죽음
-			for (auto* p : pendingkills)                // 중복 방지
-			{
-				if (p == c) return;
-			}
-			pendingkills.push_back(c);
-		};
-
 	for (auto& [ab, info] : abinfos)
 	{
 		// 한 번의 충돌이 여러 프레임 이어져도 데미지는 처음 닿은 프레임에만 준다

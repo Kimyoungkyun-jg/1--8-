@@ -168,6 +168,7 @@ public:
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual void Tick(float deltaTime) override;
+	virtual float minusHp() override { return 1.0f; }
 	virtual void Ability() {}
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
