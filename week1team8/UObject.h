@@ -176,8 +176,6 @@ public:
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 1.0f); }
-	virtual void Ability();
-
 
 	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;

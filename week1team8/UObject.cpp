@@ -305,6 +305,17 @@ void ABombBird::Ability()
 				FVector Direction = (Col->GetLocation() - Location);
 				Direction.Normalize();
 				Col->SetVelocity(Col->GetVelocity() + Direction * 0.4f);
+
+				std::pair<float, float> screenPt = UIManager::GetInstance().WorldToScreen(Col->GetLocation());
+				if (Col->GetColliderId() == EColliderId::PIG)
+				{
+					UIManager::GetInstance().SpawnFloatingText(2000.0f, screenPt.first, screenPt.second - 40.0f, D2D1::ColorF(D2D1::ColorF::Gold));
+				}
+				else if (Col->GetColliderId() == EColliderId::BLOCK)
+				{
+					UIManager::GetInstance().SpawnFloatingText(700.0f, screenPt.first, screenPt.second - 40.0f, D2D1::ColorF(D2D1::ColorF::Yellow));
+				}
+
 				CollisionManager::GetInstance().TryKill(Col);
 			}
 		}
