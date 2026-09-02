@@ -138,8 +138,7 @@ bool LoadManager::LoadMap(int num)
 
 	if (savedfile.is_open())
 	{
-		if (GameManager::GetInstance().GetGameState() != GameState::Menu)
-			ClearMap();
+		ClearMap();
 
 		std::string str;
 		std::getline(savedfile, str);

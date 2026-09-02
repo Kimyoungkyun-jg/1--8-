@@ -182,6 +182,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
 	SM.LoadSound("sfx_bird", L"Assets/sfx_bird.wav");
+	SM.LoadSound("sfx_pig", L"Assets/sfx_pig.wav");
+	SM.LoadSound("sfx_rock", L"Assets/sfx_rock.wav");
 
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
@@ -326,7 +328,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 
 				// 충돌 검사
-				uiManager.GetCollisionInfos(CM.CheckCollisionAll((float)fixedDeltaTime));
+				vector<CollisionInfo> infos = CM.CheckCollisionAll((float)fixedDeltaTime);
+				for (const auto& info : infos)
+				{
+					if (info.colAId == EColliderId::BLOCK || info.colBId == EColliderId::BLOCK)
+					{
+						SM.PlaySFX("sfx_rock");
+					}
+					if (info.colAId == EColliderId::PIG || info.colBId == EColliderId::PIG)
+					{
+						SM.PlaySFX("sfx_pig");
+					}
+				}
+
+				uiManager.GetCollisionInfos(infos);
 			};
 
 		// 흐른 시간을 쌓아두고 고정 크기로 꺼내 쓴다. 남은 건 다음 프레임으로 넘어간다.
