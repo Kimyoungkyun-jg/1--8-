@@ -35,6 +35,7 @@ void CollisionManager::SetAllCollisionFriction(float _dynamic, float _static)
 std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 {
 	std::vector<CollisionInfo> infos;
+	std::vector<std::pair<std::pair<ACollider*, ACollider*>, CollisionInfo>> abinfos;
 	size_t n = colliders.size();
 
 
@@ -48,36 +49,41 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 			if (info.isCollision)
 			{
-				infos.push_back(info);
+				float impulse = ResolveCollision(colliders[i], colliders[j], info);
+				if (impulse > 10.0f)
+				{
+					infos.push_back(info);
+				}
+				abinfos.push_back({ { colliders[i] , colliders[j] }, info });
 			}
 		}
 	}
 
-	std::sort(infos.begin(), infos.end(), [](const CollisionInfo& a, const CollisionInfo& b) {
-		return a.contactPoint.y < b.contactPoint.y;
+	std::sort(abinfos.begin(), abinfos.end(), [](const auto& a, const auto& b) {
+		return a.second.contactPoint.y < b.second.contactPoint.y;
 		});
 
 	for (int i = 0; i < 10; i++)
 	{
-		for (CollisionInfo& info : infos)
+		for (auto& [ab, info] : abinfos)
 		{
 			// 충격량(속도) 해결
-			ResolveCollision(info.a, info.b, info);
+			ResolveCollision(ab.first, ab.second, info);
 		}
 	}
 
 	for (int i = 0; i < 20; i++)
 	{
-		for (CollisionInfo& info : infos)
+		for (auto& [ab, info] : abinfos)
 		{
 			// 앞선 루프나 충격량 처리에 의해 위치가 변경되었으므로,
 			// 현재 위치를 기준으로 겹침(penetration)을 '다시' 계산해야 합니다.
-			CollisionInfo currentInfo = CheckCollision(info.a, info.b);
+			CollisionInfo currentInfo = CheckCollision(ab.first, ab.second);
 
 			if (currentInfo.isCollision)
 			{
 				// 새롭게 계산된 정보(currentInfo)로 위치 보정
-				ResolvePosition(info.a, info.b, currentInfo);
+				ResolvePosition(ab.first, ab.second, currentInfo);
 			}
 		}
 	}
@@ -154,7 +160,7 @@ CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollid
 		penetration,
 		isCollision
 	};
-	
+
 
 	return info;
 }
@@ -382,7 +388,7 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		b->SetVelocity(b->GetVelocity() - tangent * (frictionImpulseMag * invMassB));
 	}
 
-	if (impulse > 10.0f)
+	if (impulseMag > 80.0f)
 	{
 		AObstacle* oba = dynamic_cast<AObstacle*>(a);
 		AObstacle* obb = dynamic_cast<AObstacle*>(b);
@@ -420,5 +426,5 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		}
 	}
 
-	return impulse;
+	return impulseMag;
 }

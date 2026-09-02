@@ -82,8 +82,8 @@ protected:
 	FVector Velocity;						// 속도
 	float Mass = 10;						// 질량
 	EColliderId colId = EColliderId::NONE;	// collider 종류
-	float StaticFriction = 0.5f;
-	float DynamicFriction = 0.3f;
+	float StaticFriction = 0.3f;
+	float DynamicFriction = 0.2f;
 };
 
 class ABird : public ACollider
