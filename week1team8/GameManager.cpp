@@ -6,9 +6,13 @@
 //새의 속도가 일정 이하면 호출
 void GameManager::ReloadBird()
 {
-	ReloadedBird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
-	SlingShot->EquippedBird = ReloadedBird;
-	ReloadedBird->SlingShot = SlingShot;
+	if (BirdCount > 0)
+	{
+		ReloadedBird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+		SlingShot->EquippedBird = ReloadedBird;
+		ReloadedBird->SlingShot = SlingShot;
+	}
+	--BirdCount;
 }
 
 void GameManager::SpawnBirdAndSlingShot()
@@ -39,5 +43,10 @@ void GameManager::CheckGameState()
 		{
 			state = GameState::GameClear;
 		}
+	}
+
+	if (BirdCount == -1)
+	{
+		state = GameState::GameOver;
 	}
 }

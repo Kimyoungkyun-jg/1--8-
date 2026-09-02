@@ -32,7 +32,7 @@ const std::string MakeColliderInfo(const ACollider *Collider)
 	return MakeActorInfo(Collider) + " " + std::to_string(Collider->GetMass()) + " " + std::to_string(static_cast<int>(Collider->GetColliderId()));
 }
 
-void LoadManager::SaveMap()
+void LoadManager::SaveMap(int BirdCount)
 {
 	//파일 하나를 생성 및 열기
 
@@ -46,6 +46,9 @@ void LoadManager::SaveMap()
 	OutputDebugStringA(std::filesystem::absolute(filePath).string().c_str());
 	std::ofstream newfile;
 	newfile.open(filePath);
+
+	//레벨에 스폰할 새 갯수
+	newfile << BirdCount << '\n';
 
 	if (newfile.is_open())
 	{
@@ -138,6 +141,11 @@ bool LoadManager::LoadMap(int num)
 		ClearMap();
 
 		std::string str;
+		std::getline(savedfile, str);
+		int BirdCount = std::stoi(str);
+		GameManager::GetInstance().SetBirdCount(BirdCount - 1);
+
+
 		int PigCount = 0;
 		while (getline(savedfile, str))
 		{

@@ -68,6 +68,9 @@ public:
 	ASlingShot* GetSlingShot() { return SlingShot; }
 	ABird* GetReloadedBird() { return ReloadedBird; }
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
+	void SetBirdCount(int NewBirdCount) { BirdCount = NewBirdCount; }
+	int GetBirdCount() const { return BirdCount; }
+	GameState GetGameState() const { return state; }
 	void PigDeath();
 	void CheckGameState();
 
@@ -78,6 +81,7 @@ private:
 	ABird* ReloadedBird;
 	ASlingShot* SlingShot;
 	int PigCount = 0;
+	int BirdCount = 0;
 	int CurrentLevel = 0;
 
 	GameState state = GameState::Menu;

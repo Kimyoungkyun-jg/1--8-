@@ -348,6 +348,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
 		FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
 		ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
+		ImGui::Text("GameState : %d", static_cast<int>(gameManager.GetGameState()));
 		ImGui::SetNextItemWidth(100);
 		ImGui::SetNextItemWidth(100);
 		ImGui::End();
@@ -375,9 +376,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			LoadManager.ClearMap();
 		}
+		int BirdCount = 3;
+		ImGui::InputInt("Bird Count on This Level", &BirdCount);
 		if (ImGui::Button("Save Map", ImVec2(100, 20)))
 		{
-			LoadManager.SaveMap();
+			LoadManager.SaveMap(BirdCount);
 		}
 		if (ImGui::Checkbox("EditorMode", &bEditorMode))
 		{
