@@ -3,6 +3,7 @@
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "TemplateLibrary.h"
+#include "GameManager.h"
 
 void UObject::Pressed(FVector _Location)
 {
@@ -168,6 +169,8 @@ void ABird::Pressed(FVector _Location)
 void ABird::Released(FVector _Location)
 {
 	bUseGravity = true;
+	State = EBirdState::Shooting;
+	bEditing = false;
 
 	if (SlingShot)
 	{
@@ -182,6 +185,15 @@ void ABird::Released(FVector _Location)
 			BackBand->TipVelocity = 0;
 			FrontBand->TipVelocity = 0;
 		}
+	}
+}
+
+void ABird::Tick(float deltaTime)
+{
+	if (State == EBirdState::Shooting && Velocity.LengthSquared() < 0.001f)
+	{
+		GameManager::GetInstance().ReloadBird();
+		State = EBirdState::Shooted;
 	}
 }
 
@@ -232,10 +244,9 @@ void ABand::Stretched(FVector BirdLoc, float StretchedRate)
 	Scale.x = (AttachedPoint - BirdLoc).Length();
 	Scale.y = Scaley * (min(0.5, max(1 - StretchedRate, 0.1)));
 
-	//밴드 포인트와 새 사이 벡터의 tan 값으로 회전시킨다?
+	///회전값을 구한다.
 	FVector v = BirdLoc - AttachedPoint;
-	float radian = atan2f(v.y, v.x);
-	Rotation = DirectX::XMConvertToDegrees(radian);
+	Rotation = atan2f(v.y, v.x);
 }
 
 void ABand::Tick(float deltaTime)
@@ -247,10 +258,17 @@ void ABand::Tick(float deltaTime)
 		TipLocation += TipVelocity * deltaTime;
 		float Length = (RestPoint - TipLocation).Length();
 		Stretched(TipLocation, Length / 0.6);
-
-		/*if (TipVelocity.LengthSquared() < 0.0025f && Length < 0.05f)
-		{
-			State = EBandState::Idle;
-		}*/
 	}
+}
+
+float APig::minusHp()
+{
+	hp -= 1;
+	if (hp == 0)
+	{
+		GameManager::GetInstance().PigDeath();
+		return 0.0f;
+	}
+
+	return hp;
 }

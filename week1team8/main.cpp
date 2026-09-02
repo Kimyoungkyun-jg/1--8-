@@ -148,37 +148,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
-
-
 	// 인게임 배경화면 로드
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
-	
 
-
-	ASlingShot* SlingShot = nullptr;
-	ABird* Bird = nullptr;
-	bool bResult = LoadManager.LoadMap(1, SlingShot, Bird);
+	bool bResult = LoadManager.LoadMap(0);
 	if (!bResult)
 	{
-		SlingShot = SpawnActor<ASlingShot>({ -1.2, -0.6, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
-		Bird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50);
-
-		SlingShot->EquippedBird = Bird;
-		SlingShot->ShotPoint = Bird->GetLocation();
-		SlingShot->SpawnBand();
-		Bird->SlingShot = SlingShot;
+		gameManager.SpawnBirdAndSlingShot();
 	}
-
-	// 테스트용
-	//AObstacle* block = SpawnColider<AObstacle>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
-	//ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
-
-	//테스트용
-	//ABlock* block = SpawnColider<ABlock>(FVector(0, -10, 0), EPrimitive::Rectangle, true, { 0.5,0.5,0.5 });
-	//block->SetVelocity(0);
-
-	//ACollider* NewBall = SpawnColider<ACollider>(FVector(0, 0, 0), EPrimitive::Circle, true, { 0.2, 0.2, 1 });
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -220,6 +198,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bool bFound = false;
 				for (ACollider* Collider : CM.colliders)
 				{
+					if (!Collider->bEditing) continue;
 					FVector ColLoc = Collider->GetLocation();
 					EPrimitive Primitive = Collider->GetPrimitive();
 					if (Primitive == EPrimitive::Circle)
@@ -273,7 +252,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					if (PressedCollider->GetColliderId() == EColliderId::BIRD)
 					{
-						SlingShot->Released(WorldMouseXY);
+						gameManager.GetSlingShot()->Released(WorldMouseXY);
 					}
 					else PressedCollider->Released(WorldMouseXY);
 				}
@@ -310,10 +289,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		CollisionManager& ColManager = CollisionManager::GetInstance();
 		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
 
+		//
+
 		//매 프레임 UObject에 Tick 호출
-		for (UObject* Obj : ObjectManager.AllObjects)
+		for (int i = ObjectManager.AllObjects.size()-1; i >= 0; --i)
 		{
-			Obj->Tick(elapsedTime * 0.001);
+			ObjectManager.AllObjects[i]->Tick(elapsedTime * 0.001);
 		}
 
 		// 렌더 준비
@@ -374,7 +355,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
 		ImGui::Text("PressedColliderID %s", s.c_str());
 		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
-		FVector TipLoc = SlingShot->GetBackBand()->TipLocation;
+		FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
 		ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
 		ImGui::SetNextItemWidth(100);
 		ImGui::SetNextItemWidth(100);
@@ -401,7 +382,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 		if (ImGui::Button("Clear Map", ImVec2(100, 20)))
 		{
-			LoadManager.ClearMap(SlingShot, Bird);
+			LoadManager.ClearMap();
 		}
 		if (ImGui::Button("Save Map", ImVec2(100, 20)))
 		{
@@ -414,6 +395,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		else
 		{
 			CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
+		}
+		if (ImGui::Button("Delete Select Object", ImVec2(100, 20)))
+		{
+			PressedCollider->Destroy();
 		}
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);

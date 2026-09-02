@@ -19,8 +19,8 @@ public:
 	LoadManager& operator=(const LoadManager&) = delete;
 
 	void SaveMap();
-	bool LoadMap(int num, ASlingShot*& SlingShot, ABird*& Bird);
-	void ClearMap(ASlingShot*& SlingShot, ABird*& Bird);
+	bool LoadMap(int num);
+	void ClearMap();
 
 private:
 	LoadManager() {}
