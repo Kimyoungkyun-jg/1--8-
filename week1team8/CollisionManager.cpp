@@ -3,6 +3,7 @@
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "GameManager.h"
+#include "Effects/EffectManager.h"
 
 OBB MakeOBB(const ACollider* collider)
 {
@@ -592,6 +593,15 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 
 		infos.push_back(info);
 
+		if (ab.first->GetColliderId() == EColliderId::BIRD)
+		{
+			EffectManager::GetInstance().PlayColEffect(info.AverageContactPoint(), ab.first);
+		}
+		else if (ab.second->GetColliderId() == EColliderId::BIRD)
+		{
+			EffectManager::GetInstance().PlayColEffect(info.AverageContactPoint(), ab.second);
+		}
+
 		if (!bCanDamage) continue;
 
 		TryKill(ab.first);
@@ -610,7 +620,17 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 
 	for (int i = (int)pendingkills.size() - 1; i >= 0; i--)
 	{
-		UObjectManager::GetInstance().Destroy(pendingkills[i]);
+		ACollider* target = pendingkills[i];
+		if (target)
+		{
+			EColliderId id = target->GetColliderId();
+			if (id == EColliderId::PIG || id == EColliderId::BLOCK)
+			{
+				EffectManager::GetInstance().PlayDisEffect(target->GetLocation());
+			}
+
+			UObjectManager::GetInstance().Destroy(target);
+		}
 	}
 
 	pendingkills.clear();

@@ -18,12 +18,14 @@
 #include "UUIObject.h"
 #include "UPage.h"
 #include "UUIIngamePage.h"
+#include "../GameManager.h"
 
 using namespace std;
 
 enum class GameState;
 
 class UIManager
+
 {
 public:
 	static UIManager& GetInstance()
@@ -52,8 +54,11 @@ public:
 	void ChangePage(EPageType newPageType);
 	void GotoEnding(GameState gs);
 	void DrawBirdPath(const std::vector<FVector>& vertices);
+	void ClearBirdPath();
 
 	void LevelChanged(int curlevel);
+
+	std::pair<float, float> WorldToScreen(const FVector& worldPos);
 
 	UUIPage* GetPage(EPageType type)
 	{
@@ -77,5 +82,4 @@ private:
 
 private:
 	UIManager() {};
-	std::pair<float, float> WorldToScreen(const FVector& worldPos);
 };

@@ -12,6 +12,7 @@ void GameManager::Restart()
 	CurrentLevel = 0;
 	SlingShot = nullptr;
 	ReloadedBird = nullptr;
+	UIManager::GetInstance().ResetScore();
 
 	if (LoadManager::Get().LoadMap(0))
 	{
@@ -68,13 +69,10 @@ void GameManager::ReloadBird()
 
 void GameManager::SpawnBirdAndSlingShot()
 {
-	AActor* hill = SpawnActor<AActor>({ -1.2, -0.4, 0 }, EPrimitive::Rectangle, {1, 1.5, 1});
-	hill->SetImage(L"Assets/img/hill.png");
-
-	SlingShot = SpawnActor<ASlingShot>({ -1.18, -0.45, 0 }, EPrimitive::Rectangle, { 0.1, 0.2, 0 });
+	SlingShot = SpawnActor<ASlingShot>({ -1.2, -0.6, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
 	SlingShot->SetImage(L"Assets/img/slingshot.png");
 
-	ReloadedBird = SpawnColider<ABird>({ -1.18, -0.35, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+	ReloadedBird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
 	ReloadedBird->SetImage(L"Assets/img/bird.png");
 
 	SlingShot->EquippedBird = ReloadedBird;
@@ -97,6 +95,7 @@ void GameManager::CheckGameState()
 			if (LoadManager::Get().LoadMap(CurrentLevel + 1))
 			{
 				CurrentLevel += 1;
+				UIManager::GetInstance().LevelChanged(CurrentLevel);
 			}
 			else
 			{
