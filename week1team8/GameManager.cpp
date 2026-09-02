@@ -61,12 +61,14 @@ void GameManager::CheckGameState()
 			else
 			{
 				state = GameState::GameClear;
+				UIManager::GetInstance().GotoEnding(state);
 			}
 		}
 
 		if (BirdCount == -1)
 		{
 			state = GameState::GameOver;
+			UIManager::GetInstance().GotoEnding(state);
 		}
 	}
 }
