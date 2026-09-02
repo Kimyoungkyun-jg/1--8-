@@ -4,6 +4,7 @@
 #include "ObjectManager.h"
 #include "TemplateLibrary.h"
 #include "GameManager.h"
+#include "UI/UIManager.h"
 
 void UObject::Pressed(FVector _Location)
 {
@@ -162,6 +163,8 @@ void ABird::Clicked()
 	}
 }
 
+std::vector<FVector> Points;
+
 void ABird::Pressed(FVector _Location)
 {
 	Velocity = 0.f;
@@ -184,15 +187,17 @@ void ABird::Pressed(FVector _Location)
 			FrontBand->Stretched(Location, StretchedRate);
 
 			//새가 이동할 포물선 경로
-			std::vector<FVector> Points(10);
+			Points.clear();
 			FVector vel = Velocity, loc = Location;
 			static const float delta = 0.00694;
 			for (int i = 0; i < 10; i++)
 			{
 				vel += Global::G * delta;
 				loc += vel * delta;
-				Points[i] = loc;
+				Points.emplace_back(loc);
 			}
+
+			UIManager::GetInstance().DrawBirdPath(Points);
 		}
 	}
 }
@@ -232,12 +237,14 @@ void ASlingShot::SpawnBand()
 {
 
 	//새총의 왼쪽 위를 Back에, 오른쪽 위를 Front에
-	FVector BackPoint = Location + FVector(-Scale.x / 2, Scale.y / 2, 0);
-	FVector FrontPoint = Location + FVector(Scale.x / 2, Scale.y / 2, 0);
+	FVector BackPoint = Location + FVector(-Scale.x / 2 + 0.03, Scale.y / 2 - 0.03, 0);
+	FVector FrontPoint = Location + FVector(Scale.x / 2 - 0.02, Scale.y / 2 - 0.03, 0);
 	FVector RestPoint = (BackPoint + FrontPoint) / 2;
 
 	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
+	BackBand->SetImage(L"Assets/img/band.png");
 	FrontBand = SpawnActor<ABand>(FrontPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
+	FrontBand->SetImage(L"Assets/img/band.png");
 
 	BackBand->AttachedPoint = BackPoint;
 	FrontBand->AttachedPoint = FrontPoint;

@@ -49,6 +49,7 @@ public:
 
 	void ChangePage(EPageType newPageType);
 	void GotoEnding(GameState gs);
+	void DrawBirdPath(const std::vector<FVector>& vertices);
 
 	void LevelChanged(int curlevel);
 

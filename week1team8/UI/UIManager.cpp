@@ -419,6 +419,10 @@ void UIManager::LevelChanged(int curlevel)
 	}
 }
 
+void UIManager::DrawBirdPath(const std::vector<FVector> &vertices)
+{
+}
+
 
 
 std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos) 
