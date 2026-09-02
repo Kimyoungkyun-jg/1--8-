@@ -587,10 +587,18 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 		if (ab.first->GetColliderId() == EColliderId::BIRD)
 		{
 			EffectManager::GetInstance().PlayColEffect(info.AverageContactPoint(), ab.first);
+			if (ABombBird* bomb = dynamic_cast<ABombBird*>(ab.first))
+			{
+				bomb->Ability();
+			}
 		}
 		else if (ab.second->GetColliderId() == EColliderId::BIRD)
 		{
 			EffectManager::GetInstance().PlayColEffect(info.AverageContactPoint(), ab.second);
+			if (ABombBird* bomb = dynamic_cast<ABombBird*>(ab.second))
+			{
+				bomb->Ability();
+			}
 		}
 
 		if (!bCanDamage) continue;

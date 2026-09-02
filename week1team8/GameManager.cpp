@@ -179,19 +179,8 @@ void GameManager::CheckGameState()
 	if (state == GameState::Play)
 	{
 		if (PigCount == 0 && ReloadedBird->GetVelocity().Length() < 0.5f)
-		{
-
-			if (LoadManager::Get().LoadMap(CurrentLevel + 1))
-			{
-				CurrentLevel += 1;
-				UIManager::GetInstance().LevelChanged(CurrentLevel);
-
-			}
-			else
-			{
-				state = GameState::GameClear;
-				UIManager::GetInstance().GotoEnding(state);
-			}
+		{	
+			UIManager::GetInstance().LevelChanged(CurrentLevel);
 		}
 	}
 }

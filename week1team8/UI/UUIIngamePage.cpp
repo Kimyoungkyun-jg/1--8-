@@ -34,7 +34,8 @@ bool UUIIngamePage::Initialize(IDWriteFactory* dwriteFactory, ID2D1RenderTarget*
 	// 일시정지 버튼
 	PauseBtn = new UUIButton();
 	PauseBtn->ButtonBitmap = pauseBtnBitmap;
-	PauseBtn->SetPoisition(static_cast<float>(screenWidth) - 150.0f, 30.0f, 50.0f, 50.0f);
+	PauseBtn->SetTouch(true);
+	PauseBtn->SetPoisition(static_cast<float>(screenWidth) - 100.0f, 30.0f, 70.0f, 70.0f);
 	AddChild(PauseBtn);
 
 	return true;
@@ -54,7 +55,7 @@ void UUIIngamePage::ResetScore()
 		InGameHUD->SetData(0.0f, BirdsLeft);
 	}
 	ClearTrajectoryPoints();
-	ClearFlowtingText();
+	ClearFloatingText(false);
 }
 
 void UUIIngamePage::SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color)
@@ -167,14 +168,27 @@ void UUIIngamePage::Hide()
 {
 	UUIPage::Hide();
 	ClearTrajectoryPoints();
-	ClearFlowtingText();
+	ClearFloatingText(true);
 }
 
-void UUIIngamePage::ClearFlowtingText()
+void UUIIngamePage::ClearFloatingText(bool bAddScore)
 {
 	for (auto* ft : FloatingTexts)
 	{
-		delete ft;
+		if (ft)
+		{
+			if (bAddScore && ft->TargetScore > 0.0f)
+			{
+				AddScore(static_cast<int>(ft->TargetScore));
+			}
+			delete ft;
+		}
 	}
+
 	FloatingTexts.clear();
+	DisplayScore = static_cast<float>(TargetScore);
+	if (InGameHUD)
+	{
+		InGameHUD->SetData(DisplayScore, BirdsLeft);
+	}
 }

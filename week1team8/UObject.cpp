@@ -5,6 +5,7 @@
 #include "TemplateLibrary.h"
 #include "GameManager.h"
 #include "UI/UIManager.h"
+#include "Effects/EffectManager.h"
 
 void UObject::Pressed(FVector _Location)
 {
@@ -204,10 +205,6 @@ void ABird::SetWait()
 	isInvalid = true;
 }
 
-void ABird::Ability()
-{
-}
-
 void ASlingShot::SpawnBand()
 {
 
@@ -288,10 +285,8 @@ float APig::minusHp()
 
 float ABombBird::minusHp()
 {
-	Ability();
-
 	//확정 죽음
-	GameManager::GetInstance().ReloadBird();
+	
 	return 0.f;
 }
 
@@ -314,6 +309,11 @@ void ABombBird::Ability()
 			}
 		}
 	}
+
+	EffectManager::GetInstance().PlayExpEffect(Location, { 1.0f,1.0f });
+
+	GameManager::GetInstance().ReloadBird();
+	Destroy();
 }
 
 void AFastBird::Ability()

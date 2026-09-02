@@ -172,7 +172,7 @@ public:
 	virtual void Ability() {}
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
-	virtual void Ability();
+
 
 	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;
