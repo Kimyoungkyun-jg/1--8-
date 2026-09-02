@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "UObject.h"
+#include "SoundManager.h"
 
 
 // 접촉점
@@ -115,6 +116,7 @@ public:
 	void TryKill(ACollider * c)
 	{
 		if (!c || c->GetMass() <= 0.0f) return;     // 정적 물체(바닥)는 제외
+		c->PlaySFX();
 		if (c->minusHp() > 0) return;              // 아직 안 죽음
 		for (auto* p : pendingkills)                // 중복 방지
 		{
