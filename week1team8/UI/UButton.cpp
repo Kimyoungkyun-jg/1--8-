@@ -6,6 +6,7 @@
 UUIButton::UUIButton(const wchar_t* url, float centerX, float centerY, float sizeX, float sizeY, bool bAnimate, float startOffsetY)
 	: imagePath(url)
 {
+	SetTouch(true);
 	SetCenterPoisition(centerX, centerY, sizeX, sizeY);
 	if (url)
 	{
@@ -67,25 +68,16 @@ bool UUIButton::IsPointInside(float x, float y) const
 
 void UUIButton::OnMouseMove(float mouseX, float mouseY)
 {
-	if (!GetVisible())
-	{
-		bIsHovered = false;
-		return;
-	}
-
+	if (!GetVisible() || !GetTouch()) return;
 	bIsHovered = IsPointInside(mouseX, mouseY);
 }
 
 bool UUIButton::OnMouseDown(float mouseX, float mouseY)
 {
-	if (!GetVisible()) return false;
-
+	if (!GetVisible() || !GetTouch()) return false;
 	if (IsPointInside(mouseX, mouseY))
 	{
-		if (OnClick)
-		{
-			OnClick();
-		}
+		bIsPressed = true;
 		return true;
 	}
 	return false;
@@ -93,6 +85,15 @@ bool UUIButton::OnMouseDown(float mouseX, float mouseY)
 
 void UUIButton::OnMouseUp(float mouseX, float mouseY)
 {
+	if (!GetVisible() || !GetTouch()) return;
+	if (bIsPressed && IsPointInside(mouseX, mouseY))
+	{
+		if (OnClick)
+		{
+			OnClick();
+		}
+	}
+	bIsPressed = false;
 }
 
 void UUIButton::Update(float deltaTime, float mouseX, float mouseY)
@@ -115,6 +116,14 @@ void UUIButton::Update(float deltaTime, float mouseX, float mouseY)
 			bIsSlideAnimating = false;
 		}
 		CenterY = CurrentCenterY;
+	}
+
+	if (!GetTouch())
+	{
+		bIsHovered = false;
+		bIsPressed = false;
+		bWasPressed = false;
+		return;
 	}
 
 	// 마우스 호버 여부 갱신

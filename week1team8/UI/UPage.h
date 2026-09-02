@@ -34,6 +34,4 @@ public:
 	virtual void OnMouseMove(float mouseX, float mouseY);
 	virtual bool OnMouseDown(float mouseX, float mouseY);
 	virtual void OnMouseUp(float mouseX, float mouseY);
-
-	
 };

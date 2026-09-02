@@ -202,17 +202,39 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 	{
 		UUIPage* stageClearPage = new UUIPage(EPageType::StageClear);
 
-		UUIButton* scoreBoardBtn = new UUIButton(
-			L"Assets/img/Scoreboard.png",
+		UUIBackground* darkBg = new UUIBackground(
+			0.5f,
 			screenWidth * 0.5f,
 			screenHeight * 0.5f,
-			450,
-			850,
+			static_cast<float>(screenWidth),
+			static_cast<float>(screenHeight)
+		);
+		darkBg->SetTouch(false);
+		stageClearPage->AddChild(darkBg);
+
+		UUIBackground* scoreBoard = new UUIBackground(
+			L"Assets/img/Scoreboard.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.42f,
+			550.0f,
+			450.0f,
+			true,
+			1200.0f
+		);
+		scoreBoard->SetTouch(false);
+		stageClearPage->AddChild(scoreBoard);
+
+		UUIButton* nextBtn = new UUIButton(
+			L"Assets/img/continuebtn.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.68f,
+			250.0f,
+			90.0f,
 			true,
 			1200.0f
 		);
 
-		scoreBoardBtn->SetOnClick([this]() {
+		nextBtn->SetOnClick([this]() {
 			int nextLvl = GameManager::GetInstance().GetCurlvl() + 1;
 			if (LoadManager::Get().LoadMap(nextLvl))
 			{
@@ -227,7 +249,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			}
 		});
 
-		stageClearPage->AddChild(scoreBoardBtn);
+		stageClearPage->AddChild(nextBtn);
 
 		Pages[EPageType::StageClear] = stageClearPage;
 	}
