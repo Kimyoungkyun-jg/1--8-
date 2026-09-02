@@ -166,5 +166,6 @@ bool LoadManager::LoadMap(int num)
 void LoadManager::ClearMap()
 {
 	UObjectManager::GetInstance().DistroyAllActors();
+	GameManager::GetInstance().SpawnWalls();
 	GameManager::GetInstance().SpawnBirdAndSlingShot();
 }

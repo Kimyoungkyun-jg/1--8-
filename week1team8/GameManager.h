@@ -65,6 +65,7 @@ public:
 
 	void ReloadBird();
 	void SpawnBirdAndSlingShot();
+	void SpawnWalls();
 	ASlingShot* GetSlingShot() { return SlingShot; }
 	ABird* GetReloadedBird() { return ReloadedBird; }
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }

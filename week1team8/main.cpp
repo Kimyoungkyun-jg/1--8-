@@ -188,8 +188,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gameManager.SpawnBirdAndSlingShot();
 	}*/
 
-	// 테스트 바닥
-	ABlock* ground = SpawnColider<ABlock>({ 0, -1.0f, 0 }, EPrimitive::Rectangle, false, { 3.8f, 0.1f, 0 }, 0.0f);
+	// 화면 경계 벽 (Clear Map 해도 ClearMap()이 다시 만든다)
+	gameManager.SpawnWalls();
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)

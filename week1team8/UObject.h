@@ -157,6 +157,18 @@ public:
 	virtual ~ABlock() {}
 };
 
+// 화면 경계 벽. 질량 0으로 생성해서 움직이지 않는다.
+class AGround : public ACollider
+{
+public:
+	AGround() { colId = EColliderId::GROUND; }
+	float GetInertia() const override
+	{
+		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
+	}
+	virtual ~AGround() {}
+};
+
 enum class EBandState
 {
 	Idle,

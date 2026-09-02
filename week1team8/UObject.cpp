@@ -55,61 +55,9 @@ void ACollider::Move(float t)
 	// 회전
 	Rotation += AngularVelocity * deltaTime;
 
-
-	if (Primitive == EPrimitive::Circle)
-	{
-		float Radius = Scale.x / 2;
-		// 공-벽 충돌 감지 및 해결
-		if (Location.x < Global::leftBorder + Radius)
-		{
-			Velocity.x *= -0.8f;
-			Location.x = Global::leftBorder + Radius;
-		}
-		if (Location.x > Global::rightBorder - Radius)
-		{
-			Velocity.x *= -0.8f;
-			Location.x = Global::rightBorder - Radius;
-		}
-		if (Location.y < Global::bottomBorder + Radius)
-		{
-			Velocity.y *= -0.8f;
-			Location.y = Global::bottomBorder + Radius;
-		}
-		if (Location.y > Global::topBorder - Radius)
-		{
-			Velocity.y *= -0.8f;
-			Location.y = Global::topBorder - Radius;
-		}
-	}
-	else if (Primitive == EPrimitive::Rectangle)
-	{
-		float halfWidth = Scale.x * 0.5f;   // 가로 절반 
-		float halfHeight = Scale.y * 0.5f;  // 세로 절반 
-
-		// 좌/우 벽 충돌 
-		if (Location.x < Global::leftBorder + halfWidth)
-		{
-			Velocity.x *= -0.8f;
-			Location.x = Global::leftBorder + halfWidth;
-		}
-		if (Location.x > Global::rightBorder - halfWidth)
-		{
-			Velocity.x *= -0.8f;
-			Location.x = Global::rightBorder - halfWidth;
-		}
-
-		// 상/하 벽 충돌
-		if (Location.y < Global::bottomBorder + halfHeight)
-		{
-			Velocity.y *= -0.8f;
-			Location.y = Global::bottomBorder + halfHeight;
-		}
-		if (Location.y > Global::topBorder - halfHeight)
-		{
-			Velocity.y *= -0.8f;
-			Location.y = Global::topBorder - halfHeight;
-		}
-	}
+	// 화면 경계는 GameManager::SpawnWalls()가 만든 정적 콜라이더가 처리한다.
+	// 예전엔 여기서 위치를 클램프하고 속도를 뒤집었는데, 솔버와 따로 놀아서
+	// 마찰도 회전도 안 먹고 겹침 해소와 서로 싸웠다.
 }
 
 void ACollider::Pressed(FVector _Location)
