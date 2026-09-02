@@ -79,7 +79,7 @@ public:
 
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
-	virtual float GetInertia() = 0;
+	virtual float GetInertia() const = 0;
 
 	bool bEditing = false;
 	bool bUseGravity = true;
@@ -91,7 +91,6 @@ protected:
 	float DynamicFriction = 0.0f;
 	float Mass = 10;						// 질량
 	float AngularVelocity = 0;
-	float Inertia = 0;
 	float Restitution = 1.0f;
 	float hp = 1.0f;
 };
@@ -100,7 +99,7 @@ class ACircle : public ACollider
 {
 public:
 	float GetRadius() const { return Scale.x / 2; }
-	float GetInertia() override
+	float GetInertia() const override
 	{
 		float r = GetRadius();
 		return 0.5f * Mass * r * r;
@@ -132,7 +131,7 @@ class ABlock : public ACollider
 {
 public:
 	ABlock() { colId = EColliderId::BLOCK; }
-	float GetInertia() override
+	float GetInertia() const override
 	{
 		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
 	}
