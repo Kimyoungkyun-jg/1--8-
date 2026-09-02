@@ -396,6 +396,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
 		ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
 		ImGui::Text("GameState : %d", static_cast<int>(gameManager.GetGameState()));
+		ImGui::Text("Bird %d, Pig %d", gameManager.GetBirdCount(), gameManager.GetPigCount());
 		ImGui::SetNextItemWidth(100);
 		ImGui::SetNextItemWidth(100);
 		ImGui::End();

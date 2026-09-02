@@ -232,12 +232,14 @@ void ASlingShot::SpawnBand()
 {
 
 	//새총의 왼쪽 위를 Back에, 오른쪽 위를 Front에
-	FVector BackPoint = Location + FVector(-Scale.x / 2, Scale.y / 2, 0);
-	FVector FrontPoint = Location + FVector(Scale.x / 2, Scale.y / 2, 0);
+	FVector BackPoint = Location + FVector(-Scale.x / 2 + 0.03, Scale.y / 2 - 0.03, 0);
+	FVector FrontPoint = Location + FVector(Scale.x / 2 - 0.02, Scale.y / 2 - 0.03, 0);
 	FVector RestPoint = (BackPoint + FrontPoint) / 2;
 
 	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
+	BackBand->SetImage(L"Assets/img/band.png");
 	FrontBand = SpawnActor<ABand>(FrontPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
+	FrontBand->SetImage(L"Assets/img/band.png");
 
 	BackBand->AttachedPoint = BackPoint;
 	FrontBand->AttachedPoint = FrontPoint;

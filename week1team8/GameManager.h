@@ -71,6 +71,7 @@ public:
 	ABird* GetReloadedBird() { return ReloadedBird; }
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
 	void SetBirdCount(int NewBirdCount) { BirdCount = NewBirdCount; }
+	int GetPigCount() const { return PigCount; }
 	int GetBirdCount() const { return BirdCount; }
 	GameState GetGameState() const { return state; }
 	void PigDeath();

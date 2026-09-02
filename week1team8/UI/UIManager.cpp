@@ -190,7 +190,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		Pages[EPageType::Ending] = endPage;
 	}
 
-	ChangePage(EPageType::Ending);
+	ChangePage(EPageType::InGame);
 
 	return true;
 }
