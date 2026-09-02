@@ -167,6 +167,11 @@ bool LoadManager::LoadMap(int num)
 			}
 		}
 		GameManager::GetInstance().SetPigCount(PigCount);
+
+		// 맵의 물체들은 이미 자리를 잡은 상태로 배치돼 있다. 타이머를 채워두면
+		// 한 프레임 안에 겹침만 정리하고 바로 잠들어서, 로드 직후에 들썩이지 않는다.
+		CollisionManager::GetInstance().PrimeSleep();
+
 		return true;
 	}
 

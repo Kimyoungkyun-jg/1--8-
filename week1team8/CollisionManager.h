@@ -133,7 +133,15 @@ public:
 
 	void SetAllCollisionFriction(float _dynamic, float _static);
 
-	std::vector<CollisionInfo> CheckCollisionAll();
+	std::vector<CollisionInfo> CheckCollisionAll(float t);
+
+	// 접촉으로 연결된 무리(island) 단위로 재운다.
+	// 무리 전체가 timeToSleep을 채워야 잠들고, 하나라도 못 채우면 전부 깨어 있는다.
+	void UpdateSleep(float t, const std::vector<std::pair<ACollider*, ACollider*>>& contacts);
+
+	// 맵을 갓 불러온 직후처럼 이미 자리를 잡고 있을 물체들을 바로 재우고 싶을 때.
+	// bSleeping을 직접 켜지 않고 타이머만 채우므로, 공중에 뜬 물체는 정상적으로 떨어진다.
+	void PrimeSleep();
 
 	// 충돌 감지
 	CollisionInfo CheckCollision(ACollider* a, ACollider* b);
@@ -161,6 +169,12 @@ public:
 	int positionIterations = 15;
 	float baumgarte = 0.8f;      // 겹침을 한 번에 얼마나 밀어낼지
 	float slop = 0.0005f;         // 이 정도 침투는 무시
+
+	// 슬립
+	bool bSleepEnabled = true;
+	float linearSleepTolerance = 0.015f;
+	float angularSleepTolerance = 0.035f;   // 약 2도/초
+	float timeToSleep = 0.5f;
 
 private:
 	// 지난 프레임의 접촉들. warm starting이 여기서 충격량을 찾아 이월한다

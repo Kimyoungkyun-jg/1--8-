@@ -50,6 +50,13 @@ void ACollider::Move(float t)
 		return;
 	}
 
+	// 잠든 물체는 중력도 적분도 받지 않는다. 감쇠가 0에 수렴만 하고
+	// 도달하지 못하는 문제를 여기서 끊는다.
+	if (bSleeping)
+	{
+		return;
+	}
+
 	// 속도 변화
 	if (bUseGravity)
 	{
@@ -73,6 +80,7 @@ void ACollider::Pressed(FVector _Location)
 {
 	if (bEditing)
 	{
+		WakeUp();
 		Location = _Location;
 		Velocity = FVector();
 		bUseGravity = false;
@@ -83,6 +91,7 @@ void ACollider::Released(FVector _Location)
 {
 	if (bEditing)
 	{
+		WakeUp();
 		Location = _Location;
 		Velocity = 0.f;
 		bUseGravity = true;
@@ -114,6 +123,7 @@ std::vector<FVector> Points;
 
 void ABird::Pressed(FVector _Location)
 {
+	WakeUp();
 	Velocity = 0.f;
 	bUseGravity = false;
 
@@ -151,6 +161,7 @@ void ABird::Pressed(FVector _Location)
 
 void ABird::Released(FVector _Location)
 {
+	WakeUp();
 	bUseGravity = true;
 	State = EBirdState::Shooting;
 	bEditing = false;

@@ -319,7 +319,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 
 			// 충돌 검사
-			uiManager.GetCollisionInfos(CM.CheckCollisionAll());
+			uiManager.GetCollisionInfos(CM.CheckCollisionAll(elapsedTime));
 		}
 
 		//
@@ -397,15 +397,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				OBB Box = MakeOBB(Collider);
 
+				// 잠든 물체는 회색 — 무리가 어떻게 잠드는지 눈으로 보려는 것
+				ImU32 Color = Collider->IsSleeping()
+					? IM_COL32(150, 150, 150, 255)
+					: IM_COL32(80, 200, 255, 255);
+
 				for (int i = 0; i < 4; i++)
 				{
 					DrawList->AddLine(WorldToScreen(Box.vertex[i]),
-						WorldToScreen(Box.vertex[(i + 1) % 4]),
-						IM_COL32(80, 200, 255, 255), 2.0f);
+						WorldToScreen(Box.vertex[(i + 1) % 4]), Color, 2.0f);
 				}
 
 				// 꼭짓점 0. 블록을 돌리면 이 점도 같이 돌아야 한다
-				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, IM_COL32(80, 200, 255, 255));
+				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, Color);
 			}
 		}
 
@@ -468,6 +472,40 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::PlotLines("##pen", PenHistory, 240, PenIndex, nullptr, 0.0f, 0.02f, ImVec2(0, 60));
 		}
 
+		ImGui::SeparatorText("Sleep");
+		ImGui::Checkbox("Sleep Enabled", &CM.bSleepEnabled);
+		{
+			int SleepingCount = 0;
+			int DynamicCount = 0;
+			for (ACollider* c : CM.colliders)
+			{
+				if (c->GetMass() <= 0.0f) continue;
+				DynamicCount++;
+				if (c->IsSleeping()) SleepingCount++;
+			}
+			ImGui::SameLine();
+			ImGui::Text("%d / %d", SleepingCount, DynamicCount);
+		}
+		ImGui::SliderFloat("Linear Tol", &CM.linearSleepTolerance, 0.0f, 0.1f, "%.4f");
+		ImGui::SliderFloat("Angular Tol", &CM.angularSleepTolerance, 0.0f, 0.3f, "%.4f");
+		ImGui::SliderFloat("Time To Sleep", &CM.timeToSleep, 0.05f, 2.0f);
+
+		// 안 잠들 때 누가 붙잡고 있는지 보려는 것.
+		// 한 무리는 통째로 판정되므로, 속도가 임계값을 못 내려가는 물체 하나가
+		// 자기와 연결된 전부를 깨워둔다.
+		for (ACollider* c : CM.colliders)
+		{
+			if (c->GetMass() <= 0.0f) continue;
+
+			float speed = c->GetVelocity().Length();
+
+			ImGui::Text("ID %2d %s  v=%.4f %s  w=%+.4f %s  t=%.2f",
+				c->GetID(), c->IsSleeping() ? "zzz" : "   ",
+				speed, speed < CM.linearSleepTolerance ? "ok" : "  ",
+				c->GetAngularVelocity(), fabsf(c->GetAngularVelocity()) < CM.angularSleepTolerance ? "ok" : "  ",
+				c->GetSleepTimer());
+		}
+
 		ImGui::SeparatorText("Contacts");
 		ImGui::Text("count: %d", (int)CM.debugContacts.size());
 		for (int i = 0; i < (int)CM.debugContacts.size(); i++)
@@ -485,29 +523,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::SeparatorText("Bodies");
 
-		// 물리 디버깅 창
-		for (ACollider* c : CollisionManager::GetInstance().colliders)
+		// slip = 접촉점에서 실제로 미끄러지는 속도.
+		// 0이면 미끄러지지 않고 구르는 중이라 마찰이 할 일이 없다.
+		for (ACollider* c : CM.colliders)
 		{
 			if (c->GetMass() <= 0.0f) continue;                    // 정적 제외
 			ACircle* circle = dynamic_cast<ACircle*>(c);
 			if (!circle) continue;                                 // 원만
 
-			float slip = c->GetVelocity().x + c->GetAngularVelocity() * circle->GetRadius();
 			ImGui::Text("ID %2d  v=(%+.3f, %+.3f)  w=%+8.3f  slip=%+.5f",
 				c->GetID(), c->GetVelocity().x, c->GetVelocity().y,
-				c->GetAngularVelocity(), slip);
+				c->GetAngularVelocity(),
+				c->GetVelocity().x + c->GetAngularVelocity() * circle->GetRadius());
+		}
 
-			static float hist[240] = {};
-			static int idx = 0;
-			hist[idx] = slip;
-			idx = (idx + 1) % 240;
-			ImGui::PlotLines("slip", hist, 240, idx, nullptr, -3.0f, 3.0f, ImVec2(0, 80));
-
+		// 전체 운동에너지. 잦아들면 수렴, 평평하면 진동, 오르면 발산이다.
+		{
 			float energy = 0.0f;
-			for (ACollider* c : CollisionManager::GetInstance().colliders)
-				if (c->GetMass() > 0.0f)
-					energy += 0.5f * c->GetMass() * c->GetVelocity().LengthSquared()
+			for (ACollider* c : CM.colliders)
+			{
+				if (c->GetMass() <= 0.0f) continue;
+
+				energy += 0.5f * c->GetMass() * c->GetVelocity().LengthSquared()
 					+ 0.5f * c->GetInertia() * c->GetAngularVelocity() * c->GetAngularVelocity();
+			}
+
+			static float EnergyHistory[240] = {};
+			static int EnergyIndex = 0;
+			EnergyHistory[EnergyIndex] = energy;
+			EnergyIndex = (EnergyIndex + 1) % 240;
+
+			ImGui::Text("kinetic energy %.5f", energy);
+			ImGui::PlotLines("##energy", EnergyHistory, 240, EnergyIndex, nullptr, 0.0f, FLT_MAX, ImVec2(0, 60));
 		}
 
 		ImGui::End();

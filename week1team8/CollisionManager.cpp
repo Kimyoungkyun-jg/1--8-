@@ -307,7 +307,140 @@ void CollisionManager::SetAllCollisionFriction(float _dynamic, float _static)
 	}
 }
 
-std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
+namespace
+{
+	// union-find. 경로를 압축하며 뿌리를 찾는다
+	int FindRoot(std::vector<int>& parent, int i)
+	{
+		while (parent[i] != i)
+		{
+			parent[i] = parent[parent[i]];
+			i = parent[i];
+		}
+
+		return i;
+	}
+}
+
+void CollisionManager::PrimeSleep()
+{
+	for (ACollider* c : colliders)
+	{
+		if (c->GetMass() <= 0.0f)
+		{
+			continue;
+		}
+
+		c->SetSleepTimer(timeToSleep);
+	}
+}
+
+void CollisionManager::UpdateSleep(float t, const std::vector<std::pair<ACollider*, ACollider*>>& contacts)
+{
+	size_t n = colliders.size();
+
+	if (!bSleepEnabled)
+	{
+		for (ACollider* c : colliders)
+		{
+			c->WakeUp();
+		}
+		return;
+	}
+
+	// 1. 물체별로 '충분히 느린 상태가 이어진 시간'을 갱신한다
+	float deltaTime = t / 1000.0f;
+
+	for (ACollider* c : colliders)
+	{
+		if (c->GetMass() <= 0.0f)
+		{
+			continue;   // 정적 물체는 슬립 대상이 아니다
+		}
+
+		bool bSlow = c->GetVelocity().LengthSquared() < linearSleepTolerance * linearSleepTolerance
+			&& std::fabs(c->GetAngularVelocity()) < angularSleepTolerance;
+
+		c->SetSleepTimer(bSlow ? c->GetSleepTimer() + deltaTime : 0.0f);
+	}
+
+	// 2. 접촉으로 연결된 무리를 만든다.
+	//    정적 물체는 무리를 잇지 않는다. 바닥을 통해 이으면 바닥에 닿은 모든 물체가
+	//    한 덩어리가 되어, 화면 어딘가에서 하나만 움직여도 아무것도 못 잠든다.
+	std::unordered_map<const ACollider*, int> indexOf;
+	indexOf.reserve(n);
+	for (int i = 0; i < (int)n; i++)
+	{
+		indexOf[colliders[i]] = i;
+	}
+
+	std::vector<int> parent(n);
+	for (int i = 0; i < (int)n; i++)
+	{
+		parent[i] = i;
+	}
+
+	for (const auto& contact : contacts)
+	{
+		if (contact.first->GetMass() <= 0.0f || contact.second->GetMass() <= 0.0f)
+		{
+			continue;
+		}
+
+		int rootA = FindRoot(parent, indexOf[contact.first]);
+		int rootB = FindRoot(parent, indexOf[contact.second]);
+
+		if (rootA != rootB)
+		{
+			parent[rootA] = rootB;
+		}
+	}
+
+	// 3. 무리마다 가장 짧은 타이머를 찾는다. 그게 무리 전체의 진행도다.
+	std::unordered_map<int, float> islandTimer;
+
+	for (int i = 0; i < (int)n; i++)
+	{
+		if (colliders[i]->GetMass() <= 0.0f)
+		{
+			continue;
+		}
+
+		int root = FindRoot(parent, i);
+		float timer = colliders[i]->GetSleepTimer();
+		auto found = islandTimer.find(root);
+
+		if (found == islandTimer.end() || timer < found->second)
+		{
+			islandTimer[root] = timer;
+		}
+	}
+
+	// 4. 무리 단위로 재우거나 깨운다.
+	//    깨어 있는 물체가 잠든 무리에 새로 닿으면 둘이 한 무리가 되고,
+	//    그 무리의 최소 타이머가 0이 되므로 잠든 쪽이 저절로 깨어난다.
+	for (int i = 0; i < (int)n; i++)
+	{
+		ACollider* c = colliders[i];
+		if (c->GetMass() <= 0.0f)
+		{
+			continue;
+		}
+
+		if (islandTimer[FindRoot(parent, i)] >= timeToSleep)
+		{
+			c->SetSleeping(true);
+			c->SetVelocity(FVector());
+			c->SetAngularVelocity(0.0f);
+		}
+		else
+		{
+			c->SetSleeping(false);
+		}
+	}
+}
+
+std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 {
 	std::vector<CollisionInfo> infos;
 	std::vector<std::pair<std::pair<ACollider*, ACollider*>, CollisionInfo>> abinfos;
@@ -317,7 +450,11 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 	{
 		for (size_t j = i + 1; j < n; j++)
 		{
-			if (colliders[i]->GetMass() + colliders[j]->GetMass() <= 0.0f)
+			// 둘 다 움직일 수 없으면 풀 게 없다 (정적끼리, 잠든 것끼리, 정적-잠듦)
+			bool aMovable = colliders[i]->GetMass() > 0.0f && !colliders[i]->IsSleeping();
+			bool bMovable = colliders[j]->GetMass() > 0.0f && !colliders[j]->IsSleeping();
+
+			if (!aMovable && !bMovable)
 			{
 				continue;
 			}
@@ -399,6 +536,19 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		}
 	}
 
+	// 속도가 확정된 뒤, 물체가 파괴되기 전에 판정한다.
+	// 파괴 뒤에 하면 contacts가 이미 지워진 콜라이더를 가리킨다.
+	{
+		std::vector<std::pair<ACollider*, ACollider*>> contacts;
+		contacts.reserve(abinfos.size());
+		for (auto& [ab, info] : abinfos)
+		{
+			contacts.push_back(ab);
+		}
+
+		UpdateSleep(t, contacts);
+	}
+
 	// infos 채우기
 	bool bCanDamage = false;
 	float MinDamageSpeed = 0.1f;
@@ -440,13 +590,24 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		TryKill(ab.second);
 	}
 
+	// 사라질 물체가 받치고 있던 것들을 깨운다.
+	// 받침이 없어지면 접촉도 같이 사라져서, 남은 물체는 자기 혼자 무리가 된다.
+	// 타이머는 이미 차 있으니 그대로 두면 공중에 뜬 채로 잠들어 있는다.
+	for (auto& [ab, info] : abinfos)
+	{
+		for (ACollider* dying : pendingkills)
+		{
+			if (ab.first == dying)  ab.second->WakeUp();
+			if (ab.second == dying) ab.first->WakeUp();
+		}
+	}
+
 	for (int i = (int)pendingkills.size() - 1; i >= 0; i--)
 	{
 		UObjectManager::GetInstance().Destroy(pendingkills[i]);
 	}
 
 	pendingkills.clear();
-
 
 	return infos;
 }
@@ -571,36 +732,60 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 	if (localX != clampedX) regionId |= (localX > 0.0f) ? 0x1u : 0x2u;
 	if (localY != clampedY) regionId |= (localY > 0.0f) ? 0x4u : 0x8u;
 
-	// 다시 월드 좌표로
-	FVector closest = box.center + box.axis[0] * clampedX + box.axis[1] * clampedY;
+	FVector normal;
+	float penetration;
 
-	FVector diff = a->GetLocation() - closest;
-	float dist = diff.Length();
-
-	bool isCollision = dist < radius;
-
-	// 원이 사각형 내부에 들어감 (추후 수정)
-	if (dist <= 0.0001f)
+	if (regionId == 0)
 	{
-		return CollisionInfo();
+		// 어느 축도 clamp에 안 걸렸다 = 원 중심이 사각형 안.
+		// 가장 가까운 점이 중심 자신이라 방향을 못 구하므로, 대신 가장 얕게
+		// 빠져나갈 면을 골라 그쪽으로 밀어낸다.
+		// 예전엔 여기서 충돌을 버려서, 빠른 새가 벽 중심선을 넘으면 그대로 통과했다.
+		float depthX = box.half[0] - std::fabs(localX);   // 좌우 면까지 남은 거리
+		float depthY = box.half[1] - std::fabs(localY);   // 위아래 면까지 남은 거리
+
+		if (depthX < depthY)
+		{
+			normal = box.axis[0] * (localX < 0.0f ? -1.0f : 1.0f);
+			penetration = depthX + radius;
+			regionId = (localX < 0.0f) ? 0x12u : 0x11u;
+		}
+		else
+		{
+			normal = box.axis[1] * (localY < 0.0f ? -1.0f : 1.0f);
+			penetration = depthY + radius;
+			regionId = (localY < 0.0f) ? 0x18u : 0x14u;
+		}
+		// 0x10 비트를 세워서 바깥쪽 영역 ID와 겹치지 않게 한다
+	}
+	else
+	{
+		// 다시 월드 좌표로
+		FVector closest = box.center + box.axis[0] * clampedX + box.axis[1] * clampedY;
+
+		FVector diff = a->GetLocation() - closest;
+		float dist = diff.Length();
+
+		if (dist >= radius || dist <= 0.0001f)
+		{
+			return CollisionInfo();
+		}
+
+		normal = diff / dist;
+		penetration = radius - dist;
 	}
 
-	// 충돌 법선 단위 벡터
-	FVector normal = diff;
-	normal.Normalize();
-
-	// 침투
-	float penetration = radius - dist;
-
-	// 충돌 지점
-	FVector pointA = a->GetLocation() - normal * radius;
-	FVector pointB = closest;
+	// 충돌 지점: 원 표면의 점과 사각형 쪽 점의 중간.
+	// radius - penetration은 바깥일 때 중심~사각형 거리, 안쪽일 때는 음수라
+	// 빠져나갈 면 위로 투영된다.
+	FVector pointOnCircle = a->GetLocation() - normal * radius;
+	FVector pointOnBox = a->GetLocation() - normal * (radius - penetration);
 
 	CollisionInfo info;
 	info.normal = normal;
-	info.isCollision = isCollision;
+	info.isCollision = true;
 	info.pointCount = 1;
-	info.points[0].position = (pointA + pointB) / 2;
+	info.points[0].position = (pointOnCircle + pointOnBox) / 2;
 	info.points[0].penetration = penetration;
 	info.points[0].id = regionId;
 
