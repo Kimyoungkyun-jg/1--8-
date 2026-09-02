@@ -128,6 +128,12 @@ ABird *GameManager::SpawnWaitingBird(FVector Location, EBirdType BirdType)
 		Bird->SetImage(L"Assets/img/bomb.png");
 		Birds.push_back(Bird);
 	}
+	else if (BirdType == EBirdType::FastBird)
+	{
+		Bird = SpawnColider<AFastBird>(Location, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+		Bird->SetImage(L"Assets/img/bird.png");
+		Birds.push_back(Bird);
+	}
 
 	Bird->SetWait();
 	return Bird;
@@ -172,12 +178,14 @@ void GameManager::CheckGameState()
 {
 	if (state == GameState::Play)
 	{
-		if (PigCount == 0 && ReloadedBird->GetVelocity(). < 0.5f)
+		if (PigCount == 0 && ReloadedBird->GetVelocity().Length() < 0.5f)
 		{
+
 			if (LoadManager::Get().LoadMap(CurrentLevel + 1))
 			{
 				CurrentLevel += 1;
 				UIManager::GetInstance().LevelChanged(CurrentLevel);
+
 			}
 			else
 			{

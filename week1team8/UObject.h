@@ -168,6 +168,7 @@ public:
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual void Tick(float deltaTime) override;
+	virtual void Ability() {}
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
 
@@ -196,7 +197,7 @@ public:
 	}
 	virtual ~AFastBird() {}
 
-	virtual void Boost();
+	virtual void Ability() override;
 	virtual void Clicked() override;
 
 	bool bHasBoosted = false;

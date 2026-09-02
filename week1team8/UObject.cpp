@@ -305,3 +305,24 @@ float ABombBird::minusHp()
 	GameManager::GetInstance().ReloadBird();
 	return 0.f;
 }
+
+void AFastBird::Ability()
+{
+	if (!bHasBoosted)
+	{
+		Velocity = Velocity * 2.2f;
+		bHasBoosted = true;
+	}
+}
+
+void AFastBird::Clicked()
+{
+	if (State == EBirdState::Shooting)
+	{
+		Ability();
+	}
+	else
+	{
+		ABird::Clicked();
+	}
+}

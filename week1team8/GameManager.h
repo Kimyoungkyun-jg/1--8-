@@ -18,7 +18,8 @@ enum class GameState
 enum EBirdType
 {
 	Basic,
-	BombBird
+	BombBird,
+	FastBird
 };
 
 class GameManager
@@ -56,7 +57,7 @@ public:
 		BirdTypes.clear();
 		for (int i = 0; i < NewBirdCount; i++)
 		{
-			int randi = rand() % 2;
+			int randi = rand() % 3;
 			BirdTypes.push_back(randi);
 		}
 	}
@@ -68,6 +69,9 @@ public:
 
 	int GetCurlvl() { return CurrentLevel; }
 	void SetCurlvl(int lvl) { CurrentLevel = lvl; }
+
+	int GetMaxLevel() const { return Maxlevel; }
+	void SetMaxLevel(int lvl) { Maxlevel = lvl; }
 
 	void ReloadBird();
 
@@ -81,6 +85,7 @@ private:
 	ASlingShot* SlingShot = nullptr;
 	int PigCount = 0;
 	int CurrentLevel = 0;
+	int Maxlevel = 99;
 
 	GameState state = GameState::Menu;
 	

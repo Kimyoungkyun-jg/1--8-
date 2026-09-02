@@ -465,6 +465,8 @@ void UIManager::LevelChanged(int curlevel)
 	{
 		igpage->ClearFlowtingText();
 	}
+
+	ChangePage(EPageType::StageClear);
 }
 
 void UIManager::DrawBirdPath(const std::vector<FVector>& vertices)
