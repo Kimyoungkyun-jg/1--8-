@@ -65,9 +65,8 @@ void ACollider::Move(float t)
 	// 회전
 	Rotation += AngularVelocity * deltaTime;
 
-	// 화면 경계는 GameManager::SpawnWalls()가 만든 정적 콜라이더가 처리한다.
-	// 예전엔 여기서 위치를 클램프하고 속도를 뒤집었는데, 솔버와 따로 놀아서
-	// 마찰도 회전도 안 먹고 겹침 해소와 서로 싸웠다.
+	// 화면 경계는 SpawnWalls()가 만든 정적 콜라이더가 처리한다.
+	// 예전의 하드코딩 반사는 솔버와 따로 놀아서 마찰도 회전도 안 먹었다.
 }
 
 void ACollider::Pressed(FVector _Location)

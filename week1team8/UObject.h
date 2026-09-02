@@ -93,6 +93,9 @@ public:
 	float GetAngularVelocity() const { return AngularVelocity; }
 	void SetAngularVelocity(float value) { AngularVelocity = value; }
 
+	float GetRestitution() const { return Restitution; }
+	void SetRestitution(float _r) { Restitution = _r; }
+
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual float GetInertia() const = 0;
@@ -112,7 +115,7 @@ protected:
 	float DynamicFriction = 0.3f;
 	float Mass = 10;						// 질량
 	float AngularVelocity = 0;
-	float Restitution = 1.0f;
+	float Restitution = 0.2f;	// 반발계수. 0이면 안 튀고 1이면 속도를 그대로 되돌린다
 	float hp = 1.0f;
 	float LinearDamping = 0.0f;
 	float AngularDamping = 2.0f;
