@@ -105,6 +105,12 @@ void GameManager::ReloadBird()
 		SlingShot->EquippedBird = ReloadedBird;
 		SlingShot->ShotPoint = ReloadedBird->GetLocation();
 		ReloadedBird->SlingShot = SlingShot;
+
+		//웨이팅중인 새들을 한칸씩 땡긴다.
+		for (int i = 0; i < Birds.size(); ++i)
+		{
+			Birds[i]->SetLocation(WaitPoints[Birds.size()-i-1]);
+		}
 	}
 	else
 	{
@@ -144,12 +150,20 @@ void GameManager::SpawnBirdAndSlingShot()
 
 	//대기하는 새들을 언덕에 스폰하여 배치한다. 언덕에 있는 새들은 클릭과 중력을 비활성화한다.
 	FVector WaitPoint = ShotPoint;
+	WaitPoint.y -= 0.1;
+	for (int i = 0; i < BirdTypes.size() - 1; ++i)
+	{
+		WaitPoint.x -= 0.06;
+		WaitPoint.y -= 0.08;
+		WaitPoints.push_back(WaitPoint);
+	}
+
 	for (int i = 0; i < BirdTypes.size() - 1; ++i)
 	{
 		EBirdType BirdType = static_cast<EBirdType>(BirdTypes[i]);
-		WaitPoint.x -= 0.1;
-		SpawnWaitingBird(WaitPoint, BirdType);
+		SpawnWaitingBird(WaitPoints[BirdTypes.size() - i - 2], BirdType);
 	}
+
 
 	//가장 뒤의 새를 새총에 배치한다.
 	EBirdType BirdType = static_cast<EBirdType>(BirdTypes.back());

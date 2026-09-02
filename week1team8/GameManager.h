@@ -85,6 +85,7 @@ private:
 	GameState state = GameState::Menu;
 	
 	std::vector<int> BirdTypes;
+	std::vector<FVector> WaitPoints;
 	std::vector<ABird*> Birds;
 
 	FVector ShotPoint = { -1.18, -0.35, 0 };
