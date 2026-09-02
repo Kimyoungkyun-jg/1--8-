@@ -285,6 +285,22 @@ CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, A
 	// 충돌 지점
 	FVector contactPoint = (pointA + pointB) / 2;
 
+	// 접촉점을 실제로 겹치는 구간 안으로 옮긴다
+	if (overlapX < overlapY)
+	{
+		// 법선이 x축 -> 접촉면은 세로선. y를 겹치는 구간의 중앙으로
+		float overlapDown = std::fmax(downA, downB);
+		float overlapUp = std::fmin(upA, upB);
+		contactPoint.y = (overlapDown + overlapUp) / 2;
+	}
+	else
+	{
+		// 법선이 y축 -> 접촉면은 가로선. x를 겹치는 구간의 중앙으로
+		float overlapLeft = std::fmax(leftA, leftB);
+		float overlapRight = std::fmin(rightA, rightB);
+		contactPoint.x = (overlapLeft + overlapRight) / 2;
+	}
+
 	CollisionInfo info
 	{
 		contactPoint,
@@ -462,7 +478,7 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
 
 	const float restitutionThreshold = 1.0f; // 튜닝 값
-	float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.8f;
+	float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.2f;
 
 	// 충격량
 	float raxn = FVector::Cross(rA, normal);
