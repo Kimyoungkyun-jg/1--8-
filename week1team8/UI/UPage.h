@@ -10,7 +10,8 @@ enum class EPageType
 	Starting = 0,
 	InGame,
 	Pause,
-	Ending
+	Ending,
+	StageClear
 };
 
 class UUIPage : public UUIObject

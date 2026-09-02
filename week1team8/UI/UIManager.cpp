@@ -198,7 +198,39 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		Pages[EPageType::Ending] = endPage;
 	}
 
+	//스테이지 클리어 페이지
+	{
+		UUIPage* stageClearPage = new UUIPage(EPageType::StageClear);
 
+		UUIButton* scoreBoardBtn = new UUIButton(
+			L"Assets/img/Scoreboard.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.5f,
+			450,
+			850,
+			true,
+			1200.0f
+		);
+
+		scoreBoardBtn->SetOnClick([this]() {
+			int nextLvl = GameManager::GetInstance().GetCurlvl() + 1;
+			if (LoadManager::Get().LoadMap(nextLvl))
+			{
+				GameManager::GetInstance().SetCurlvl(nextLvl);
+				GameManager::GetInstance().Play();
+				LevelChanged(nextLvl);
+				ChangePage(EPageType::InGame);
+			}
+			else
+			{
+				GameManager::GetInstance().GameClear();
+			}
+		});
+
+		stageClearPage->AddChild(scoreBoardBtn);
+
+		Pages[EPageType::StageClear] = stageClearPage;
+	}
 
 	return true;
 }

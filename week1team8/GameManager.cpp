@@ -4,6 +4,7 @@
 #include "TemplateLibrary.h"
 #include "LoadManager.h"
 #include "UI/UIManager.h"
+#include <fstream>
 
 void GameManager::Initialize()
 {
@@ -13,19 +14,19 @@ void GameManager::Initialize()
 void GameManager::Play()
 {
 	state = GameState::Play;
-	//UIManager::GetInstance().ChangePage(EPageType::InGame);
+	UIManager::GetInstance().ChangePage(EPageType::InGame);
 }
 
 void GameManager::Pause()
 {
 	state = GameState::Pause;
-	//UIManager::GetInstance().ChangePage(EPageType::Pause);
+	UIManager::GetInstance().ChangePage(EPageType::Pause);
 }
 
 void GameManager::Resume()
 {
 	state = GameState::Play;
-	//UIManager::GetInstance().ChangePage(EPageType::InGame);
+	UIManager::GetInstance().ChangePage(EPageType::InGame);
 }
 
 void GameManager::Menu()
@@ -37,6 +38,12 @@ void GameManager::Menu()
 void GameManager::Exit()
 {
 	PostQuitMessage(0);
+}
+
+void GameManager::GameClear()
+{
+	state = GameState::GameClear;
+	UIManager::GetInstance().GotoEnding(state);
 }
 
 void GameManager::Restart()

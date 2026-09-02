@@ -10,6 +10,7 @@ enum class GameState
 	Menu,
 	Play,
 	Pause,
+	StageClear,
 	GameOver,
 	GameClear
 };
@@ -42,6 +43,7 @@ public:
 	void Resume();
 	void Menu();
 	void Exit();
+	void GameClear();
 
 	void Restart();
 	void SpawnBirdAndSlingShot();
@@ -51,7 +53,7 @@ public:
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
 	void SetBirdCount(int NewBirdCount)
 	{
-		Birds.clear();
+		BirdTypes.clear();
 		for (int i = 0; i < NewBirdCount; i++)
 		{
 			int randi = rand() % 2;
@@ -65,6 +67,7 @@ public:
 	void CheckGameState();
 
 	int GetCurlvl() { return CurrentLevel; }
+	void SetCurlvl(int lvl) { CurrentLevel = lvl; }
 
 	void ReloadBird();
 
