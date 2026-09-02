@@ -297,7 +297,7 @@ public:
 	FVector ShotPoint;
 
 	//새총 강도
-	float Power = 10.f;
+	float Power = 5.0f;
 private:
 	ABand* BackBand = nullptr;
 	ABand* FrontBand = nullptr;
