@@ -41,11 +41,15 @@ void AActor::Draw(URenderer& renderer)
 	}
 }
 
-void ACollider::Move(float t)
+void ACollider::Move(float deltaTime)
 {
-	float deltaTime = t / 1000.0f;
-
 	if (Mass <= 0.0f)
+	{
+		return;
+	}
+
+	// 잠든 물체는 중력도 적분도 안 받는다. 감쇠가 0에 도달 못 하는 꼬리를 여기서 끊는다
+	if (bSleeping)
 	{
 		return;
 	}
@@ -65,14 +69,14 @@ void ACollider::Move(float t)
 	// 회전
 	Rotation += AngularVelocity * deltaTime;
 
-	// 화면 경계는 SpawnWalls()가 만든 정적 콜라이더가 처리한다.
-	// 예전의 하드코딩 반사는 솔버와 따로 놀아서 마찰도 회전도 안 먹었다.
+	// 화면 경계는 SpawnWalls()가 만든 정적 콜라이더가 처리한다
 }
 
 void ACollider::Pressed(FVector _Location)
 {
 	if (bEditing)
 	{
+		WakeUp();
 		Location = _Location;
 		Velocity = FVector();
 		bUseGravity = false;
@@ -83,6 +87,7 @@ void ACollider::Released(FVector _Location)
 {
 	if (bEditing)
 	{
+		WakeUp();
 		Location = _Location;
 		Velocity = 0.f;
 		bUseGravity = true;
@@ -116,6 +121,7 @@ std::vector<FVector> Points;
 
 void ABird::Pressed(FVector _Location)
 {
+	WakeUp();
 	if (State == EBirdState::Waiting) return;
 
 	Velocity = 0.f;
@@ -137,15 +143,18 @@ void ABird::Pressed(FVector _Location)
 			BackBand->Stretched(Location, StretchedRate);
 			FrontBand->Stretched(Location, StretchedRate);
 
-			//새가 이동할 포물선 경로
+			//새가 이동할 포물선 경로 계산
 			Points.clear();
-			FVector vel = Velocity, loc = Location;
-			static const float delta = 0.00694;
-			for (int i = 0; i < 10; i++)
+			FVector startPos = Location;
+			FVector launchVel = (SlingShot->ShotPoint - startPos) * SlingShot->Power;
+
+			float dt = 0.035f;
+			for (int i = 1; i <= 18; i++)
 			{
-				vel += Global::G * delta;
-				loc += vel * delta;
-				Points.emplace_back(loc);
+				float t = i * dt;
+				float x = startPos.x + launchVel.x * t;
+				float y = startPos.y + launchVel.y * t + 0.5f * Global::G.y * t * t;
+				Points.emplace_back(FVector(x, y, 0.0f));
 			}
 
 			UIManager::GetInstance().DrawBirdPath(Points);
@@ -155,9 +164,12 @@ void ABird::Pressed(FVector _Location)
 
 void ABird::Released(FVector _Location)
 {
+	WakeUp();
 	bUseGravity = true;
 	State = EBirdState::Shooting;
 	bEditing = false;
+
+	UIManager::GetInstance().ClearBirdPath();
 
 	if (SlingShot)
 	{

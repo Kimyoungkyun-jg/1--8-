@@ -1,8 +1,8 @@
 #include "UUIIngamePage.h"
+#include "UIManager.h"
 #include <cmath>
 #include <algorithm>
 #include "../Global.h"
-
 
 static constexpr float TargetHUD_X = 50.0f;
 static constexpr float TargetHUD_Y = 40.0f;
@@ -19,6 +19,7 @@ UUIIngamePage::~UUIIngamePage()
 		delete ft;
 	}
 	FloatingTexts.clear();
+	TrajectoryPoints.clear();
 }
 
 bool UUIIngamePage::Initialize(IDWriteFactory* dwriteFactory, ID2D1RenderTarget* d2dRenderTarget, ID2D1Bitmap* pauseBtnBitmap, ID2D1Bitmap* bgBitmap, int screenWidth, int screenHeight)
@@ -36,13 +37,24 @@ bool UUIIngamePage::Initialize(IDWriteFactory* dwriteFactory, ID2D1RenderTarget*
 	PauseBtn->SetPoisition(static_cast<float>(screenWidth) - 150.0f, 30.0f, 50.0f, 50.0f);
 	AddChild(PauseBtn);
 
-
 	return true;
 }
 
 void UUIIngamePage::AddScore(int points)
 {
 	TargetScore += points;
+}
+
+void UUIIngamePage::ResetScore()
+{
+	TargetScore = 0;
+	DisplayScore = 0.0f;
+	if (InGameHUD)
+	{
+		InGameHUD->SetData(0.0f, BirdsLeft);
+	}
+	ClearTrajectoryPoints();
+	ClearFlowtingText();
 }
 
 void UUIIngamePage::SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color)
@@ -77,6 +89,11 @@ void UUIIngamePage::UpdateScore(float deltaTime)
 			DisplayScore = static_cast<float>(TargetScore);
 		}
 	}
+	else if (DisplayScore > TargetScore)
+	{
+		// 점수가 리셋되었을 때 즉시 동기화
+		DisplayScore = static_cast<float>(TargetScore);
+	}
 }
 
 void UUIIngamePage::UpdateFloatingTexts(float deltaTime)
@@ -107,15 +124,36 @@ void UUIIngamePage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush
 {
 	if (!GetVisible() || !renderTarget) return;
 
+	//포물선 궤적 점선 그리기 (새를 당기고 있을 때)
+	if (!TrajectoryPoints.empty() && brush)
+	{
+		float baseRadius = 5.0f;
+		for (size_t i = 0; i < TrajectoryPoints.size(); ++i)
+		{
+			const FVector& worldPt = TrajectoryPoints[i];
+			std::pair<float, float> screenPt = UIManager::GetInstance().WorldToScreen(worldPt);
+
+			float progress = static_cast<float>(i) / static_cast<float>(TrajectoryPoints.size());
+			float radius = baseRadius * (1.0f - progress * 0.35f);
+			float alpha = 0.85f * (1.0f - progress * 0.3f);
+
+			brush->SetColor(D2D1::ColorF(1.0f, 1.0f, 1.0f, alpha));
+			D2D1_ELLIPSE dot = D2D1::Ellipse(
+				D2D1::Point2F(screenPt.first, screenPt.second),
+				radius,
+				radius
+			);
+			renderTarget->FillEllipse(&dot, brush);
+		}
+	}
+
 	if (InGameHUD)
 	{
 		InGameHUD->SetData(DisplayScore, BirdsLeft);
 	}
 
-	// Render child UI elements (HUD, Pause Button, etc.)
 	UUIPage::Render(renderTarget, brush, font);
 
-	// Render dynamic floating texts
 	for (UUIFloatingText* ft : FloatingTexts)
 	{
 		if (ft && ft->GetVisible())
@@ -123,4 +161,20 @@ void UUIIngamePage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush
 			ft->Render(renderTarget, brush, font);
 		}
 	}
+}
+
+void UUIIngamePage::Hide()
+{
+	UUIPage::Hide();
+	ClearTrajectoryPoints();
+	ClearFlowtingText();
+}
+
+void UUIIngamePage::ClearFlowtingText()
+{
+	for (auto* ft : FloatingTexts)
+	{
+		delete ft;
+	}
+	FloatingTexts.clear();
 }

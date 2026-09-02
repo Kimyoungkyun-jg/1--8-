@@ -26,6 +26,7 @@
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "SoundManager.h"
+#include "Effects/EffectManager.h"
 
 bool bUseGravity = true;
 
@@ -51,9 +52,8 @@ FVector ScreenToWorld(HWND hwnd, int MouseX, int MouseY)
 	return FVector(worldX, worldY, 0.0f);
 }
 
-// ScreenToWorld의 역변환.
-// 크기는 GetClientRect가 아니라 ImGui의 DisplaySize에서 가져와야 한다.
-// DPI 배율이 걸리면 둘이 달라서(150%면 1.5배) 그린 게 그만큼 밀린다.
+// ScreenToWorld의 역변환. 크기는 ImGui의 DisplaySize에서 가져와야 한다.
+// GetClientRect의 물리 픽셀을 쓰면 DPI 배율만큼 밀린다.
 ImVec2 WorldToScreen(const FVector& World)
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -131,11 +131,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	const int targetFPS = 144;
 	const double targetFrameTime = 1000.0 / targetFPS;	// 한 프레임의 목표 시간 (밀리초 단위)
 
+	// 물리는 프레임과 분리해 항상 같은 크기로 진행한다.
+	// 큰 걸음 한 번 대신 작은 걸음 여러 번이라 물체가 접촉을 뛰어넘지 않는다.
+	const double fixedDeltaTime = 1.0 / 144.0;
+	const double maxAccumulated = fixedDeltaTime * 5.0;
+	double accumulator = 0.0;
+
 	LARGE_INTEGER frequency;	// tick/sec
 	QueryPerformanceFrequency(&frequency);
 
 	LARGE_INTEGER startTime, endTime;
 	double elapsedTime = 0.0;
+	float deltaTime = 0.0f;
 
 	bool bIsExit = false;
 	bool bPressed = false;
@@ -146,7 +153,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	float BlockWidth = 0.4;
 	float BlockHeight = 0.05;
 	float PigWidth = 0.15, PigHeight = 0.15;
-	bool bEditorMode = false;
 
 	// 물리 디버그
 	bool bPausePhysics = false;		// 켜면 물리가 멈춘다 (렌더와 UI는 계속 돈다)
@@ -165,6 +171,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UObjectManager& ObjectManager = UObjectManager::GetInstance();
 	CollisionManager& CM = CollisionManager::GetInstance();
 	LoadManager& LoadManager = LoadManager::Get();
+	EffectManager& effectManager = EffectManager::GetInstance();
+	effectManager.Initialize();
 
 	SoundManager& SM = SoundManager::GetInstance();
 	if (!SM.Initialize())
@@ -181,14 +189,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 인게임 배경화면 로드
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
-	/*bool bResult = LoadManager.LoadMap(0);
-	if (!bResult)
-	{
-		gameManager.SpawnBirdAndSlingShot();
-	}*/
-
-	// 화면 경계 벽 (Clear Map 해도 ClearMap()이 다시 만든다)
-	gameManager.SpawnWalls();
+	// 레벨 0으로 시작. state를 Play로 올려야 CheckGameState가 돈다.
+	// 벽과 새총은 Restart -> ClearMap 안에서 같이 만들어진다.
+	gameManager.Restart();
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -312,25 +315,53 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		bool bAdvancePhysics = !bPausePhysics || bStepOnce;
 		bStepOnce = false;
 
-		uiManager.Update(elapsedTime * 0.001);
+		deltaTime = static_cast<float>(elapsedTime * 0.001);
 
-		if (bAdvancePhysics)
-		{
-			for (ACollider* Collider : CM.colliders)
+		uiManager.Update(deltaTime);
+		effectManager.Update(deltaTime);
+
+		// 물리 한 스텝. 항상 fixedDeltaTime만큼만 진행한다.
+		auto StepPhysics = [&]()
 			{
-				Collider->Move(elapsedTime);
-			}
+				for (ACollider* Collider : CM.colliders)
+				{
+					Collider->Move((float)fixedDeltaTime);
+				}
 
-			// 충돌 검사
-			uiManager.GetCollisionInfos(CM.CheckCollisionAll());
+				// 충돌 검사
+				uiManager.GetCollisionInfos(CM.CheckCollisionAll((float)fixedDeltaTime));
+			};
+
+		// 흐른 시간을 쌓아두고 고정 크기로 꺼내 쓴다. 남은 건 다음 프레임으로 넘어간다.
+		if (bPausePhysics)
+		{
+			// 멈춘 동안 시간이 쌓이면 풀었을 때 한꺼번에 몰아서 돈다
+			accumulator = 0.0;
+
+			if (bStepOnce)
+			{
+				StepPhysics();   // Step은 정확히 한 스텝
+			}
 		}
+		else
+		{
+			accumulator += deltaTime;
+
+			while (accumulator >= fixedDeltaTime)
+			{
+				StepPhysics();
+				accumulator -= fixedDeltaTime;
+			}
+		}
+
+		bStepOnce = false;
 
 		//
 
 		//매 프레임 UObject에 Tick 호출
 		for (int i = ObjectManager.AllObjects.size() - 1; i >= 0; --i)
 		{
-			ObjectManager.AllObjects[i]->Tick(elapsedTime * 0.001);
+			ObjectManager.AllObjects[i]->Tick(deltaTime);
 		}
 
 		// 렌더 준비
@@ -343,6 +374,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		renderer.PrepareShader();
+
+		//이펙트 그리기
+		effectManager.Render(renderer);
+
 
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)
@@ -379,7 +414,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		// UI 그리기
-		uiManager.Render(4);
+		uiManager.Render(gameManager.GetBirdCount()+1);
 
 		// ImGui
 		ImGui_ImplDX11_NewFrame();
@@ -400,15 +435,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				OBB Box = MakeOBB(Collider);
 
+				// 잠든 물체는 회색 — 무리가 어떻게 잠드는지 눈으로 보려는 것
+				ImU32 Color = Collider->IsSleeping()
+					? IM_COL32(150, 150, 150, 255)
+					: IM_COL32(80, 200, 255, 255);
+
 				for (int i = 0; i < 4; i++)
 				{
 					DrawList->AddLine(WorldToScreen(Box.vertex[i]),
-						WorldToScreen(Box.vertex[(i + 1) % 4]),
-						IM_COL32(80, 200, 255, 255), 2.0f);
+						WorldToScreen(Box.vertex[(i + 1) % 4]), Color, 2.0f);
 				}
 
 				// 꼭짓점 0. 블록을 돌리면 이 점도 같이 돌아야 한다
-				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, IM_COL32(80, 200, 255, 255));
+				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, Color);
 			}
 		}
 
@@ -460,6 +499,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::SliderInt("Position Iter", &CM.positionIterations, 1, 20);
 		ImGui::SliderFloat("Baumgarte", &CM.baumgarte, 0.05f, 1.0f);
 		ImGui::SliderFloat("Slop", &CM.slop, 0.0f, 0.02f, "%.4f");
+		ImGui::SliderFloat("Rolling", &CM.rollingResistance, 0.0f, 0.02f, "%.4f");
 
 		// slop 근처에서 평평하면 수렴한 것
 		ImGui::Text("max penetration %.5f  (slop %.5f)", CM.maxPenetration, CM.slop);
@@ -469,6 +509,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			PenHistory[PenIndex] = CM.maxPenetration;
 			PenIndex = (PenIndex + 1) % 240;
 			ImGui::PlotLines("##pen", PenHistory, 240, PenIndex, nullptr, 0.0f, 0.02f, ImVec2(0, 60));
+		}
+
+		ImGui::SeparatorText("Sleep");
+		ImGui::Checkbox("Sleep Enabled", &CM.bSleepEnabled);
+		{
+			int SleepingCount = 0;
+			int DynamicCount = 0;
+			for (ACollider* c : CM.colliders)
+			{
+				if (c->GetMass() <= 0.0f) continue;
+				DynamicCount++;
+				if (c->IsSleeping()) SleepingCount++;
+			}
+			ImGui::SameLine();
+			ImGui::Text("%d / %d", SleepingCount, DynamicCount);
+		}
+		ImGui::SliderFloat("Linear Tol", &CM.linearSleepTolerance, 0.0f, 0.1f, "%.4f");
+		ImGui::SliderFloat("Angular Tol", &CM.angularSleepTolerance, 0.0f, 0.3f, "%.4f");
+		ImGui::SliderFloat("Time To Sleep", &CM.timeToSleep, 0.05f, 2.0f);
+
+		// 안 잠들 때 누가 붙잡고 있는지. 임계값을 못 넘는 물체 하나가 무리 전체를 깨워둔다
+		for (ACollider* c : CM.colliders)
+		{
+			if (c->GetMass() <= 0.0f) continue;
+
+			float speed = c->GetVelocity().Length();
+
+			ImGui::Text("ID %2d %s  v=%.4f %s  w=%+.4f %s  t=%.2f",
+				c->GetID(), c->IsSleeping() ? "zzz" : "   ",
+				speed, speed < CM.linearSleepTolerance ? "ok" : "  ",
+				c->GetAngularVelocity(), fabsf(c->GetAngularVelocity()) < CM.angularSleepTolerance ? "ok" : "  ",
+				c->GetSleepTimer());
 		}
 
 		ImGui::SeparatorText("Contacts");
@@ -488,29 +560,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::SeparatorText("Bodies");
 
-		// 물리 디버깅 창
-		for (ACollider* c : CollisionManager::GetInstance().colliders)
+		// slip = 접촉점에서 실제로 미끄러지는 속도. 0이면 구르는 중이라 마찰이 할 일이 없다
+		for (ACollider* c : CM.colliders)
 		{
 			if (c->GetMass() <= 0.0f) continue;                    // 정적 제외
 			ACircle* circle = dynamic_cast<ACircle*>(c);
 			if (!circle) continue;                                 // 원만
 
-			float slip = c->GetVelocity().x + c->GetAngularVelocity() * circle->GetRadius();
 			ImGui::Text("ID %2d  v=(%+.3f, %+.3f)  w=%+8.3f  slip=%+.5f",
 				c->GetID(), c->GetVelocity().x, c->GetVelocity().y,
-				c->GetAngularVelocity(), slip);
+				c->GetAngularVelocity(),
+				c->GetVelocity().x + c->GetAngularVelocity() * circle->GetRadius());
+		}
 
-			static float hist[240] = {};
-			static int idx = 0;
-			hist[idx] = slip;
-			idx = (idx + 1) % 240;
-			ImGui::PlotLines("slip", hist, 240, idx, nullptr, -3.0f, 3.0f, ImVec2(0, 80));
-
+		// 전체 운동에너지. 잦아들면 수렴, 평평하면 진동, 오르면 발산이다.
+		{
 			float energy = 0.0f;
-			for (ACollider* c : CollisionManager::GetInstance().colliders)
-				if (c->GetMass() > 0.0f)
-					energy += 0.5f * c->GetMass() * c->GetVelocity().LengthSquared()
+			for (ACollider* c : CM.colliders)
+			{
+				if (c->GetMass() <= 0.0f) continue;
+
+				energy += 0.5f * c->GetMass() * c->GetVelocity().LengthSquared()
 					+ 0.5f * c->GetInertia() * c->GetAngularVelocity() * c->GetAngularVelocity();
+			}
+
+			static float EnergyHistory[240] = {};
+			static int EnergyIndex = 0;
+			EnergyHistory[EnergyIndex] = energy;
+			EnergyIndex = (EnergyIndex + 1) % 240;
+
+			ImGui::Text("kinetic energy %.5f", energy);
+			ImGui::PlotLines("##energy", EnergyHistory, 240, EnergyIndex, nullptr, 0.0f, FLT_MAX, ImVec2(0, 60));
 		}
 
 		ImGui::End();
@@ -557,18 +637,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			LoadManager.SaveMap(BirdCount);
 		}
-		// Checkbox는 '값이 바뀐 프레임'에만 true다. 매 프레임 마찰을 덮어쓰지 않도록 분리
-		if (ImGui::Checkbox("EditorMode", &bEditorMode))
-		{
-			if (bEditorMode)
-			{
-				CollisionManager::GetInstance().SetAllCollisionFriction(1.f, 1.f);
-			}
-			else
-			{
-				CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
-			}
-		}
 		if (ImGui::Button("Delete Select Object", ImVec2(100, 20)))
 		{
 			PressedCollider->Destroy();
@@ -597,6 +665,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			// 한 프레임이 소요된 시간 계산 (밀리초 단위로 변환)
 			elapsedTime = (endTime.QuadPart - startTime.QuadPart) * 1000.0 / frequency.QuadPart;
 		} while (elapsedTime < targetFrameTime);
+
+		// 크게 튄 프레임을 한 번에 갚으려다 더 밀리는 악순환을 막는다.
+		// 대신 물리가 잠깐 느려진다.
+		elapsedTime = min(elapsedTime, maxAccumulated * 1000.0);
 	}
 
 	//ImGui 리소스 해제

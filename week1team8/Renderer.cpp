@@ -413,7 +413,7 @@ void URenderer::DrawBitmap(ID2D1Bitmap* bitmap, float left, float top, float wid
 	D2DRenderTarget->EndDraw();
 }
 
-void URenderer::DrawWorldBitmap(ID2D1Bitmap* bitmap, const FVector& worldLocation, float rotation, const FVector& worldScale, float opacity)
+void URenderer::DrawWorldBitmap(ID2D1Bitmap* bitmap, const FVector& worldLocation, float rotation, const FVector& worldScale, float opacity, const D2D1_RECT_F* srcRect)
 {
 	if (!D2DRenderTarget || !bitmap) return;
 
@@ -434,7 +434,7 @@ void URenderer::DrawWorldBitmap(ID2D1Bitmap* bitmap, const FVector& worldLocatio
 		* D2D1::Matrix3x2F::Translation(screenX, screenY);
 
 	D2DRenderTarget->SetTransform(transform);
-	D2DRenderTarget->DrawBitmap(bitmap, &destRect, opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+	D2DRenderTarget->DrawBitmap(bitmap, &destRect, opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, srcRect);
 	D2DRenderTarget->SetTransform(oldTransform);
 	D2DRenderTarget->EndDraw();
 }

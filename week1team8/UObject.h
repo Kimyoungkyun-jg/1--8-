@@ -76,7 +76,7 @@ public:
 	ACollider() {}
 	virtual ~ACollider() {}
 
-	virtual void Move(float t);		// t 시간동안 이동
+	virtual void Move(float deltaTime);
 
 	FVector GetVelocity() const { return Velocity; }
 	void SetVelocity(FVector _Vel) { Velocity = _Vel; }
@@ -98,6 +98,13 @@ public:
 	float GetRestitution() const { return Restitution; }
 	void SetRestitution(float _r) { Restitution = _r; }
 
+	// 슬립. 판정은 CollisionManager::UpdateSleep이 한다
+	bool IsSleeping() const { return bSleeping; }
+	void SetSleeping(bool value) { bSleeping = value; }
+	float GetSleepTimer() const { return SleepTimer; }
+	void SetSleepTimer(float value) { SleepTimer = value; }
+	void WakeUp() { bSleeping = false; SleepTimer = 0.0f; }
+
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual float GetInertia() const = 0;
@@ -107,8 +114,6 @@ public:
 
 	bool bEditing = false;
 	bool bUseGravity = true;
-
-
 
 protected:
 	EColliderId colId = EColliderId::NONE;	// collider 종류
@@ -121,6 +126,8 @@ protected:
 	float hp = 1.0f;
 	float LinearDamping = 0.0f;
 	float AngularDamping = 2.0f;
+	bool bSleeping = false;
+	float SleepTimer = 0.0f;	// 충분히 느린 상태가 이어진 시간
 };
 
 class ACircle : public ACollider
@@ -145,7 +152,15 @@ enum class EBirdState
 class ABird : public ACircle
 {
 public:
-	ABird() { colId = EColliderId::BIRD; bEditing = true; }
+	ABird()
+	{
+		colId = EColliderId::BIRD;
+		bEditing = true;
+		StaticFriction = 0.4f;   // 잘 구르고
+		DynamicFriction = 0.3f;
+		Restitution = 0.4f;      // 잘 튄다
+	}
+
 	virtual ~ABird() {}
 
 	virtual void Clicked() override;
@@ -172,7 +187,13 @@ public:
 class APig : public ACircle
 {
 public:
-	APig() { colId = EColliderId::PIG; }
+	APig()
+	{
+		colId = EColliderId::PIG;
+		StaticFriction = 0.5f;
+		DynamicFriction = 0.4f;
+		Restitution = 0.2f;
+	}
 	virtual ~APig() {}
 
 	virtual float minusHp() override;
@@ -181,7 +202,13 @@ public:
 class ABlock : public ACollider
 {
 public:
-	ABlock() { colId = EColliderId::BLOCK; }
+	ABlock()
+	{
+		colId = EColliderId::BLOCK;
+		StaticFriction = 0.6f;   // 나무끼리는 잘 안 미끄러지고
+		DynamicFriction = 0.5f;
+		Restitution = 0.05f;     // 거의 안 튄다
+	}
 	float GetInertia() const override
 	{
 		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
@@ -193,7 +220,13 @@ public:
 class AGround : public ACollider
 {
 public:
-	AGround() { colId = EColliderId::GROUND; }
+	AGround()
+	{
+		colId = EColliderId::GROUND;
+		StaticFriction = 0.7f;   // 바닥이 제일 잘 잡아준다
+		DynamicFriction = 0.6f;
+		Restitution = 0.1f;
+	}
 	float GetInertia() const override
 	{
 		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;

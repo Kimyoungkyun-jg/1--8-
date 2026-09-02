@@ -16,21 +16,26 @@ struct ContactPoint
 	unsigned int id = 0;         // 어느 면·꼭짓점에서 나왔는지. warm starting이 이걸로 짝을 찾음
 
 	FVector rA, rB;              // 질량중심 -> 접촉점
+	FVector localA, localB;      // 각 물체 로컬 좌표의 접촉점. 위치 보정이 깊이를 다시 잴 때 쓴다
 	float normalMass = 0.0f;     // 1 / validMass       (미리 나눠둔 값)
 	float tangentMass = 0.0f;    // 1 / validMassTangent
 	float velocityBias = 0.0f;   // 목표 분리 속도
 
 	float normalImpulse = 0.0f;  // 누적 충격량 1: 법선
 	float tangentImpulse = 0.0f; // 누적 충격량 2: 마찰
+	float rollingImpulse = 0.0f; // 누적 충격량 3: 구름 저항 (각충격량)
 	float initialNormalVelocity = 0.0f;
+
+	float inheritedNormalImpulse = 0.0f;   // 이월받은 몫 = 지지 하중. 빼면 이번 충돌분만 남는다
 };
 
-// 한 쌍의 충돌. 법선은 공유하고 접촉점만 여러 개 (면끼리 닿으면 2개)
+
 struct CollisionInfo
 {
-	FVector normal = FVector();  // B -> A 방향
-	FVector tangent = FVector(); // 접선 방향 (고정)
+	FVector normal = FVector(); 
+	FVector tangent = FVector(); 
 	bool isCollision = false;
+	bool bNewContact = false;    // 지난 프레임엔 안 닿아 있었다 = 이번에 새로 부딪힘
 	EColliderId colAId = EColliderId::NONE;
 	EColliderId colBId = EColliderId::NONE;
 
@@ -54,8 +59,7 @@ struct CollisionInfo
 	}
 };
 
-// 회전을 포함한 사각형 (Oriented Bounding Box).
-// 면 i는 vertex[i] -> vertex[(i+1)%4] 선분, 그 면의 바깥 방향이 normal[i]
+// 회전을 포함한 사각형. 면 i는 vertex[i] -> vertex[i+1], 바깥 방향이 normal[i]
 struct OBB
 {
 	FVector center;
@@ -130,9 +134,20 @@ public:
 		return false;
 	}
 
-	void SetAllCollisionFriction(float _dynamic, float _static);
+	// 둘 다 못 움직이면 풀 필요가 없다 (정적끼리, 잠든 것끼리, 정적-잠듦)
+	static bool IsPairSolvable(const ACollider* a, const ACollider* b)
+	{
+		return (a->GetMass() > 0.0f && !a->IsSleeping())
+			|| (b->GetMass() > 0.0f && !b->IsSleeping());
+	}
 
-	std::vector<CollisionInfo> CheckCollisionAll();
+	std::vector<CollisionInfo> CheckCollisionAll(float t);
+
+	// 무리(island) 단위로 재운다. 하나라도 타이머를 못 채우면 무리 전체가 깨어 있는다
+	void UpdateSleep(float t, const std::vector<std::pair<ACollider*, ACollider*>>& contacts);
+
+	// 타이머만 채워서 바로 잠들 준비를 시킨다 (맵 로드 직후용). 뜬 물체는 그대로 떨어진다
+	void PrimeSleep();
 
 	// 충돌 감지
 	CollisionInfo CheckCollision(ACollider* a, ACollider* b);
@@ -154,12 +169,19 @@ public:
 
 	bool bWarmStarting = true;   // 끄고 켜서 효과 비교용
 
-	// 솔버 튜닝 값 (Physics Debug에서 실시간 조절).
-	// 속도 반복 = 충격량이 접촉을 타고 전파되는 횟수라 높이 쌓을수록 더 필요하다
-	int velocityIterations = 8;
-	int positionIterations = 10;
+	// 솔버 튜닝 값 (Physics Debug에서 실시간 조절)
+	int velocityIterations = 8;   // 충격량이 접촉을 타고 전파되는 횟수
+	int positionIterations = 15;
 	float baumgarte = 0.8f;      // 겹침을 한 번에 얼마나 밀어낼지
 	float slop = 0.0005f;         // 이 정도 침투는 무시
+
+	float rollingResistance = 0.002f;   // 구름 저항의 팔 길이. 무차원이 아니라 길이 단위다
+
+	// 슬립
+	bool bSleepEnabled = true;
+	float linearSleepTolerance = 0.015f;
+	float angularSleepTolerance = 0.035f;   // 약 2도/초
+	float timeToSleep = 0.5f;
 
 private:
 	// 지난 프레임의 접촉들. warm starting이 여기서 충격량을 찾아 이월한다

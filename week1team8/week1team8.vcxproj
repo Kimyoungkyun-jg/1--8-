@@ -125,6 +125,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CollisionManager.cpp" />
+    <ClCompile Include="Effects\EffectManager.cpp" />
+    <ClCompile Include="Effects\UEffect.cpp" />
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
@@ -155,6 +157,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CollisionManager.h" />
+    <ClInclude Include="EffectManager.h" />
+    <ClInclude Include="Effects\EffectManager.h" />
+    <ClInclude Include="Effects\UEffect.h" />
     <ClInclude Include="enums.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="Global.h" />
