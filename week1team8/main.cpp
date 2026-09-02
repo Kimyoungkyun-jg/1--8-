@@ -129,10 +129,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	LoadManager& LoadManager = LoadManager::Get();
 
 	SoundManager& SM = SoundManager::GetInstance();
-	if (!SM.Initialize())
-	{
-		return 0;
-	}
+	SM.Initialize();
 
 	// 루프 진입 전 필요한 리소스 생성
 	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
@@ -150,6 +147,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		SlingShot->EquippedBird = Bird;
 		SlingShot->ShotPoint = Bird->GetLocation();
+		Bird->SlingShot = SlingShot;
 	}
 
 	// 테스트용
@@ -278,7 +276,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// 충돌 검사
 		CollisionManager& ColManager = CollisionManager::GetInstance();
-		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
+		ColManager.CheckCollisionAll();
 
 		// 렌더 준비
 		renderer.Prepare();

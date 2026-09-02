@@ -167,4 +167,5 @@ void LoadManager::ClearMap(ASlingShot*& SlingShot, ABird*& Bird)
 
 	SlingShot->EquippedBird = Bird;
 	SlingShot->ShotPoint = Bird->GetLocation();
+	Bird->SlingShot = SlingShot;
 }
