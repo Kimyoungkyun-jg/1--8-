@@ -328,7 +328,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 
 				// 충돌 검사
-				uiManager.GetCollisionInfos(CM.CheckCollisionAll((float)fixedDeltaTime));
+				vector<CollisionInfo> infos = CM.CheckCollisionAll((float)fixedDeltaTime);
+				for (const auto& info : infos)
+				{
+					if (info.colAId == EColliderId::BLOCK || info.colBId == EColliderId::BLOCK)
+					{
+						SM.PlaySFX("sfx_rock");
+					}
+					if (info.colAId == EColliderId::PIG || info.colBId == EColliderId::PIG)
+					{
+						SM.PlaySFX("sfx_pig");
+					}
+				}
+
+				uiManager.GetCollisionInfos(infos);
 			};
 
 		// 흐른 시간을 쌓아두고 고정 크기로 꺼내 쓴다. 남은 건 다음 프레임으로 넘어간다.
