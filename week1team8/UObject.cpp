@@ -119,6 +119,12 @@ void ACollider::Released(FVector _Location)
 	}
 }
 
+
+void UObject::Destroy()
+{
+	UObjectManager::GetInstance().Destroy(this);
+}
+
 void ABird::Clicked()
 {
 	if (SlingShot)
@@ -127,6 +133,8 @@ void ABird::Clicked()
 		ABand* FrontBand = SlingShot->GetFrontBand();
 		if (BackBand && FrontBand)
 		{
+			BackBand->SetState(EBandState::Stretching);
+			FrontBand->SetState(EBandState::Stretching);
 			BackBand->Scaley = Scale.y;
 			FrontBand->Scaley = Scale.y;
 		}
@@ -160,16 +168,28 @@ void ABird::Pressed(FVector _Location)
 void ABird::Released(FVector _Location)
 {
 	bUseGravity = true;
+
+	if (SlingShot)
+	{
+		ABand* BackBand = SlingShot->GetBackBand();
+		ABand* FrontBand = SlingShot->GetFrontBand();
+		if (BackBand && FrontBand)
+		{
+			BackBand->SetState(EBandState::Snapping);
+			FrontBand->SetState(EBandState::Snapping);
+		}
+	}
 }
 
 void ASlingShot::SpawnBand()
 {
-	BackBand = SpawnActor<ABand>(Location, EPrimitive::Rectangle);
-	FrontBand = SpawnActor<ABand>(Location, EPrimitive::Rectangle);
 
 	//새총의 왼쪽 위를 Back에, 오른쪽 위를 Front에
 	FVector BackPoint = Location + FVector(-Scale.x / 2, Scale.y / 2, 0);
 	FVector FrontPoint = Location + FVector(Scale.x / 2, Scale.y / 2, 0);
+
+	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, {0.05, 0.05, 1});
+	FrontBand = SpawnActor<ABand>(FrontPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
 
 	BackBand->AttachedPoint = BackPoint;
 	FrontBand->AttachedPoint = FrontPoint;
@@ -198,12 +218,19 @@ void ASlingShot::Released(FVector _Location)
 void ABand::Stretched(FVector BirdLoc, float StretchedRate)
 {
 	//밴드 포인트와 새 사이 중간점에 밴드를 위치시키고,
-	Location = (GetLocation() + BirdLoc) / 2;
+	Location = (AttachedPoint + BirdLoc) / 2;
 
 	//밴드 길이를 밴드 포인터와 새 사이 길이만큼 증가시키고,
 	// 비례해 두깨는 줄인다
 	Scale.x = (AttachedPoint - BirdLoc).Length();
-	Scale.y = Scaley * (1 - StretchedRate);
+	Scale.y = Scaley * (min(0.5, max(1 - StretchedRate, 0.1)));
 
 	//밴드 포인트와 새 사이 벡터의 tan 값으로 회전시킨다?
+	FVector v = BirdLoc - AttachedPoint;
+	float radian = atan2f(v.y, v.x);
+	Rotation = DirectX::XMConvertToDegrees(radian);
+}
+
+void ABand::Tick()
+{
 }

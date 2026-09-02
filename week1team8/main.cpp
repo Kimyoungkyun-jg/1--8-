@@ -22,6 +22,7 @@
 //모든 매니저 헤더파일
 #include "GameManager.h"
 #include "UI/UIManager.h"
+#include "UI/UUIBackground.h"
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "SoundManager.h"
@@ -82,7 +83,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	WNDCLASSW wndclass = { 0, WndProc, 0, 0, 0, 0, 0, 0, 0, WindowClass };
 	RegisterClassW(&wndclass);
 
-	int windowWidth = 1980;
+	int windowWidth = 1920;
 	int windowHeight = 1080; //해상도
 
 	HWND hWnd = CreateWindowExW(0, WindowClass, Title,
@@ -129,7 +130,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gameManager.Initialize();
 
 	UIManager& uiManager = UIManager::GetInstance();
-	uiManager.Initialize(renderer.SwapChain, 1980, 1980);
+	uiManager.Initialize(renderer, windowWidth, windowHeight);
 
 	UObjectManager& ObjectManager = UObjectManager::GetInstance();
 	CollisionManager& CM = CollisionManager::GetInstance();
@@ -147,13 +148,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
+
+
+	// 인게임 배경화면 로드
+	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
+
+	
+
+
 	ASlingShot* SlingShot = nullptr;
 	ABird* Bird = nullptr;
 	bool bResult = LoadManager.LoadMap(1, SlingShot, Bird);
 	if (!bResult)
 	{
-		SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
-		Bird = SpawnColider<ABird>({ -0.5, -0.6, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50);
+		SlingShot = SpawnActor<ASlingShot>({ -1.2, -0.6, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
+		Bird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50);
 
 		SlingShot->EquippedBird = Bird;
 		SlingShot->ShotPoint = Bird->GetLocation();
@@ -289,8 +298,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		CollisionManager& ColManager = CollisionManager::GetInstance();
 		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
 
+		//매 프레임 UObject에 Tick 호출
+		for (UObject* Obj : ObjectManager.AllObjects)
+		{
+			Obj->Tick();
+		}
+
 		// 렌더 준비
 		renderer.Prepare();
+
+		// 배경화면 그리기 (모든 게임 객체 뒤에 먼저 렌더링)
+		if (InGameBackgroundBitmap)
+		{
+			renderer.DrawBitmap(InGameBackgroundBitmap, 0.0f, 0.0f, (float)windowWidth, (float)windowHeight);
+		}
+
 		renderer.PrepareShader();
 
 		// 그리기
@@ -410,6 +432,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	renderer.ReleaseConstantBuffer();
 	renderer.ReleaseShader();
 	renderer.Release();
+
+	// 배경 비트맵 해제
+	if (InGameBackgroundBitmap)
+	{
+		InGameBackgroundBitmap->Release();
+		InGameBackgroundBitmap = nullptr;
+	}
 
 	// 사운드 매니저 해제
 	SM.Shutdown();

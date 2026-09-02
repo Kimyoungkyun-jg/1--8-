@@ -2,9 +2,16 @@
 
 #pragma comment(lib, "d3d11")			
 #pragma comment(lib, "d3dcompiler")		
+#pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
+#pragma comment(lib, "windowscodecs.lib")
 
 #include <d3d11.h>						
 #include <d3dcompiler.h>
+#include <d2d1.h>
+#include <d2d1helper.h>
+#include <dwrite.h>
+#include <wincodec.h>
 #include <vector>
 
 #include "VertexSimple.h"
@@ -22,7 +29,7 @@ class URenderer
 	struct FConstants
 	{
 		FVector Offset;
-		float Rotation; // 라디안
+		float Rotation;	// radians
 		FVector Scale;	// (width, height, depth)
 		float AspectRatio;
 	};
@@ -47,6 +54,12 @@ public:
 
 	// CreateConstantBuffer
 	ID3D11Buffer* ConstantBuffer = nullptr;
+
+	// Direct2D & WIC Management
+	ID2D1Factory* D2DFactory = nullptr;
+	ID2D1RenderTarget* D2DRenderTarget = nullptr;
+	IDWriteFactory* DWriteFactory = nullptr;
+	IWICImagingFactory* WICFactory = nullptr;
 
 	// values
 	D3D11_VIEWPORT ViewportInfo;
@@ -76,6 +89,13 @@ public:
 	void CreateVertexBufferInfos();
 	ID3D11Buffer* CreateVertexBuffer(FVertexSimple* vertices, UINT byteWidth);
 	void ReleaseVertexBuffers();
+
+	// Direct2D & Bitmap APIs
+	bool CreateD2D();
+	void ReleaseD2D();
+	ID2D1Bitmap* LoadBitmapFromFile(const wchar_t* uri);
+	void DrawBitmap(ID2D1Bitmap* bitmap, float left, float top, float width, float height, float opacity = 1.0f);
+	void DrawWorldBitmap(ID2D1Bitmap* bitmap, const FVector& worldLocation, float rotation, const FVector& worldScale, float opacity = 1.0f);
 
 	void Prepare();
 	void PrepareShader();
