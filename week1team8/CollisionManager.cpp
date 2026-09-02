@@ -339,7 +339,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		WarmStartContact(ab.first, ab.second, info);
 	}
 
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < velocityIterations; i++)
 	{
 		for (auto& [ab, info] : abinfos)
 		{
@@ -369,7 +369,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		debugContacts.push_back(info);
 	}
 
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < positionIterations; i++)
 	{
 		for (auto& [ab, info] : abinfos)
 		{
@@ -382,6 +382,19 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 				// 새롭게 계산된 정보(currentInfo)로 위치 보정
 				ResolvePosition(ab.first, ab.second, currentInfo);
 			}
+		}
+	}
+
+	// 위치 보정이 끝난 뒤 얼마나 남았는지 잰다. 솔버 값을 맞추는 기준이라
+	// 감지를 한 번 더 도는 값어치가 있다.
+	maxPenetration = 0.0f;
+	for (auto& [ab, info] : abinfos)
+	{
+		CollisionInfo residual = CheckCollision(ab.first, ab.second);
+
+		for (int i = 0; i < residual.pointCount; i++)
+		{
+			maxPenetration = std::fmax(maxPenetration, residual.points[i].penetration);
 		}
 	}
 
@@ -611,9 +624,7 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 		return;
 	}
 
-	// 위치 보정
-	const float slop = 0.001f; // 이 정도 침투는 무시
-	const float baumgarte = 0.5f;   // 나중에 dt 기반으로 변경
+	// slop과 baumgarte는 멤버라 Physics Debug에서 실시간으로 바꿀 수 있다.
 
 	// 접촉점마다 따로 보정한다.
 	// 예전엔 가장 깊은 값 하나로 물체를 통째로 평행이동했는데, 그러면 기울어진

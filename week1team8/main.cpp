@@ -470,6 +470,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::SliderFloat("Normal Length", &NormalLength, 10.0f, 120.0f);
 		ImGui::Checkbox("Warm Starting", &CM.bWarmStarting);
 
+		ImGui::SeparatorText("Solver");
+		ImGui::SliderInt("Velocity Iter", &CM.velocityIterations, 1, 20);
+		ImGui::SliderInt("Position Iter", &CM.positionIterations, 1, 20);
+		ImGui::SliderFloat("Baumgarte", &CM.baumgarte, 0.05f, 1.0f);
+		ImGui::SliderFloat("Slop", &CM.slop, 0.0f, 0.02f, "%.4f");
+
+		// 위치 보정이 끝나고 남은 겹침. slop 근처면 제대로 수렴한 것이다.
+		ImGui::Text("max penetration %.5f  (slop %.5f)", CM.maxPenetration, CM.slop);
+		{
+			static float PenHistory[240] = {};
+			static int PenIndex = 0;
+			PenHistory[PenIndex] = CM.maxPenetration;
+			PenIndex = (PenIndex + 1) % 240;
+			ImGui::PlotLines("##pen", PenHistory, 240, PenIndex, nullptr, 0.0f, 0.02f, ImVec2(0, 60));
+		}
+
 		ImGui::SeparatorText("Contacts");
 		ImGui::Text("count: %d", (int)CM.debugContacts.size());
 		for (int i = 0; i < (int)CM.debugContacts.size(); i++)

@@ -112,6 +112,10 @@ public:
 	// 담기지만, 이쪽은 이번 프레임에 감지된 접촉 전부를 담는다.
 	std::vector<CollisionInfo> debugContacts;
 
+	// 위치 보정을 다 하고도 남은 가장 깊은 겹침. 솔버 값을 맞추는 기준이 된다.
+	// 이 값이 slop 근처로 내려가면 위치 보정이 제 일을 다 한 것이다.
+	float maxPenetration = 0.0f;
+
 	void AddColider(ACollider* col)
 	{
 		colliders.push_back(col);
@@ -155,6 +159,13 @@ public:
 	void WarmStartContact(ACollider* a, ACollider* b, const CollisionInfo& info);
 
 	bool bWarmStarting = true;   // 끄고 켜서 효과를 비교할 수 있게
+
+	// 솔버 튜닝 값. Physics Debug 창에서 실시간으로 조절한다.
+	// 속도 반복은 충격량이 접촉을 타고 전파되는 횟수라, 높이 쌓을수록 더 필요하다.
+	int velocityIterations = 8;
+	int positionIterations = 10;
+	float baumgarte = 0.8f;      // 겹침을 한 번에 얼마나 밀어낼지
+	float slop = 0.0005f;         // 이 정도 침투는 무시
 
 private:
 	// 지난 프레임의 접촉들. warm starting이 여기서 이전 충격량을 찾아 이월한다.
