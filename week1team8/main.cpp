@@ -190,6 +190,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
 	gameManager.Menu();
+	int BirdCount = 3;
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -666,7 +667,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			LoadManager.ClearMap();
 		}
-		int BirdCount = 3;
 		ImGui::InputInt("Bird Count on This Level", &BirdCount);
 		if (ImGui::Button("Save Map", ImVec2(100, 20)))
 		{
