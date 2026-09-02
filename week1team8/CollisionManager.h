@@ -29,11 +29,11 @@ struct ContactPoint
 	float inheritedNormalImpulse = 0.0f;   // 이월받은 몫 = 지지 하중. 빼면 이번 충돌분만 남는다
 };
 
-// 한 쌍의 충돌. 법선은 공유하고 접촉점만 여러 개 (면끼리 닿으면 2개)
+
 struct CollisionInfo
 {
-	FVector normal = FVector();  // B -> A 방향
-	FVector tangent = FVector(); // 접선 방향 (고정)
+	FVector normal = FVector(); 
+	FVector tangent = FVector(); 
 	bool isCollision = false;
 	bool bNewContact = false;    // 지난 프레임엔 안 닿아 있었다 = 이번에 새로 부딪힘
 	EColliderId colAId = EColliderId::NONE;

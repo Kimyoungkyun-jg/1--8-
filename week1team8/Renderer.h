@@ -102,7 +102,7 @@ public:
 	void ReleaseD2D();
 	ID2D1Bitmap* LoadBitmapFromFile(const wchar_t* uri);
 	void DrawBitmap(ID2D1Bitmap* bitmap, float left, float top, float width, float height, float opacity = 1.0f);
-	void DrawWorldBitmap(ID2D1Bitmap* bitmap, const FVector& worldLocation, float rotation, const FVector& worldScale, float opacity = 1.0f);
+	void DrawWorldBitmap(ID2D1Bitmap* bitmap, const FVector& worldLocation, float rotation, const FVector& worldScale, float opacity = 1.0f, const D2D1_RECT_F* srcRect = nullptr);
 
 	void Prepare();
 	void PrepareShader();

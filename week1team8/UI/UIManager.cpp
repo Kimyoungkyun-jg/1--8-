@@ -67,6 +67,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		startbtn->SetOnClick([this]() {
 			// 페이지만 바꾸면 state가 Menu에 머물러 CheckGameState(맵 로드·클리어 판정)가 안 돈다
 			GameManager::GetInstance().Restart();
+			ResetScore();
 			ChangePage(EPageType::InGame);
 			});
 		startPage->AddChild(startbtn);
@@ -149,6 +150,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 
 		retryBtn->SetOnClick([this]() {
 			LoadManager::Get().LoadMap(GameManager::GetInstance().GetCurlvl());
+			ResetScore();
 			ChangePage(EPageType::InGame);
 			});
 		pausePage->AddChild(retryBtn);
@@ -184,6 +186,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 
 		Resultbtn->SetOnClick([this]() {
+			ResetScore();
 			ChangePage(EPageType::Starting);
 			});
 
@@ -202,6 +205,15 @@ void UIManager::AddScore(int points)
 	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
 	{
 		inGame->AddScore(points);
+	}
+}
+
+
+void UIManager::ResetScore()
+{
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+	{
+		inGame->ResetScore();
 	}
 }
 
@@ -323,7 +335,7 @@ void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
 	for (const auto& it : infos)
 	{
 		pair<float, float> pos = WorldToScreen(it.AverageContactPoint());
-		CalPos(it.colAId, it.colBId, pos.first, pos.second);
+		CalPos(it.colAId, it.colBId, pos.first, pos.second -50.0f);
 	}
 }
 
@@ -344,6 +356,8 @@ void UIManager::ChangePage(EPageType newPageType)
 
 void UIManager::GotoEnding(GameState gs)
 {
+	ResetScore();
+
 	if (CurrentPage)
 	{
 		CurrentPage->Hide();
@@ -369,8 +383,29 @@ void UIManager::GotoEnding(GameState gs)
 	}
 }
 
+void UIManager::LevelChanged(int curlevel)
+{
+	UUIIngamePage* igpage = dynamic_cast<UUIIngamePage*>(CurrentPage);
+	if (igpage)
+	{
+		igpage->ClearFlowtingText();
+	}
+}
+
 void UIManager::DrawBirdPath(const std::vector<FVector>& vertices)
 {
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+	{
+		inGame->SetTrajectoryPoints(vertices);
+	}
+}
+
+void UIManager::ClearBirdPath()
+{
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+	{
+		inGame->ClearTrajectoryPoints();
+	}
 }
 
 

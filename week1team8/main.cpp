@@ -26,6 +26,7 @@
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "SoundManager.h"
+#include "Effects/EffectManager.h"
 
 bool bUseGravity = true;
 
@@ -141,6 +142,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LARGE_INTEGER startTime, endTime;
 	double elapsedTime = 0.0;
+	float deltaTime = 0.0f;
 
 	bool bIsExit = false;
 	bool bPressed = false;
@@ -170,6 +172,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UObjectManager& ObjectManager = UObjectManager::GetInstance();
 	CollisionManager& CM = CollisionManager::GetInstance();
 	LoadManager& LoadManager = LoadManager::Get();
+	EffectManager& effectManager = EffectManager::GetInstance();
+	effectManager.Initialize();
 
 	SoundManager& SM = SoundManager::GetInstance();
 	if (!SM.Initialize())
@@ -310,7 +314,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		uiManager.Update(elapsedTime * 0.001);
+		// 일시정지 중에는 Step을 누른 프레임에만 한 번 진행. 렌더와 ImGui는 계속 돈다
+		bool bAdvancePhysics = !bPausePhysics || bStepOnce;
+		bStepOnce = false;
+
+		deltaTime = static_cast<float>(elapsedTime * 0.001);
+
+		uiManager.Update(deltaTime);
+		effectManager.Update(deltaTime);
 
 		// 물리 한 스텝. 항상 fixedDeltaTime만큼만 진행한다.
 		auto StepPhysics = [&]()
@@ -353,7 +364,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//매 프레임 UObject에 Tick 호출
 		for (int i = ObjectManager.AllObjects.size() - 1; i >= 0; --i)
 		{
-			ObjectManager.AllObjects[i]->Tick(elapsedTime * 0.001);
+			ObjectManager.AllObjects[i]->Tick(deltaTime);
 		}
 
 		// 렌더 준비
@@ -366,6 +377,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		renderer.PrepareShader();
+
+		//이펙트 그리기
+		effectManager.Render(renderer);
+
 
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)

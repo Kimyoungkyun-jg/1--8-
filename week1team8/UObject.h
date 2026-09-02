@@ -79,7 +79,7 @@ public:
 	ACollider() {}
 	virtual ~ACollider() {}
 
-	virtual void Move(float t);		// t 시간동안 이동
+	virtual void Move(float deltaTime);
 
 	FVector GetVelocity() const { return Velocity; }
 	void SetVelocity(FVector _Vel) { Velocity = _Vel; }
