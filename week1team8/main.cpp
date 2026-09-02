@@ -172,6 +172,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		QueryPerformanceCounter(&startTime);
 
+		gameManager.CheckGameState();
+
 		// 입력 처리
 		MSG msg;
 

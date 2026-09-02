@@ -69,6 +69,7 @@ public:
 	ABird* GetReloadedBird() { return ReloadedBird; }
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
 	void PigDeath();
+	void CheckGameState();
 
 private:
 	GameManager() = default;

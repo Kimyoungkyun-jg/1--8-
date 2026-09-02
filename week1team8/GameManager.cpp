@@ -25,6 +25,10 @@ void GameManager::SpawnBirdAndSlingShot()
 void GameManager::PigDeath()
 {
 	--PigCount;
+}
+
+void GameManager::CheckGameState()
+{
 	if (PigCount == 0)
 	{
 		if (LoadManager::Get().LoadMap(CurrentLevel + 1))

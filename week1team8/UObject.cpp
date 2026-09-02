@@ -164,7 +164,7 @@ void ABird::Pressed(FVector _Location)
 		ABand* FrontBand = SlingShot->GetFrontBand();
 		if (BackBand && FrontBand)
 		{
-			//새가 이동할 수 있는 거리는 n
+			//새가 당겨질 수 있는 거리는 n
 			//새의 위치 = AttachedPoint + 새총->새 벡터 * (n / 새총->새 벡터 길이);
 			FVector Point = (BackBand->AttachedPoint + FrontBand->AttachedPoint) / 2;
 			float Length = (_Location - Point).Length();
@@ -173,6 +173,17 @@ void ABird::Pressed(FVector _Location)
 			float StretchedRate = Length / CanStretcheLength;
 			BackBand->Stretched(Location, StretchedRate);
 			FrontBand->Stretched(Location, StretchedRate);
+
+			//새가 이동할 포물선 경로
+			std::vector<FVector> Points(10);
+			FVector vel = Velocity, loc = Location;
+			static const float delta = 0.00694;
+			for (int i = 0; i < 10; i++)
+			{
+				vel += Global::G * delta;
+				loc += vel * delta;
+				Points[i] = loc;
+			}
 		}
 	}
 }
@@ -201,7 +212,7 @@ void ABird::Released(FVector _Location)
 
 void ABird::Tick(float deltaTime)
 {
-	if (State == EBirdState::Shooting && Velocity.LengthSquared() < 0.001f)
+	if (State == EBirdState::Shooting && Velocity.LengthSquared() < 0.05f)
 	{
 		GameManager::GetInstance().ReloadBird();
 		State = EBirdState::Shooted;
