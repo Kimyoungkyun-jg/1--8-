@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "UObject.h"
+#include "SoundManager.h"
 
 
 // 접촉점
@@ -121,6 +122,7 @@ public:
 			if (p == c) return;
 		}
 		pendingkills.push_back(c);
+		c->PlaySFX();
 	};
 
 	// 디버그용. 반환값 infos와 달리 데미지 판정 전의 모든 접촉을 담는다

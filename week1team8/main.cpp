@@ -290,12 +290,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					if (PressedCollider->GetColliderId() == EColliderId::BIRD)
 					{
 						gameManager.GetSlingShot()->Released(WorldMouseXY);
+						SM.PlaySFX("sfx_bird");
 					}
 					else PressedCollider->Released(WorldMouseXY);
 				}
 
 				ReleaseCapture();
-				SM.PlaySFX("sfx_bird");
 			}
 			else if (msg.message == WM_MOUSEMOVE)
 			{
@@ -331,20 +331,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 
 				// 충돌 검사
-				vector<CollisionInfo> infos = CM.CheckCollisionAll((float)fixedDeltaTime);
-				for (const auto& info : infos)
-				{
-					if (info.colAId == EColliderId::BLOCK || info.colBId == EColliderId::BLOCK)
-					{
-						SM.PlaySFX("sfx_rock", 0.7f);
-					}
-					if (info.colAId == EColliderId::PIG || info.colBId == EColliderId::PIG)
-					{
-						SM.PlaySFX("sfx_pig");
-					}
-				}
-
-				uiManager.GetCollisionInfos(infos);
+				uiManager.GetCollisionInfos(CM.CheckCollisionAll((float)fixedDeltaTime));
 			};
 
 		// 흐른 시간을 쌓아두고 고정 크기로 꺼내 쓴다. 남은 건 다음 프레임으로 넘어간다.

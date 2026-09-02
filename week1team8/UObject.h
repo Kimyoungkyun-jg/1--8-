@@ -5,6 +5,7 @@
 #include "enums.h"
 #include <cmath>
 #include <DirectXMath.h>
+#include "SoundManager.h"
 
 class ASlingShot;
 
@@ -98,6 +99,8 @@ public:
 	float GetRestitution() const { return Restitution; }
 	void SetRestitution(float _r) { Restitution = _r; }
 
+	virtual void PlaySFX() { return; }
+
 	// 슬립. 판정은 CollisionManager::UpdateSleep이 한다
 	bool IsSleeping() const { return bSleeping; }
 	void SetSleeping(bool value) { bSleeping = value; }
@@ -171,6 +174,7 @@ public:
 	virtual float minusHp() override { return 1.0f; }
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit"); }
 
 	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;
@@ -180,8 +184,9 @@ public:
 class ABombBird : public ABird
 {
 public:
-	ABombBird(){}
+	ABombBird() {}
 	virtual ~ABombBird() {}
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bomb_hit"); }
 
 	virtual float minusHp();
 };
@@ -197,6 +202,7 @@ public:
 		Restitution = 0.2f;
 	}
 	virtual ~APig() {}
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_pig"); }
 
 	virtual float minusHp() override;
 };
@@ -216,6 +222,7 @@ public:
 		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
 	}
 	virtual ~ABlock() {}
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_rock"); }
 };
 
 // 화면 경계 벽. 질량 0으로 생성해서 움직이지 않는다.
