@@ -18,7 +18,7 @@ public:
 	LoadManager(const LoadManager& Others) = delete;
 	LoadManager& operator=(const LoadManager&) = delete;
 
-	void SaveMap();
+	void SaveMap(int BirdCount);
 	bool LoadMap(int num);
 	void ClearMap();
 

@@ -115,7 +115,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		CW_USEDEFAULT, CW_USEDEFAULT, windowWidth, windowHeight, nullptr, nullptr, hInstance, nullptr);
 
 	// 렌더러 초기화
-	URenderer renderer;
+	URenderer& renderer = URenderer::GetInstance();
 	renderer.Create(hWnd);
 	renderer.CreateShader();
 	renderer.CreateConstantBuffer();
@@ -221,9 +221,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			else if (msg.message == WM_LBUTTONDOWN)
 			{
 				bPressed = true;
+				Global::bIsLButtonPressed = true;
 				MouseX = GET_X_LPARAM(msg.lParam);
 				MouseY = GET_Y_LPARAM(msg.lParam);
+				Global::MouseScreenX = static_cast<float>(MouseX); //글로벌에 다가 마우스 좌표 넘김
+				Global::MouseScreenY = static_cast<float>(MouseY);
 				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+				Global::MouseWorldPos = WorldMouseXY;
 				SetCapture(msg.hwnd);
 
 				bool bFound = false;
@@ -270,9 +274,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (msg.message == WM_LBUTTONUP)
 			{
+				bPressed = false;
+				Global::bIsLButtonPressed = false;
 				MouseX = GET_X_LPARAM(msg.lParam);
 				MouseY = GET_Y_LPARAM(msg.lParam);
+				Global::MouseScreenX = static_cast<float>(MouseX);
+				Global::MouseScreenY = static_cast<float>(MouseY);
 				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+				Global::MouseWorldPos = WorldMouseXY;
 
 				if (PressedCollider)
 				{
@@ -283,21 +292,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					else PressedCollider->Released(WorldMouseXY);
 				}
 
-				bPressed = false;
 				ReleaseCapture();
 				SM.PlaySFX("sfx_bird");
 			}
 			else if (msg.message == WM_MOUSEMOVE)
 			{
-				if (bPressed)
+				MouseX = GET_X_LPARAM(msg.lParam);
+				MouseY = GET_Y_LPARAM(msg.lParam);
+				Global::MouseScreenX = static_cast<float>(MouseX);
+				Global::MouseScreenY = static_cast<float>(MouseY);
+				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
+				Global::MouseWorldPos = WorldMouseXY;
+
+				if (bPressed && PressedCollider)
 				{
-					MouseX = GET_X_LPARAM(msg.lParam);
-					MouseY = GET_Y_LPARAM(msg.lParam);
-					WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
-					if (PressedCollider)
-					{
-						PressedCollider->Pressed(WorldMouseXY);
-					}
+					PressedCollider->Pressed(WorldMouseXY);
 				}
 			}
 		}
@@ -307,6 +316,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 화면에 띄워놓고 들여다볼 수 있다.
 		bool bAdvancePhysics = !bPausePhysics || bStepOnce;
 		bStepOnce = false;
+
+		uiManager.Update(elapsedTime * 0.001);
+
+
+		for (ACollider* Collider : CM.colliders)
+		{
+			Collider->Move(elapsedTime);
+		}
 
 		if (bAdvancePhysics)
 		{
@@ -374,7 +391,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// UI 그리기
 		uiManager.Render(4);
-		uiManager.Update(elapsedTime * 0.001);
 
 		// ImGui
 		ImGui_ImplDX11_NewFrame();
@@ -504,6 +520,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
 		FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
 		ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
+		ImGui::Text("GameState : %d", static_cast<int>(gameManager.GetGameState()));
+		ImGui::Text("Bird %d, Pig %d", gameManager.GetBirdCount(), gameManager.GetPigCount());
 		ImGui::SetNextItemWidth(100);
 		ImGui::SetNextItemWidth(100);
 		ImGui::End();
@@ -531,9 +549,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			LoadManager.ClearMap();
 		}
+		int BirdCount = 3;
+		ImGui::InputInt("Bird Count on This Level", &BirdCount);
 		if (ImGui::Button("Save Map", ImVec2(100, 20)))
 		{
-			LoadManager.SaveMap();
+			LoadManager.SaveMap(BirdCount);
 		}
 		if (ImGui::Checkbox("EditorMode", &bEditorMode))
 		{
@@ -547,6 +567,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			PressedCollider->Destroy();
 		}
+		if (ImGui::Button("Restart", ImVec2(100, 20)))
+		{
+			gameManager.Restart();
+		}
+
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);
 		ImGui::End();

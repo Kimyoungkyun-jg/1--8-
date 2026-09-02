@@ -48,11 +48,24 @@ public:
 	FVector GetScale() const { return Scale; }
 	FVector GetLocation() const { return Location; }
 
+	void SetImage(const wchar_t* uri)
+	{
+		Bitmap = URenderer::GetInstance().LoadBitmapFromFile(uri);
+	}
+
+	void SetBitmap(ID2D1Bitmap* bmp)
+	{
+		Bitmap = bmp;
+	}
+
 protected:
 	FVector Location = FVector(0, 0, 0);				// 위치
 	EPrimitive Primitive = EPrimitive::Circle;
 	float Rotation = 0.0f; // 라디안, 반시계 방향
 	FVector Scale = { 1, 1, 1 };
+
+	ID2D1Bitmap* Bitmap = nullptr;
+
 };
 
 class ACollider : public AActor
@@ -89,6 +102,8 @@ public:
 
 	bool bEditing = false;
 	bool bUseGravity = true;
+
+
 
 protected:
 	EColliderId colId = EColliderId::NONE;	// collider 종류

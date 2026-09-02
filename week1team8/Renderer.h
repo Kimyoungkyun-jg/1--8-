@@ -35,6 +35,13 @@ class URenderer
 	};
 
 public:
+	static URenderer& GetInstance()
+	{
+		static URenderer instance;
+		return instance;
+	}
+
+public:
 	// CreateDeviceAndSwapChain
 	ID3D11Device* Device = nullptr;
 	ID3D11DeviceContext* DeviceContext = nullptr;

@@ -63,14 +63,22 @@ public:
 		// 프로그램 종료
 	}
 
+	void Restart();
+
 	void ReloadBird();
 	void SpawnBirdAndSlingShot();
 	void SpawnWalls();
 	ASlingShot* GetSlingShot() { return SlingShot; }
 	ABird* GetReloadedBird() { return ReloadedBird; }
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
+	void SetBirdCount(int NewBirdCount) { BirdCount = NewBirdCount; }
+	int GetPigCount() const { return PigCount; }
+	int GetBirdCount() const { return BirdCount; }
+	GameState GetGameState() const { return state; }
 	void PigDeath();
 	void CheckGameState();
+
+	int GetCurlvl() { return CurrentLevel; }
 
 private:
 	GameManager() = default;
@@ -79,6 +87,7 @@ private:
 	ABird* ReloadedBird;
 	ASlingShot* SlingShot;
 	int PigCount = 0;
+	int BirdCount = 0;
 	int CurrentLevel = 0;
 
 	GameState state = GameState::Menu;

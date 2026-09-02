@@ -7,7 +7,7 @@
 
 enum class EPageType
 {
-	Starting= 0,
+	Starting = 0,
 	InGame,
 	Pause,
 	Ending
@@ -24,7 +24,15 @@ public:
 
 	void AddChild(UUIObject* uiObject);
 	virtual void Show();
+	virtual void Show(bool IsClear);
 	virtual void Hide();
-	virtual void Update(float deltaTime);
+	virtual void Update(float deltaTime) override;
+	virtual void Update(float deltaTime, float mouseX, float mouseY);
 	virtual void Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush, IDWriteTextFormat* font);
+
+	virtual void OnMouseMove(float mouseX, float mouseY);
+	virtual bool OnMouseDown(float mouseX, float mouseY);
+	virtual void OnMouseUp(float mouseX, float mouseY);
+
+	
 };

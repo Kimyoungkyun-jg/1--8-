@@ -16,6 +16,7 @@
 #include "../Renderer.h"
 #include "UUIObject.h"
 #include "UPage.h"
+#include "../GameManager.h"
 #include "UUIIngamePage.h"
 
 using namespace std;
@@ -31,7 +32,8 @@ public:
 
 	~UIManager();
 
-	bool Initialize(URenderer& renderer, int nWidth, int nHeight);
+	bool Initialize(int nWidth, int nHeight);
+	bool Initialize(URenderer& renderer, int nWidth, int nHeight) { return Initialize(nWidth, nHeight); }
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
@@ -39,23 +41,15 @@ public:
 	void SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
 	void Release();
 
+	static ID2D1Bitmap* LoadBitmapFromFile(const wchar_t* uri);
+
 	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy);
 	void GetCollisionInfos(std::vector<CollisionInfo> infos);
 
-	void ChangePage(EPageType newPageType)
-	{
-		if (CurrentPage)
-		{
-			CurrentPage->Hide();
-		}
+	void ChangePage(EPageType newPageType);
+	void GotoEnding(GameState gs);
+	void DrawBirdPath(const std::vector<FVector>& vertices);
 
-		auto it = Pages.find(newPageType);
-		if (it != Pages.end())
-		{
-			CurrentPage = it->second;
-			CurrentPage->Show();
-		}
-	}
 
 	UUIPage* GetPage(EPageType type)
 	{

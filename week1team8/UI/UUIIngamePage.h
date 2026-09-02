@@ -22,12 +22,12 @@ public:
 	int GetScore() const { return TargetScore; }
 
 	virtual void Update(float deltaTime) override;
+	virtual void Update(float deltaTime, float mouseX, float mouseY) override;
 	virtual void Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush, IDWriteTextFormat* font) override;
 
 public:
 	UUIHUDText* InGameHUD = nullptr;
 	UUIButton* PauseBtn = nullptr;
-	UUIBackground* Bg = nullptr;
 	std::vector<UUIFloatingText*> FloatingTexts;
 
 	int TargetScore = 0;

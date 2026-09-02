@@ -3,6 +3,19 @@
 #include "Global.h"
 #include "TemplateLibrary.h"
 #include "LoadManager.h"
+#include "UI/UIManager.h"
+
+void GameManager::Restart()
+{
+	PigCount = 0;
+	BirdCount = 0;
+	CurrentLevel = 0;
+	SlingShot = nullptr;
+	ReloadedBird = nullptr;
+
+	state = GameState::Play;
+	LoadManager::Get().LoadMap(0);
+}
 
 void GameManager::SpawnWalls()
 {
@@ -31,15 +44,26 @@ void GameManager::SpawnWalls()
 //새의 속도가 일정 이하면 호출
 void GameManager::ReloadBird()
 {
-	ReloadedBird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
-	SlingShot->EquippedBird = ReloadedBird;
-	ReloadedBird->SlingShot = SlingShot;
+	if (BirdCount > 0)
+	{
+		ReloadedBird = SpawnColider<ABird>({ -1.18, -0.35, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+		ReloadedBird->SetImage(L"Assets/img/bird.png");
+		SlingShot->EquippedBird = ReloadedBird;
+		ReloadedBird->SlingShot = SlingShot;
+	}
+	--BirdCount;
 }
 
 void GameManager::SpawnBirdAndSlingShot()
 {
-	SlingShot = SpawnActor<ASlingShot>({ -1.2, -0.6, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
-	ReloadedBird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+	AActor* hill = SpawnActor<AActor>({ -1.2, -0.4, 0 }, EPrimitive::Rectangle, {1, 1.5, 1});
+	hill->SetImage(L"Assets/img/hill.png");
+
+	SlingShot = SpawnActor<ASlingShot>({ -1.18, -0.45, 0 }, EPrimitive::Rectangle, { 0.1, 0.2, 0 });
+	SlingShot->SetImage(L"Assets/img/slingshot.png");
+
+	ReloadedBird = SpawnColider<ABird>({ -1.18, -0.35, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+	ReloadedBird->SetImage(L"Assets/img/bird.png");
 
 	SlingShot->EquippedBird = ReloadedBird;
 	SlingShot->ShotPoint = ReloadedBird->GetLocation();
@@ -54,15 +78,25 @@ void GameManager::PigDeath()
 
 void GameManager::CheckGameState()
 {
-	if (PigCount == 0)
+	if (state == GameState::Play)
 	{
-		if (LoadManager::Get().LoadMap(CurrentLevel + 1))
+		if (PigCount == 0)
 		{
-			CurrentLevel += 1;
+			if (LoadManager::Get().LoadMap(CurrentLevel + 1))
+			{
+				CurrentLevel += 1;
+			}
+			else
+			{
+				state = GameState::GameClear;
+				UIManager::GetInstance().GotoEnding(state);
+			}
 		}
-		else
+
+		if (BirdCount == -1)
 		{
-			state = GameState::GameClear;
+			state = GameState::GameOver;
+			UIManager::GetInstance().GotoEnding(state);
 		}
 	}
 }
