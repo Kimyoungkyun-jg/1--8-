@@ -14,3 +14,12 @@ enum class EColliderId
 	BLOCK,
 	NONE
 };
+
+enum class GameState
+{
+	Start,
+	Play,
+	Pause,
+	GameOver,
+	GameClear
+};

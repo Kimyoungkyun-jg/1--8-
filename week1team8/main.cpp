@@ -347,7 +347,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		// UI 그리기
-		uiManager.Render(4);
+		uiManager.Render(gameManager.GetBirdCount()+1);
 
 		// ImGui
 		ImGui_ImplDX11_NewFrame();

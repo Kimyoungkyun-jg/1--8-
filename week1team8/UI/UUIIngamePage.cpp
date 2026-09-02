@@ -45,6 +45,16 @@ void UUIIngamePage::AddScore(int points)
 	TargetScore += points;
 }
 
+void UUIIngamePage::ResetScore()
+{
+	TargetScore = 0;
+	DisplayScore = 0.0f;
+	for (auto* ptr : FloatingTexts) {
+		delete ptr;
+	}
+	FloatingTexts.clear();
+}
+
 void UUIIngamePage::SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color)
 {
 	UUIFloatingText* newText = new UUIFloatingText(score, screenX, screenY, color);
@@ -124,3 +134,20 @@ void UUIIngamePage::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush
 		}
 	}
 }
+
+void UUIIngamePage::Hide()
+{
+	UUIPage::Hide();
+
+	ClearFlowtingText();
+}
+
+void UUIIngamePage::ClearFlowtingText()
+{
+	for (auto it : FloatingTexts)
+	{
+		it->bIsFinished = true;
+		AddScore(static_cast<int>(it->TargetScore));
+	}
+}
+

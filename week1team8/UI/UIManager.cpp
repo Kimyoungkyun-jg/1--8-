@@ -65,7 +65,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			200
 		);
 		startbtn->SetOnClick([this]() {
+			ResetScore();
 			ChangePage(EPageType::InGame);
+			GameManager::GetInstance().Restart();
 		});
 		startPage->AddChild(startbtn);
 
@@ -94,6 +96,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		{
 			inGamePage->PauseBtn->SetOnClick([this]() {
 				ChangePage(EPageType::Pause);
+				GameManager::GetInstance().Pause();
 			});
 		}
 		Pages[EPageType::InGame] = inGamePage;
@@ -133,6 +136,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 		continueBtn->SetOnClick([this]() {
 			ChangePage(EPageType::InGame);
+			GameManager::GetInstance().Resume();
 		});
 		pausePage->AddChild(continueBtn);
 
@@ -146,8 +150,10 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 
 		retryBtn->SetOnClick([this]() {
+			ResetScore();
 			LoadManager::Get().LoadMap(GameManager::GetInstance().GetCurlvl());
 			ChangePage(EPageType::InGame);
+			GameManager::GetInstance().Restart();
 		});
 		pausePage->AddChild(retryBtn);
 
@@ -182,15 +188,15 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 
 		Resultbtn->SetOnClick([this]() {
-			ChangePage(EPageType::Starting);
-			});
+			GameManager::GetInstance().Menu();
+		});
 
 		endPage->AddChild(Resultbtn);
 
 		Pages[EPageType::Ending] = endPage;
 	}
 
-	ChangePage(EPageType::InGame);
+	ChangePage(EPageType::Starting);
 
 	return true;
 }
@@ -200,6 +206,14 @@ void UIManager::AddScore(int points)
 	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
 	{
 		inGame->AddScore(points);
+	}
+}
+
+void UIManager::ResetScore()
+{
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+	{
+		inGame->ResetScore();
 	}
 }
 
@@ -338,6 +352,26 @@ void UIManager::ChangePage(EPageType newPageType)
 		CurrentPage = it->second;
 		CurrentPage->Show();
 	}
+
+	switch (newPageType)
+	{
+	case EPageType::Starting:
+		ResetScore();
+		break;
+	case EPageType::InGame:
+		GameManager::GetInstance().SetGameState(GameState::Play);
+		break;
+	case EPageType::Pause:
+		GameManager::GetInstance().SetGameState(GameState::Pause);
+		break;
+	default:
+		break;
+	}
+
+
+
+
+
 }
 
 
@@ -352,6 +386,13 @@ void UIManager::GotoEnding(GameState gs)
 	auto it = Pages.find(EPageType::Ending);
 	if (it != Pages.end())
 	{
+		UUIIngamePage* igpg = dynamic_cast<UUIIngamePage*>(CurrentPage);
+		if (igpg)
+		{
+			igpg->TargetScore = 0;
+			igpg->DisplayScore = 0;
+		}
+
 		CurrentPage = it->second;
 
 		switch (gs)
@@ -366,6 +407,15 @@ void UIManager::GotoEnding(GameState gs)
 			break;
 		}
 		
+	}
+}
+
+void UIManager::LevelChanged(int curlevel)
+{
+	UUIIngamePage* igpage = dynamic_cast<UUIIngamePage*>(CurrentPage);
+	if (igpage)
+	{
+		igpage->ClearFlowtingText();
 	}
 }
 
