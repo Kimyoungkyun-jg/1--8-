@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <unordered_map>
 
 #include "UObject.h"
 
@@ -151,4 +152,14 @@ public:
 	// 충돌해결
 	void SolveContact(ACollider* a, ACollider* b, CollisionInfo& info);
 	void InitContact(ACollider* a, ACollider* b, CollisionInfo& info);
+	void WarmStartContact(ACollider* a, ACollider* b, const CollisionInfo& info);
+
+	bool bWarmStarting = true;   // 끄고 켜서 효과를 비교할 수 있게
+
+private:
+	// 지난 프레임의 접촉들. warm starting이 여기서 이전 충격량을 찾아 이월한다.
+	std::unordered_map<unsigned long long, CollisionInfo> previousManifolds;
+
+	static unsigned long long MakePairKey(const ACollider* a, const ACollider* b);
+	const CollisionInfo* FindPreviousManifold(const ACollider* a, const ACollider* b) const;
 };

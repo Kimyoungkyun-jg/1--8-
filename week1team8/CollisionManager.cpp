@@ -333,6 +333,12 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		InitContact(ab.first, ab.second, info);
 	}
 
+	// 이월받은 충격량 적용. 모든 InitContact가 끝난 뒤에 따로 돈다.
+	for (auto& [ab, info] : abinfos)
+	{
+		WarmStartContact(ab.first, ab.second, info);
+	}
+
 	for (int i = 0; i < 3; i++)
 	{
 		for (auto& [ab, info] : abinfos)
@@ -340,6 +346,20 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 			// 충격량(속도) 해결
 			SolveContact(ab.first, ab.second, info);
 		}
+	}
+
+	// 수렴한 충격량을 다음 프레임에 넘겨준다. 매 프레임 새로 만들기 때문에
+	// 이제 안 닿는 쌍이나 파괴된 물체의 항목은 자연히 사라진다.
+	{
+		std::unordered_map<unsigned long long, CollisionInfo> currentManifolds;
+		currentManifolds.reserve(abinfos.size());
+
+		for (auto& [ab, info] : abinfos)
+		{
+			currentManifolds[MakePairKey(ab.first, ab.second)] = info;
+		}
+
+		previousManifolds = std::move(currentManifolds);
 	}
 
 	// 디버그용 스냅샷. 충격량이 다 풀린 뒤라 normalImpulse가 최종값이다.
@@ -717,6 +737,10 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 
 	if (invMassA + invMassB <= 0.0f) return; // 스태틱 충돌
 
+	// 지난 프레임에 이 쌍이 닿아 있었다면 그때 충격량을 이어받는다 (warm starting).
+	// 0에서 다시 시작하면 반복 횟수 안에 다 못 풀어서 탑이 매 프레임 가라앉는다.
+	const CollisionInfo* previous = bWarmStarting ? FindPreviousManifold(a, b) : nullptr;
+
 	for (int i = 0; i < info.pointCount; i++)
 	{
 		ContactPoint& point = info.points[i];
@@ -751,5 +775,58 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 		point.tangentMass = 1.0f / validMassTangent;
 		point.initialNormalVelocity = relativeVelocityNormal;
 		point.velocityBias = (relativeVelocityNormal < -restitutionThreshold) ? -restitution * relativeVelocityNormal : 0.0f;
+
+		// 지난 프레임에 ID가 같은 접촉점이 있었으면 그 충격량에서 이어서 푼다.
+		// 여기서 initialNormalVelocity는 이미 기록된 뒤라 데미지 판정은 영향을 안 받는다.
+		if (previous)
+		{
+			for (int j = 0; j < previous->pointCount; j++)
+			{
+				if (previous->points[j].id != point.id)
+				{
+					continue;
+				}
+
+				point.normalImpulse = previous->points[j].normalImpulse;
+				point.tangentImpulse = previous->points[j].tangentImpulse;
+				break;
+			}
+		}
 	}
+}
+
+// 이어받은 충격량을 실제로 물체에 적용한다.
+// 모든 쌍의 InitContact가 끝난 뒤에 따로 돌려야 한다. 안 그러면 앞 쌍이 밀어낸
+// 속도가 뒤 쌍의 접근 속도 측정에 섞여서 반발과 데미지 판정이 틀어진다.
+void CollisionManager::WarmStartContact(ACollider* a, ACollider* b, const CollisionInfo& info)
+{
+	float invMassA = InvMass(a->GetMass());
+	float invMassB = InvMass(b->GetMass());
+	float invIA = InvInertia(a->GetInertia());
+	float invIB = InvInertia(b->GetInertia());
+
+	for (int i = 0; i < info.pointCount; i++)
+	{
+		const ContactPoint& point = info.points[i];
+
+		// 법선 성분과 마찰 성분을 합친 하나의 충격량
+		FVector impulse = info.normal * point.normalImpulse + info.tangent * point.tangentImpulse;
+
+		a->SetVelocity(a->GetVelocity() + impulse * invMassA);
+		b->SetVelocity(b->GetVelocity() - impulse * invMassB);
+		a->SetAngularVelocity(a->GetAngularVelocity() + FVector::Cross(point.rA, impulse) * invIA);
+		b->SetAngularVelocity(b->GetAngularVelocity() - FVector::Cross(point.rB, impulse) * invIB);
+	}
+}
+
+unsigned long long CollisionManager::MakePairKey(const ACollider* a, const ACollider* b)
+{
+	return ((unsigned long long)(unsigned int)a->GetID() << 32) | (unsigned int)b->GetID();
+}
+
+const CollisionInfo* CollisionManager::FindPreviousManifold(const ACollider* a, const ACollider* b) const
+{
+	auto found = previousManifolds.find(MakePairKey(a, b));
+
+	return (found != previousManifolds.end()) ? &found->second : nullptr;
 }

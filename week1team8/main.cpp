@@ -468,6 +468,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::SameLine();
 		ImGui::Checkbox("Draw Colliders", &bDrawColliders);
 		ImGui::SliderFloat("Normal Length", &NormalLength, 10.0f, 120.0f);
+		ImGui::Checkbox("Warm Starting", &CM.bWarmStarting);
 
 		ImGui::SeparatorText("Contacts");
 		ImGui::Text("count: %d", (int)CM.debugContacts.size());
