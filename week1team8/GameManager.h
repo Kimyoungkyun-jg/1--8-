@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "Vector.h"
 class ABird;
 class ASlingShot;
 
@@ -34,41 +35,13 @@ public:
 	GameManager(GameManager&&) = delete;					// 이동생성자
 	GameManager& operator=(GameManager&&) = delete;			// 이동 대입 연산자
 
-	void Initialize()
-	{
-		Play();
-	}
-
-	// Menu -> Play
-	void Play()
-	{
-		state = GameState::Play;
-	}
-
-	// Play -> Pause
-	void Pause()
-	{
-		state = GameState::Pause;
-	}
-
-	// Pause -> Play
-	void Resume()
-	{
-		state = GameState::Play;
-	}
-
-	// Pause -> Menu
-	void Menu()
-	{
-		state = GameState::Menu;
-		// UIManager::GetInstance().Menu()
-	}
-
-	// Menu -> Exit
-	void Exit()
-	{
-		// 프로그램 종료
-	}
+	/* 상태 전이 및 초기화 함수 */
+	void Initialize();
+	void Play();
+	void Pause();
+	void Resume();
+	void Menu();
+	void Exit();
 
 	void Restart();
 	void SpawnBirdAndSlingShot();
@@ -78,10 +51,11 @@ public:
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
 	void SetBirdCount(int NewBirdCount)
 	{
+		Birds.clear();
 		for (int i = 0; i < NewBirdCount; i++)
 		{
 			int randi = rand() % 2;
-			Birds.push_back(randi);
+			BirdTypes.push_back(randi);
 		}
 	}
 	int GetPigCount() const { return PigCount; }
@@ -98,6 +72,8 @@ private:
 	GameManager() = default;
 	~GameManager() = default;
 
+	ABird * SpawnWaitingBird(FVector Location, EBirdType BirdType);
+
 	ABird* ReloadedBird = nullptr;
 	ASlingShot* SlingShot = nullptr;
 	int PigCount = 0;
@@ -105,6 +81,9 @@ private:
 
 	GameState state = GameState::Menu;
 	
-	std::vector<int> Birds = {EBirdType::Basic, EBirdType::BombBird, EBirdType::Basic};
+	std::vector<int> BirdTypes;
+	std::vector<ABird*> Birds;
+
+	FVector ShotPoint = { -1.18, -0.35, 0 };
 };
 

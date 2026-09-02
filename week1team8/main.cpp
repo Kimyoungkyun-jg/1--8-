@@ -162,11 +162,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	float NormalLength = 40.0f;		// 법선 표시 길이 (픽셀)
 
 	// 매니저 초기화
-	GameManager& gameManager = GameManager::GetInstance();
-	gameManager.Initialize();
-
 	UIManager& uiManager = UIManager::GetInstance();
 	uiManager.Initialize(renderer, windowWidth, windowHeight);
+
+	GameManager& gameManager = GameManager::GetInstance();
+	gameManager.Initialize();
 
 	UObjectManager& ObjectManager = UObjectManager::GetInstance();
 	CollisionManager& CM = CollisionManager::GetInstance();
@@ -180,7 +180,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 0;
 	}
 
-	// 루프 진입 전 필요한 리소스 생성
 	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
 	SM.LoadSound("sfx_bird", L"Assets/sfx_bird.wav");
 	SM.LoadSound("sfx_pig", L"Assets/sfx_pig.wav");
@@ -188,12 +187,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
-	// 인게임 배경화면 로드
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
-	// 레벨 0으로 시작. state를 Play로 올려야 CheckGameState가 돈다.
-	// 벽과 새총은 Restart -> ClearMap 안에서 같이 만들어진다.
-	gameManager.Restart();
+	gameManager.Menu();
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -206,8 +202,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 4. 프레임 교체 및 대기
 
 		QueryPerformanceCounter(&startTime);
-
-		gameManager.CheckGameState();
 
 		// 입력 처리
 		MSG msg;
@@ -235,38 +229,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				SetCapture(msg.hwnd);
 
 				bool bFound = false;
-				for (ACollider* Collider : CM.colliders)
+				if (gameManager.GetGameState() == GameState::Play)
 				{
-					if (!Collider->bEditing) continue;
-					FVector ColLoc = Collider->GetLocation();
-					EPrimitive Primitive = Collider->GetPrimitive();
-					if (Primitive == EPrimitive::Circle)
+					for (ACollider* Collider : CM.colliders)
 					{
-						float dist = (ColLoc - WorldMouseXY).Length();
-						if (dist <= Collider->GetScale().x / 2.f)
+						if (!Collider->bEditing) continue;
+						FVector ColLoc = Collider->GetLocation();
+						EPrimitive Primitive = Collider->GetPrimitive();
+						if (Primitive == EPrimitive::Circle)
 						{
-							//원 모양 객체를 클릭 중
-							PressedCollider = Collider;
-							Collider->Clicked();
-							bFound = true;
-							break;
+							float dist = (ColLoc - WorldMouseXY).Length();
+							if (dist <= Collider->GetScale().x / 2.f)
+							{
+								PressedCollider = Collider;
+								Collider->Clicked();
+								bFound = true;
+								break;
+							}
 						}
-					}
-					else if (Primitive == EPrimitive::Rectangle)
-					{
-						float halfx = Collider->GetScale().x / 2.f;
-						float halfy = Collider->GetScale().y / 2.f;
-						if (WorldMouseXY.x >= ColLoc.x - halfx
-							&& WorldMouseXY.x <= ColLoc.x + halfx
-							&& WorldMouseXY.y >= ColLoc.y - halfy
-							&& WorldMouseXY.y <= ColLoc.y + halfy
-							)
+						else if (Primitive == EPrimitive::Rectangle)
 						{
-							//직사각형 모양의 객체를 클릭 중
-							PressedCollider = Collider;
-							Collider->Clicked();
-							bFound = true;
-							break;
+							float halfx = Collider->GetScale().x / 2.f;
+							float halfy = Collider->GetScale().y / 2.f;
+							if (WorldMouseXY.x >= ColLoc.x - halfx
+								&& WorldMouseXY.x <= ColLoc.x + halfx
+								&& WorldMouseXY.y >= ColLoc.y - halfy
+								&& WorldMouseXY.y <= ColLoc.y + halfy
+								)
+							{
+								PressedCollider = Collider;
+								Collider->Clicked();
+								bFound = true;
+								break;
+							}
 						}
 					}
 				}
@@ -659,9 +654,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// 프레임 교체
 		renderer.SwapBuffer();
-
-		//PendingKill로 삭제 대기중인 UObject들을 삭제
-		ObjectManager.DistroyPendingKills();
+		gameManager.CheckGameState();
 
 		do	// 프레임 대기
 		{
