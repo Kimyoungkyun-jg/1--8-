@@ -1,5 +1,7 @@
 #include "UIManager.h"
+#include "../GameManager.h"
 #include <cmath>
+
 
 UIManager::~UIManager()
 {

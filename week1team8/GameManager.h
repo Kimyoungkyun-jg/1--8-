@@ -68,6 +68,7 @@ public:
 	ASlingShot* GetSlingShot() { return SlingShot; }
 	ABird* GetReloadedBird() { return ReloadedBird; }
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
+	void PigDeath();
 
 private:
 	GameManager() = default;
@@ -76,6 +77,7 @@ private:
 	ABird* ReloadedBird;
 	ASlingShot* SlingShot;
 	int PigCount = 0;
+	int CurrentLevel = 0;
 
 	GameState state = GameState::Menu;
 };

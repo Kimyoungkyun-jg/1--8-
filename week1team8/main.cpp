@@ -196,6 +196,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bool bFound = false;
 				for (ACollider* Collider : CM.colliders)
 				{
+					if (!Collider->bEditing) continue;
 					FVector ColLoc = Collider->GetLocation();
 					EPrimitive Primitive = Collider->GetPrimitive();
 					if (Primitive == EPrimitive::Circle)
@@ -277,10 +278,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		CollisionManager& ColManager = CollisionManager::GetInstance();
 		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
 
+		//
+
 		//매 프레임 UObject에 Tick 호출
-		for (UObject* Obj : ObjectManager.AllObjects)
+		for (int i = ObjectManager.AllObjects.size()-1; i >= 0; --i)
 		{
-			Obj->Tick(elapsedTime * 0.001);
+			ObjectManager.AllObjects[i]->Tick(elapsedTime * 0.001);
 		}
 
 		// 렌더 준비

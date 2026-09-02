@@ -180,7 +180,8 @@ void ABird::Pressed(FVector _Location)
 void ABird::Released(FVector _Location)
 {
 	bUseGravity = true;
-	State = EBirdState::Shooted;
+	State = EBirdState::Shooting;
+	bEditing = false;
 
 	if (SlingShot)
 	{
@@ -200,9 +201,10 @@ void ABird::Released(FVector _Location)
 
 void ABird::Tick(float deltaTime)
 {
-	if (State == EBirdState::Shooted && Velocity.LengthSquared() < 0.01f)
+	if (State == EBirdState::Shooting && Velocity.LengthSquared() < 0.001f)
 	{
 		GameManager::GetInstance().ReloadBird();
+		State = EBirdState::Shooted;
 	}
 }
 
@@ -267,10 +269,17 @@ void ABand::Tick(float deltaTime)
 		TipLocation += TipVelocity * deltaTime;
 		float Length = (RestPoint - TipLocation).Length();
 		Stretched(TipLocation, Length / 0.6);
-
-		if (TipVelocity.LengthSquared() < 0.0025f && Length < 0.05f)
-		{
-			State = EBandState::Idle;
-		}
 	}
+}
+
+float APig::minusHp()
+{
+	hp -= 1;
+	if (hp == 0)
+	{
+		GameManager::GetInstance().PigDeath();
+		return 0.0f;
+	}
+
+	return hp;
 }

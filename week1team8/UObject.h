@@ -84,6 +84,9 @@ public:
 	virtual void Released(FVector _Location) override;
 	virtual float GetInertia() const = 0;
 
+	void SetHp(float _hp) { hp = _hp; }
+	virtual float minusHp() { hp -= 1; return hp; }
+
 	bool bEditing = false;
 	bool bUseGravity = true;
 
@@ -114,13 +117,14 @@ public:
 enum class EBirdState
 {
 	Idle,
+	Shooting,
 	Shooted
 };
 
 class ABird : public ACircle
 {
 public:
-	ABird() { colId = EColliderId::BIRD; }
+	ABird() { colId = EColliderId::BIRD; bEditing = true; }
 	virtual ~ABird() {}
 
 	virtual void Clicked() override;
@@ -138,6 +142,8 @@ class APig : public ACircle
 public:
 	APig() { colId = EColliderId::PIG; }
 	virtual ~APig() {}
+
+	virtual float minusHp() override;
 };
 
 class ABlock : public ACollider
