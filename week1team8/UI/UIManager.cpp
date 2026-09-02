@@ -59,38 +59,40 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight)
 	for (int i = 0; i < 4; i++)
 	{
 		EPageType pageType = static_cast<EPageType>(i);
-		UUIPage* page = new UUIPage(pageType);
 
 		switch (pageType)
 		{
 		case EPageType::Starting:
+		{
+			UUIPage* startPage = new UUIPage(pageType);
+			Pages[pageType] = startPage;
 			break;
-
+		}
 		case EPageType::InGame:
 		{
-			// 1. 좌상단 HUD
-			MainHUD = new UUIHUDText(TargetHUD_X, TargetHUD_Y);
-			MainHUD->Initialize(DWriteFactory, D2DRenderTarget);
-			page->AddChild(MainHUD);
+			UUIIngamePage* inGamePage = new UUIIngamePage();
+			const wchar_t* pauseBtnPath = L"Assets\\img\\pausebtn.png";
+			const wchar_t* bgPath = L"Assets\\img]\\ingamebackground.jpg";
 
-			// 2. 우상단 일시정지 버튼
-			UUIButton* pauseBtn = new UUIButton();
-			const wchar_t* imagePath = L"C:\\Users\\JUNGLE\\Desktop\\1--8-\\week1team8\\Assets\\img\\pausebtn.png";
-			pauseBtn->SetImagePath(imagePath);
-			pauseBtn->ButtonBitmap = LoadBitmapFromFile(imagePath);
-			pauseBtn->SetPoisition(800.0f, 30.0f, 50.0f, 50.0f);
-			page->AddChild(pauseBtn);
+			ID2D1Bitmap* pauseBtnBmp = LoadBitmapFromFile(pauseBtnPath);
+			ID2D1Bitmap* bgBtnBmp = nullptr;
+			inGamePage->Initialize(DWriteFactory, D2DRenderTarget, pauseBtnBmp, bgBtnBmp, screenWidth, screenHeight);
+			Pages[pageType] = inGamePage;
 			break;
 		}
-
 		case EPageType::Pause:
-			break;
-
-		case EPageType::Ending:
+		{
+			UUIPage* pausePage = new UUIPage(pageType);
+			Pages[pageType] = pausePage;
 			break;
 		}
-
-		Pages[pageType] = page;
+		case EPageType::Ending:
+		{
+			UUIPage* endPage = new UUIPage(pageType);
+			Pages[pageType] = endPage;
+			break;
+		}
+		}
 	}
 
 	ChangePage(EPageType::InGame);
@@ -100,96 +102,25 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight)
 
 void UIManager::AddScore(int points)
 {
-	TargetScore += points;
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+	{
+		inGame->AddScore(points);
+	}
 }
 
 void UIManager::SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color)
 {
-	UUIFloatingText* newText = new UUIFloatingText(score, screenX, screenY, color);
-	FloatingTexts.push_back(newText);
-
-	UUIPage* inGamePage = GetPage(EPageType::InGame);
-	if (inGamePage)
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
 	{
-		inGamePage->AddChild(newText);
+		inGame->SpawnFloatingText(score, screenX, screenY, color);
 	}
 }
 
 void UIManager::Update(float deltaTime)
 {
-	if (!CurrentPage)
-		return;
-
-
-	
-	switch (CurrentPage->PageType)
+	if (CurrentPage)
 	{
-	case EPageType::Starting:
-		break;
-	case EPageType::InGame:
-		UpdateScore(deltaTime);
-		UpdateFloatingTexts(deltaTime);
 		CurrentPage->Update(deltaTime);
-
-		break;
-	case EPageType::Pause:
-		break;
-	case EPageType::Ending:
-		break;
-	default:
-		break;
-	}
-	
-
-
-}
-
-void UIManager::UpdateScore(float deltaTime)
-{
-	if (DisplayScore < TargetScore) 
-	{
-		float speed = 10.0f;
-		DisplayScore += (TargetScore - DisplayScore) * (speed * deltaTime);
-		if (std::abs(TargetScore - DisplayScore) < 1.0f)
-		{
-			DisplayScore = static_cast<float>(TargetScore);
-		}
-	}
-}
-
-void UIManager::UpdateFloatingTexts(float deltaTime)
-{
-	UUIPage* inGamePage = GetPage(EPageType::InGame);
-
-	for (auto it = FloatingTexts.begin(); it != FloatingTexts.end(); )
-	{
-		UUIFloatingText* ft = *it;
-		ft->Update(deltaTime);
-
-		if (ft->bIsFinished)
-		{
-			if (ft->TargetScore > 0.0f)
-			{
-				AddScore(static_cast<int>(ft->TargetScore));
-			}
-
-			if (inGamePage)
-			{
-				auto& children = inGamePage->ChildUIObjects;
-				auto cIt = std::find(children.begin(), children.end(), ft);
-				if (cIt != children.end())
-				{
-					children.erase(cIt);
-				}
-			}
-
-			delete ft;
-			it = FloatingTexts.erase(it);
-		}
-		else
-		{
-			++it;
-		}
 	}
 }
 
@@ -200,16 +131,14 @@ void UIManager::Render(int birdsLeft)
 
 	D2DRenderTarget->BeginDraw();
 
-	if (MainHUD)
-	{
-		MainHUD->SetData(DisplayScore, birdsLeft);
-	}
-
 	if (CurrentPage)
 	{
+		if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(CurrentPage))
+		{
+			inGame->SetBirdsLeft(birdsLeft);
+		}
 		CurrentPage->Render(D2DRenderTarget, Brush, FloatingFont);
 	}
-
 
 	D2DRenderTarget->EndDraw();
 }
@@ -217,7 +146,6 @@ void UIManager::Render(int birdsLeft)
 void UIManager::Release()
 {
 	if (WICFactory) { WICFactory->Release(); WICFactory = nullptr; }
-
 	if (FloatingFont) { FloatingFont->Release(); FloatingFont = nullptr; }
 	if (Brush) { Brush->Release(); Brush = nullptr; }
 	if (D2DRenderTarget) { D2DRenderTarget->Release(); D2DRenderTarget = nullptr; }
@@ -255,33 +183,36 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 		score = 2000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::LightGreen);
 	}
-	else if(colAId == EColliderId::BLOCK && colBId == EColliderId::BLOCK)
+	else if (colAId == EColliderId::BLOCK && colBId == EColliderId::BLOCK)
 	{
-		UUIFloatingText* ft = nullptr;
-		float maxMergeDistance = 100.0f;
-		float minDistanceSq = maxMergeDistance * maxMergeDistance;
-
-		for (auto& it : FloatingTexts)
+		UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame));
+		if (inGame)
 		{
-			if (it->bIsFlyingToHUD || it->bIsFinished) continue;
-			float dx = it->X - colposx;
-			float dy = it->Y - colposy;
-			float distSq = dx * dx + dy * dy;
+			UUIFloatingText* ft = nullptr;
+			float maxMergeDistance = 100.0f;
+			float minDistanceSq = maxMergeDistance * maxMergeDistance;
 
-			if (distSq < minDistanceSq)
+			for (auto& it : inGame->FloatingTexts)
 			{
-				minDistanceSq = distSq;
-				ft = it;
+				if (it->bIsFlyingToHUD || it->bIsFinished) continue;
+				float dx = it->X - colposx;
+				float dy = it->Y - colposy;
+				float distSq = dx * dx + dy * dy;
+
+				if (distSq < minDistanceSq)
+				{
+					minDistanceSq = distSq;
+					ft = it;
+				}
+			}
+
+			if (ft)
+			{
+				ft->TargetScore += 500;
+				ft->FloatTimer += 0.4f;
+				ft->ftscale = 1.5f;
 			}
 		}
-
-		if (ft)
-		{
-			ft->TargetScore += 500;
-			ft->FloatTimer += 0.4f;
-			ft->ftscale = 1.5f;
-		}
-		
 		return;
 	}
 	else
@@ -306,7 +237,8 @@ void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
 
 std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos) 
 {
-	float screenX = (worldPos.x + 1.0f) * 0.5f * screenWidth;
+	float aspect = (screenHeight > 0) ? ((float)screenWidth / (float)screenHeight) : (16.0f / 9.0f);
+	float screenX = (worldPos.x / aspect + 1.0f) * 0.5f * screenWidth;
 	float screenY = (1.0f - worldPos.y) * 0.5f * screenHeight;
 
 	return { screenX, screenY };

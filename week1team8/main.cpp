@@ -147,6 +147,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
+
+
+	//인게임 배경화면 생성.
+	UUIBackground* ingameBG = new UUIBackground();
+	const wchar_t* bgPath = L"Assets\\img]\\ingamebackground.jpg";
+	ingameBG->bgBitmap = uiManager.LoadBitmapFromFile(bgPath);
+
+	
+
+
 	ASlingShot* SlingShot = nullptr;
 	ABird* Bird = nullptr;
 	bool bResult = LoadManager.LoadMap(1, SlingShot, Bird);
