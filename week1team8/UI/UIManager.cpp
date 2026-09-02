@@ -45,7 +45,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 	{
 
 		UUIPage* startPage = new UUIPage(EPageType::Starting);
-		
+
 		//배경
 		UUIBackground* startBg = new UUIBackground(
 			L"Assets/img/startimg.png",
@@ -68,7 +68,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			// 페이지만 바꾸면 state가 Menu에 머물러 CheckGameState(맵 로드·클리어 판정)가 안 돈다
 			GameManager::GetInstance().Restart();
 			ChangePage(EPageType::InGame);
-		});
+			});
 		startPage->AddChild(startbtn);
 
 		//게임 종료 버튼
@@ -81,7 +81,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 		finishbtn->SetOnClick([]() {
 			PostQuitMessage(0);
-		});
+			});
 		startPage->AddChild(finishbtn);
 
 		Pages[EPageType::Starting] = startPage;
@@ -96,7 +96,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		{
 			inGamePage->PauseBtn->SetOnClick([this]() {
 				ChangePage(EPageType::Pause);
-			});
+				});
 		}
 		Pages[EPageType::InGame] = inGamePage;
 	}
@@ -135,7 +135,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 		continueBtn->SetOnClick([this]() {
 			ChangePage(EPageType::InGame);
-		});
+			});
 		pausePage->AddChild(continueBtn);
 
 		//재시작 버튼
@@ -150,7 +150,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		retryBtn->SetOnClick([this]() {
 			LoadManager::Get().LoadMap(GameManager::GetInstance().GetCurlvl());
 			ChangePage(EPageType::InGame);
-		});
+			});
 		pausePage->AddChild(retryBtn);
 
 		//게임 종료 버튼
@@ -261,19 +261,19 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 	D2D1_COLOR_F color = D2D1::ColorF(D2D1::ColorF::Gold);
 
 	if ((colAId == EColliderId::BIRD && colBId == EColliderId::PIG) ||
-		(colAId == EColliderId::PIG  && colBId == EColliderId::BIRD))
+		(colAId == EColliderId::PIG && colBId == EColliderId::BIRD))
 	{
 		score = 1000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::Gold);
 	}
-	else if ((colAId == EColliderId::BIRD  && colBId == EColliderId::BLOCK) ||
-		     (colAId == EColliderId::BLOCK && colBId == EColliderId::BIRD))
+	else if ((colAId == EColliderId::BIRD && colBId == EColliderId::BLOCK) ||
+		(colAId == EColliderId::BLOCK && colBId == EColliderId::BIRD))
 	{
 		score = 700.0f;
 		color = D2D1::ColorF(D2D1::ColorF::Yellow);
 	}
 	else if ((colAId == EColliderId::BLOCK && colBId == EColliderId::PIG) ||
-		     (colAId == EColliderId::PIG   && colBId == EColliderId::BLOCK))
+		(colAId == EColliderId::PIG && colBId == EColliderId::BLOCK))
 	{
 		score = 2000.0f;
 		color = D2D1::ColorF(D2D1::ColorF::LightGreen);
@@ -318,7 +318,7 @@ void UIManager::CalPos(EColliderId colAId, EColliderId colBId, float colposx, fl
 	SpawnFloatingText(score, colposx, colposy, color);
 }
 
-void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos) 
+void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
 {
 	for (const auto& it : infos)
 	{
@@ -341,8 +341,6 @@ void UIManager::ChangePage(EPageType newPageType)
 		CurrentPage->Show();
 	}
 }
-
-
 
 void UIManager::GotoEnding(GameState gs)
 {
@@ -367,17 +365,17 @@ void UIManager::GotoEnding(GameState gs)
 		default:
 			break;
 		}
-		
+
 	}
 }
 
-void UIManager::DrawBirdPath(const std::vector<FVector> &vertices)
+void UIManager::DrawBirdPath(const std::vector<FVector>& vertices)
 {
 }
 
 
 
-std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos) 
+std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos)
 {
 	float aspect = (screenHeight > 0) ? (static_cast<float>(screenWidth) / static_cast<float>(screenHeight)) : (16.0f / 9.0f);
 	float screenX = (worldPos.x / aspect + 1.0f) * 0.5f * static_cast<float>(screenWidth);

@@ -21,6 +21,8 @@
 
 using namespace std;
 
+enum class GameState;
+
 class UIManager
 {
 public:
