@@ -47,8 +47,8 @@ public:
 	void GetCollisionInfos(std::vector<CollisionInfo> infos);
 
 	void ChangePage(EPageType newPageType);
-
 	void GotoEnding(GameState gs);
+	void DrawBirdPath(const std::vector<FVector>& vertices);
 
 
 	UUIPage* GetPage(EPageType type)

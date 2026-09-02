@@ -369,6 +369,10 @@ void UIManager::GotoEnding(GameState gs)
 	}
 }
 
+void UIManager::DrawBirdPath(const std::vector<FVector> &vertices)
+{
+}
+
 
 
 std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos) 
