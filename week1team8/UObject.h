@@ -53,43 +53,57 @@ protected:
 	EPrimitive Primitive = EPrimitive::Circle;
 	float Rotation = 0.f;
 	FVector Scale = { 1, 1, 1 };
-	
 };
 
 class ACollider : public AActor
 {
 public:
-	ACollider()
-	{
+	ACollider() {}
+	virtual ~ACollider() {}
 
-	}
-	virtual ~ACollider()
-	{
-	}
 	virtual void Move(float t);		// t 시간동안 이동
-	virtual bool CheckCollision(UObject* Other);
-	virtual void ResolveCollision(UObject* Other);	// 충돌 해결 (속도 변화, 겹침 해결)
-	void SetVelocity(FVector _Vel) { Velocity = _Vel; }
-	void SetMass(float _Mass) { Mass = _Mass; }
+
 	FVector GetVelocity() const { return Velocity; }
+	void SetVelocity(FVector _Vel) { Velocity = _Vel; }
+
 	float GetMass() const { return Mass; }
+	void SetMass(float _Mass) { Mass = _Mass; }
+
 	EColliderId GetColliderId() const { return colId; }
+
 	float GetStaticFriction() const { return StaticFriction; }
-	float GetDynamicFriction() const { return DynamicFriction; }
 	void SetStaticFriction(float _f) { StaticFriction = _f; }
+
+	float GetDynamicFriction() const { return DynamicFriction; }
 	void SetdynamicFriction(float _f) { DynamicFriction = _f; }
 
+	virtual void Pressed(FVector _Location) override;
+	virtual void Released(FVector _Location) override;
+
+	bool bEditing = false;
 	bool bUseGravity = true;
 
 protected:
-	FVector Velocity;						// 속도
-	float Mass = 10;						// 질량
 	EColliderId colId = EColliderId::NONE;	// collider 종류
-	float StaticFriction = 0.3f;
-	float DynamicFriction = 0.2f;
+	FVector Velocity;						// 속도
+	float StaticFriction = 0.0f;
+	float DynamicFriction = 0.0f;
+	float Mass = 10;						// 질량
+	float AngularVelocity = 0;
+	float Inertia = 0;
+	float Restitution = 1.0f;
+	float hp = 1.0f;
 };
 
-class ABird : public ACollider
+class ACircle : public ACollider
+{
+public:
+	ACircle() : Radius(Scale.x) {}
+protected:
+	float Radius;
+};
+
+class ABird : public ACircle
 {
 public:
 	ABird() { colId = EColliderId::BIRD; }
@@ -103,31 +117,17 @@ public:
 	float CanStretcheLength = 0.6;
 };
 
-class AObstacle : public ACollider
+class APig : public ACircle
 {
 public:
-	AObstacle(float _hp = 1.0f) : hp(_hp) {}
-	virtual ~AObstacle() {}
-
-	virtual void Pressed(FVector _Location) override;
-	virtual void Released(FVector _Location) override;
-	bool bEditing = false;
-
-protected:
-	float hp = 1.0f;
-};
-
-class APig : public AObstacle
-{
-public:
-	APig() : AObstacle(1.0f) { colId = EColliderId::PIG; }
+	APig() { colId = EColliderId::PIG; }
 	virtual ~APig() {}
 };
 
-class ABlock : public AObstacle
+class ABlock : public ACollider
 {
 public:
-	ABlock() : AObstacle(1.0f) { colId = EColliderId::BLOCK; }
+	ABlock() { colId = EColliderId::BLOCK; }
 	virtual ~ABlock() {}
 };
 
@@ -160,8 +160,8 @@ private:
 class ASlingShot : public AActor
 {
 public:
-	ASlingShot(){}
-	virtual ~ASlingShot(){}
+	ASlingShot() {}
+	virtual ~ASlingShot() {}
 
 	void SpawnBand();
 	virtual void Pressed(FVector _Location) override;
