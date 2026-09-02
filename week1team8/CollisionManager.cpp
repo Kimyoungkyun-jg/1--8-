@@ -22,6 +22,16 @@ float CollisionManager::InvMass(float mass)
 	return 1.0f / mass;
 }
 
+float CollisionManager::InvInertia(float inertia)
+{
+	if (inertia <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	return 1.0f / inertia;
+}
+
 void CollisionManager::SetAllCollisionFriction(float _dynamic, float _static)
 {
 	size_t n = colliders.size();
@@ -331,11 +341,16 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 // 충돌해결 (법선 B->A)
 float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
 {
+	FVector rA = info.contactPoint - a->GetLocation();
+	FVector rB = info.contactPoint - b->GetLocation();
+
 	FVector normal = info.normal;
 	float penetration = info.penetration;
 
 	float invMassA = InvMass(a->GetMass());
 	float invMassB = InvMass(b->GetMass());
+	float invIA = InvInertia(a->GetInertia());
+	float invIB = InvInertia(b->GetInertia());
 
 	// 스태틱 충돌 (추후 수정)
 	if (invMassA + invMassB <= 0.0f)
@@ -343,7 +358,8 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		return 0.0f;
 	}
 
-	FVector relativeVelocity = a->GetVelocity() - b->GetVelocity(); // 상대 속도
+	FVector relativeVelocity = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
+		(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB)); // 상대 속도
 	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
 
 	// 충돌 지점에서 멀어지는 중 (내적의 결과가 양수 = 충돌 방향과 상대 속도가 예각을 이룸
@@ -356,12 +372,18 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 	float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.8f;
 
 	// 충격량 적용
-	float impulseMag = -(1.0f + restitution) * relativeVelocityNormal / (invMassA + invMassB); // 충격량
+	float raxn = FVector::Cross(rA, normal);
+	float rbxn = FVector::Cross(rB, normal);
+	float validMass = invMassA + invMassB + raxn * raxn * invIA + rbxn * rbxn * invIB;
+	float impulseMag = -(1.0f + restitution) * relativeVelocityNormal / (validMass); // 충격량
 	a->SetVelocity(a->GetVelocity() + normal * (impulseMag * invMassA));
 	b->SetVelocity(b->GetVelocity() - normal * (impulseMag * invMassB));
+	a->SetAngularVelocity(a->GetAngularVelocity() + raxn * impulseMag * invIA);
+	b->SetAngularVelocity(b->GetAngularVelocity() - rbxn * impulseMag * invIB);
 
 	// 마찰 적용
-	FVector relativeVelocityAfter = a->GetVelocity() - b->GetVelocity();
+	FVector relativeVelocityAfter = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
+		(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB));
 	FVector tangent = relativeVelocityAfter - normal * normal.DotProduct(relativeVelocityAfter); // 접선 방향 상대 속도
 	float tangentLength = tangent.Length(); // 속력
 
@@ -370,7 +392,11 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		tangent = tangent / tangentLength; // 정규화
 
 		float relativeVelocityTangent = tangentLength; // 접선 방향 속력
-		float frictionImpulseMag = -relativeVelocityTangent / (invMassA + invMassB); // 마찰 임펄스 크기
+
+		float raxt = FVector::Cross(rA, tangent);
+		float rbxt = FVector::Cross(rB, tangent);
+		float validMassTangent = invMassA + invMassB + raxt * raxt * invIA + rbxt * rbxt * invIB;
+		float frictionImpulseMag = -relativeVelocityTangent / (validMassTangent); // 마찰 임펄스 크기
 
 		float staticFriction = std::sqrt(a->GetStaticFriction() * b->GetStaticFriction()); // 정지 마찰 계수
 		float maxStaticFriction = impulseMag * staticFriction;
@@ -386,6 +412,8 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 
 		a->SetVelocity(a->GetVelocity() + tangent * (frictionImpulseMag * invMassA));
 		b->SetVelocity(b->GetVelocity() - tangent * (frictionImpulseMag * invMassB));
+		a->SetAngularVelocity(a->GetAngularVelocity() + raxt * frictionImpulseMag * invIA);
+		b->SetAngularVelocity(b->GetAngularVelocity() - rbxt * frictionImpulseMag * invIB);
 	}
 
 	if (impulseMag > CollisionThreshold)
@@ -429,7 +457,6 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 	return impulseMag;
 }
 
-// 충돌해결
 float CollisionManager::GetImpulse(ACollider* a, ACollider* b, const CollisionInfo& info)
 {
 	FVector normal = info.normal;

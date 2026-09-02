@@ -119,7 +119,6 @@ void ACollider::Released(FVector _Location)
 	}
 }
 
-
 void UObject::Destroy()
 {
 	UObjectManager::GetInstance().Destroy(this);
@@ -193,7 +192,7 @@ void ASlingShot::SpawnBand()
 	FVector FrontPoint = Location + FVector(Scale.x / 2, Scale.y / 2, 0);
 	FVector RestPoint = (BackPoint + FrontPoint) / 2;
 
-	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, {0.05, 0.05, 1});
+	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
 	FrontBand = SpawnActor<ABand>(FrontPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
 
 	BackBand->AttachedPoint = BackPoint;

@@ -77,6 +77,9 @@ public:
 	float GetDynamicFriction() const { return DynamicFriction; }
 	void SetdynamicFriction(float _f) { DynamicFriction = _f; }
 
+	float GetAngularVelocity() const { return AngularVelocity; }
+	void SetAngularVelocity(float value) { AngularVelocity = value; }
+
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual float GetInertia() const = 0;

@@ -29,6 +29,8 @@ public:
 
 	float InvMass(float mass);
 
+	float InvInertia(float mass);
+
 	std::vector<ACollider*> colliders;
 	std::vector<ACollider*> pendingkills;
 	float CollisionThreshold = 100.0f;
