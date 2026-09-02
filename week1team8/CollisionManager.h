@@ -111,7 +111,7 @@ public:
 
 	std::vector<ACollider*> colliders;
 	std::vector<ACollider*> pendingkills;
-	float CollisionThreshold = 50.0f;
+	float CollisionThreshold = 10.0f;
 
 	void TryKill(ACollider * c)
 	{

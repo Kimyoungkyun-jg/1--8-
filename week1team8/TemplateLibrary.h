@@ -53,8 +53,7 @@ inline T* SpawnColider(FVector Location, EPrimitive Primitive, bool bUseGravity 
 	return static_cast<T*>(Colider);
 }
 
-
-inline bool TraceSphere(FVector Location, float Radius, std::vector<ACollider*> &Result)
+inline bool TraceSphere(FVector Location, float Radius, std::vector<ACollider*>& Result)
 {
 	bool bFound = false;
 	std::vector<ACollider*> Colliders = CollisionManager::GetInstance().colliders;

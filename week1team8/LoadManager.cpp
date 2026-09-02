@@ -153,7 +153,7 @@ bool LoadManager::LoadMap(int num)
 			FSpawnInfo ObstacleInfo = MakeSpawnInfo(str, false);
 			if (ObstacleInfo.ColliderId == EColliderId::BLOCK)
 			{
-				ABlock* Block = SpawnColider<ABlock>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass);
+				ABlock* Block = SpawnColider<ABlock>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass, 3.0f);
 				if (ObstacleInfo.Scale.x >= ObstacleInfo.Scale.y)
 					Block->SetImage(L"Assets/img/plank.png");
 				else
