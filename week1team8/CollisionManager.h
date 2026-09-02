@@ -116,13 +116,13 @@ public:
 	void TryKill(ACollider * c)
 	{
 		if (!c || c->GetMass() <= 0.0f) return;     // 정적 물체(바닥)는 제외
+		c->PlaySFX();
 		if (c->minusHp() > 0) return;              // 아직 안 죽음
 		for (auto* p : pendingkills)                // 중복 방지
 		{
 			if (p == c) return;
 		}
 		pendingkills.push_back(c);
-		c->PlaySFX();
 	};
 
 	// 디버그용. 반환값 infos와 달리 데미지 판정 전의 모든 접촉을 담는다

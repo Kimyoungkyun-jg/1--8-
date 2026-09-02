@@ -187,7 +187,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SM.LoadSound("sfx_bird_hit", L"Assets/sfx_bird_hit.wav");
 	SM.LoadSound("sfx_bomb_hit", L"Assets/sfx_bomb_hit.wav");
 
-	SM.PlayBGM("bgm_main", true, 0.3f);
+	SM.PlayBGM("bgm_main", true, 0.5f);
 
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
