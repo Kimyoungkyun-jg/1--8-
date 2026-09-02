@@ -94,5 +94,9 @@ private:
 	std::vector<ABird*> Birds;
 
 	FVector ShotPoint = { -1.18, -0.35, 0 };
+
+
+public:
+	bool IsClearLevel = false;
 };
 

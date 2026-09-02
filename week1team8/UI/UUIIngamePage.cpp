@@ -1,5 +1,6 @@
 #include "UUIIngamePage.h"
 #include "UIManager.h"
+#include "../GameManager.h"
 #include <cmath>
 #include <algorithm>
 #include "../Global.h"
@@ -50,6 +51,7 @@ void UUIIngamePage::ResetScore()
 {
 	TargetScore = 0;
 	DisplayScore = 0.0f;
+	BirdsLeft = GameManager::GetInstance().GetBirdCount() + (GameManager::GetInstance().GetReloadedBird() ? 1 : 0);
 	if (InGameHUD)
 	{
 		InGameHUD->SetData(0.0f, BirdsLeft);
