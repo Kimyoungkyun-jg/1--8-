@@ -19,8 +19,7 @@ void GameManager::Restart()
 		return;
 	}
 
-	// 맵 파일이 없어도 벽과 새총은 세워둔다 (SlingShot이 null로 남으면 안 된다).
-	// 다만 Play로는 안 넘어간다. 돼지가 0마리라 CheckGameState가 바로 다음 레벨을 찾는다.
+	// 맵이 없어도 벽과 새총은 세운다. Play로는 안 넘어간다 (돼지 0마리 = 즉시 다음 레벨)
 	LoadManager::Get().ClearMap();
 	state = GameState::Menu;
 }
@@ -30,8 +29,7 @@ void GameManager::SpawnWalls()
 	// 빠른 물체가 한 프레임에 통과하지 않을 만큼의 두께
 	const float thickness = 0.5f;
 
-	// 셰이더가 x를 종횡비로 나누므로, 보이는 x 범위가 곧 ±wAspectRatio다.
-	// 고정값을 쓰면 벽이 화면 밖이나 안쪽에 생긴다.
+	// 셰이더가 x를 종횡비로 나누므로 보이는 x 범위가 곧 ±wAspectRatio다
 	const float right = URenderer::GetInstance().wAspectRatio;
 	const float left = -right;
 	const float top = Global::topBorder;

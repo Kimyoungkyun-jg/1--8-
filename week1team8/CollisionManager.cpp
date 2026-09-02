@@ -21,8 +21,7 @@ OBB MakeOBB(const ACollider* collider)
 	box.half[0] = collider->GetScale().x * 0.5f;
 	box.half[1] = collider->GetScale().y * 0.5f;
 
-	// 중심에서 두 축 방향으로 반너비/반높이만큼 간 네 점.
-	// 회전이 0일 때 좌하 -> 우하 -> 우상 -> 좌상 순서가 되고, 회전해도 순서는 유지
+	// 중심에서 두 축 방향으로 간 네 점. 반시계 순서는 회전해도 유지된다
 	FVector ex = box.axis[0] * box.half[0];
 	FVector ey = box.axis[1] * box.half[1];
 
@@ -101,9 +100,7 @@ namespace
 		unsigned int id = 0;
 	};
 
-	// 접촉점의 출처를 정수 하나로 압축
-	// 기준면 / 상대면 / 어느 꼭짓점(또는 어느 옆면에서 잘렸는지) / 기준이 뒤집혔는지.
-	// 이 넷이 같으면 프레임이 넘어가도 물리적으로 같은 접촉
+	// 접촉점의 출처(기준면/상대면/꼭짓점/뒤집힘)를 정수 하나로 압축. 같으면 같은 접촉이다
 	unsigned int MakeContactId(int referenceFace, int incidentFace, int feature, bool flip)
 	{
 		return (unsigned int)referenceFace
@@ -112,8 +109,7 @@ namespace
 			| ((unsigned int)(flip ? 1 : 0) << 24);
 	}
 
-	// 선분 in을 반평면 (n·x <= offset) 안쪽만 남기고 자름
-	// 밖으로 나간 끝점은 평면과 만나는 지점으로 옮겨지고, 그 점은 clipId를 갖음
+	// 선분을 반평면 (n·x <= offset) 안쪽만 남기고 자른다. 새로 생긴 교점은 clipId를 갖는다
 	int ClipSegment(ClipVertex out[2], const ClipVertex in[2], const FVector& n, float offset, unsigned int clipId)
 	{
 		int count = 0;
@@ -142,8 +138,7 @@ SATResult OverlapOBB(const OBB& a, const OBB& b)
 {
 	SATResult result;
 
-	// 볼록 도형 둘이 안 겹치면, 둘을 갈라놓는 축이 반드시 하나 있다 (분리축 정리).
-	// 사각형에서 후보가 되는 축은 각 상자의 로컬 축 2개씩, 총 4개
+	// 분리축 정리. 사각형은 마주보는 면이 같은 축이라 상자당 2개, 총 4개만 보면 된다
 	FVector axes[4] = { a.axis[0], a.axis[1], b.axis[0], b.axis[1] };
 
 	float overlapA = FLT_MAX;
@@ -176,9 +171,7 @@ SATResult OverlapOBB(const OBB& a, const OBB& b)
 		}
 	}
 
-	// 겹침이 가장 얕은 축이 법선. 두 값이 비슷하면 a를 붙잡아 둔다.
-	// 안 그러면 회전이 같은 두 상자에서 미세한 오차로 기준이 매 프레임 뒤집혀
-	// 아래에서 만드는 ID가 같이 흔들린다 (warm starting이 캐시를 놓침).
+	// 겹침이 가장 얕은 축이 법선. 비슷하면 a를 붙잡아 둔다 (기준이 뒤집히면 ID도 흔들린다)
 	const float relativeTolerance = 0.95f;
 	const float absoluteTolerance = 0.0001f;
 	bool flip = overlapB < overlapA * relativeTolerance - absoluteTolerance;
@@ -193,8 +186,7 @@ SATResult OverlapOBB(const OBB& a, const OBB& b)
 		normal = normal * -1.0f;
 	}
 
-	// 최소 침투 축을 낸 상자의 면이 '기준면'.
-	// normal이 B -> A라 a의 면은 b를 향하고(-normal) b의 면은 a를 향한다(+normal).
+	// 최소 침투 축을 낸 상자의 면이 기준면. normal이 B->A라 a면은 -normal, b면은 +normal
 	const OBB& reference = flip ? b : a;
 	const OBB& incident = flip ? a : b;
 	FVector referenceNormal = flip ? normal : normal * -1.0f;
@@ -220,8 +212,7 @@ SATResult OverlapOBB(const OBB& a, const OBB& b)
 	segment[1].position = incident.vertex[incidentNext];
 	segment[1].id = MakeContactId(referenceFace, incidentFace, incidentNext, flip);
 
-	// v0 쪽 옆면: sideDir·x >= sideDir·v0  <=>  (-sideDir)·x <= -(sideDir·v0)
-	// 잘려 생긴 점은 꼭짓점이 아니므로 feature 4/5를 따로 준다
+	// v0 쪽 옆면. 잘려 생긴 점은 꼭짓점이 아니므로 feature 4/5를 따로 준다
 	ClipVertex clipped[2];
 	if (ClipSegment(clipped, segment, sideDir * -1.0f, -sideDir.DotProduct(v0),
 		MakeContactId(referenceFace, incidentFace, 4, flip)) < 2)
@@ -237,9 +228,8 @@ SATResult OverlapOBB(const OBB& a, const OBB& b)
 		return result;
 	}
 
-	// 깊이는 점마다 따로 잰다. 기울어진 블록의 좌우 깊이 차이가 블록을 눕히는 회전을 만든다.
-	// separation == 0으로 자르면 놓인 블록의 침투가 slop 근처에서 떨릴 때마다 한쪽 점이
-	// 사라졌다 생겼다 한다. 여유를 둬서 개수를 안정시킨다 (안 닿았으면 충격량이 0으로 클램프됨).
+	// 깊이는 점마다 따로. 좌우 깊이 차이가 블록을 눕히는 회전을 만든다.
+	// 여유를 두는 건 침투가 slop 근처에서 떨릴 때 점이 사라졌다 생겼다 하는 걸 막으려는 것
 	const float contactTolerance = 0.005f;
 	float referenceOffset = referenceNormal.DotProduct(v0);
 
@@ -365,8 +355,7 @@ void CollisionManager::UpdateSleep(float t, const std::vector<std::pair<ACollide
 	}
 
 	// 2. 접촉으로 연결된 무리를 만든다.
-	//    정적 물체는 무리를 잇지 않는다. 바닥을 통해 이으면 바닥에 닿은 모든 물체가
-	//    한 덩어리가 되어, 화면 어딘가에서 하나만 움직여도 아무것도 못 잠든다.
+	//    정적 물체는 안 잇는다. 바닥으로 이으면 전부 한 덩어리가 돼서 아무것도 못 잠든다.
 	std::unordered_map<const ACollider*, int> indexOf;
 	indexOf.reserve(n);
 	for (int i = 0; i < (int)n; i++)
@@ -417,8 +406,7 @@ void CollisionManager::UpdateSleep(float t, const std::vector<std::pair<ACollide
 	}
 
 	// 4. 무리 단위로 재우거나 깨운다.
-	//    깨어 있는 물체가 잠든 무리에 새로 닿으면 둘이 한 무리가 되고,
-	//    그 무리의 최소 타이머가 0이 되므로 잠든 쪽이 저절로 깨어난다.
+	//    깨어 있는 물체가 새로 닿으면 한 무리가 되고 최소 타이머가 0이라 저절로 깨어난다.
 	for (int i = 0; i < (int)n; i++)
 	{
 		ACollider* c = colliders[i];
@@ -450,8 +438,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 	{
 		for (size_t j = i + 1; j < n; j++)
 		{
-			// 정적끼리는 아예 볼 것도 없다.
-			// 잠든 쌍은 감지까지는 한다 — 무리를 잇고 파괴 때 깨우려면 접촉 그래프가 온전해야 한다.
+			// 잠든 쌍도 감지는 한다. 접촉 그래프가 비면 무리도 깨우기도 성립하지 않는다
 			if (colliders[i]->GetMass() + colliders[j]->GetMass() <= 0.0f)
 			{
 				continue;
@@ -498,8 +485,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 		}
 	}
 
-	// 수렴한 충격량을 다음 프레임에 넘긴다. 매 프레임 새로 만들어 교체하므로
-	// 안 닿는 쌍이나 파괴된 물체의 항목은 저절로 사라진다.
+	// 수렴한 충격량을 다음 프레임에 넘긴다. 새로 만들어 교체하므로 낡은 항목은 저절로 사라진다
 	{
 		std::unordered_map<unsigned long long, CollisionInfo> currentManifolds;
 		currentManifolds.reserve(abinfos.size());
@@ -514,9 +500,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 				continue;
 			}
 
-			// 잠든 쌍은 이번 프레임에 풀지 않았으므로 충격량이 0이다.
-			// 그대로 저장하면 깨어날 때 warm start가 날아가고, '새 접촉'으로 잘못 잡혀
-			// 데미지가 한 번 더 들어간다. 지난 값을 그대로 들고 간다.
+			// 잠든 쌍은 안 풀어서 충격량이 0이다. 저장하면 깨어날 때 warm start가 날아가고
+			// '새 접촉'으로 잡혀 데미지가 한 번 더 들어간다. 지난 값을 그대로 들고 간다
 			auto found = previousManifolds.find(key);
 			if (found != previousManifolds.end())
 			{
@@ -557,8 +542,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 		}
 	}
 
-	// 속도가 확정된 뒤, 물체가 파괴되기 전에 판정한다.
-	// 파괴 뒤에 하면 contacts가 이미 지워진 콜라이더를 가리킨다.
+	// 속도가 확정된 뒤, 파괴 전에. 파괴 뒤면 contacts가 지워진 콜라이더를 가리킨다
 	{
 		std::vector<std::pair<ACollider*, ACollider*>> contacts;
 		contacts.reserve(abinfos.size());
@@ -594,8 +578,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 		// 한 번의 충돌이 여러 프레임 이어져도 데미지는 처음 닿은 프레임에만 준다
 		if (!info.bNewContact) continue;
 
-		// 이월받은 몫은 '위에 얹힌 무게를 떠받치는 힘'이라 충돌의 세기가 아니다.
-		// 빼주지 않으면 밑에 깔린 블록일수록 세게 맞아서가 아니라 위치 때문에 먼저 깨진다.
+		// 이월받은 몫은 지지 하중이라 충돌 세기가 아니다. 안 빼면 밑에 깔린 블록이 먼저 깨진다
 		float approachSpeed = 0.0f;
 		float impactImpulse = 0.0f;
 		for (int i = 0; i < info.pointCount; i++)
@@ -615,9 +598,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 		TryKill(ab.second);
 	}
 
-	// 사라질 물체가 받치고 있던 것들을 깨운다.
-	// 받침이 없어지면 접촉도 같이 사라져서, 남은 물체는 자기 혼자 무리가 된다.
-	// 타이머는 이미 차 있으니 그대로 두면 공중에 뜬 채로 잠들어 있는다.
+	// 받침이 사라지면 접촉도 같이 사라져서 혼자 무리가 된다. 안 깨우면 공중에 뜬 채로 잠든다
 	for (auto& [ab, info] : abinfos)
 	{
 		for (ACollider* dying : pendingkills)
@@ -751,8 +732,7 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 	float clampedX = std::clamp(localX, -box.half[0], box.half[0]);
 	float clampedY = std::clamp(localY, -box.half[1], box.half[1]);
 
-	// 원이 사각형의 어느 면/모서리에 붙었는지. clamp에 걸린 축과 부호가 곧 영역이라,
-	// 같은 면 위를 굴러가는 동안은 안 바뀐다 (프레임 간 추적용 ID).
+	// 원이 붙은 면/모서리. clamp에 걸린 축과 부호가 곧 영역이라 굴러가도 안 바뀐다 (추적용 ID)
 	unsigned int regionId = 0;
 	if (localX != clampedX) regionId |= (localX > 0.0f) ? 0x1u : 0x2u;
 	if (localY != clampedY) regionId |= (localY > 0.0f) ? 0x4u : 0x8u;
@@ -762,10 +742,8 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 
 	if (regionId == 0)
 	{
-		// 어느 축도 clamp에 안 걸렸다 = 원 중심이 사각형 안.
-		// 가장 가까운 점이 중심 자신이라 방향을 못 구하므로, 대신 가장 얕게
-		// 빠져나갈 면을 골라 그쪽으로 밀어낸다.
-		// 예전엔 여기서 충돌을 버려서, 빠른 새가 벽 중심선을 넘으면 그대로 통과했다.
+		// clamp에 안 걸렸다 = 중심이 사각형 안. 가장 가까운 점이 중심 자신이라 방향을
+		// 못 구하므로, 가장 얕게 빠져나갈 면으로 민다 (예전엔 여기서 버려서 벽을 통과했다)
 		float depthX = box.half[0] - std::fabs(localX);   // 좌우 면까지 남은 거리
 		float depthY = box.half[1] - std::fabs(localY);   // 위아래 면까지 남은 거리
 
@@ -800,9 +778,8 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 		penetration = radius - dist;
 	}
 
-	// 충돌 지점: 원 표면의 점과 사각형 쪽 점의 중간.
-	// radius - penetration은 바깥일 때 중심~사각형 거리, 안쪽일 때는 음수라
-	// 빠져나갈 면 위로 투영된다.
+	// 원 표면의 점과 사각형 쪽 점의 중간. radius - penetration이 안쪽일 땐 음수가 되어
+	// 빠져나갈 면 위로 투영된다
 	FVector pointOnCircle = a->GetLocation() - normal * radius;
 	FVector pointOnBox = a->GetLocation() - normal * (radius - penetration);
 
@@ -833,17 +810,13 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 	}
 
 	// 접촉점마다 따로, 회전까지 보정한다 (속도 솔버와 같은 구조).
-	// 가장 깊은 값으로 통째로 평행이동하면 기울어진 블록의 얕은 쪽이 바닥에서 들린다.
-	//
-	// 법선은 감지 시점 값으로 고정하고, 겹친 깊이만 로컬 앵커로 다시 잰다.
-	// 반복마다 재감지하면 법선이 조금씩 다른 방향으로 잡히고, 그 차이가 쌓여
-	// 물체가 옆으로 밀린다. 위치 보정은 속도를 안 거치므로 마찰이 이걸 못 막는다.
+	// 법선은 감지 시점 값으로 고정한다. 반복마다 재감지하면 법선이 조금씩 달라지고
+	// 그 차이가 쌓여 물체가 옆으로 밀리는데, 마찰은 속도만 보므로 이걸 못 막는다
 	for (int i = 0; i < info.pointCount; i++)
 	{
 		const ContactPoint& point = info.points[i];
 
-		// 두 앵커는 감지 시점엔 같은 점이었다. 그동안 법선 방향으로 벌어진 만큼이
-		// 겹침이 줄어든 양이다.
+		// 두 앵커는 감지 시점엔 같은 점이었다. 벌어진 만큼 겹침이 줄었다
 		FVector worldA = ToWorld(a, point.localA);
 		FVector worldB = ToWorld(b, point.localB);
 		float penetration = point.penetration - normal.DotProduct(worldA - worldB);
@@ -945,11 +918,8 @@ void CollisionManager::SolveContact(ACollider* a, ACollider* b, CollisionInfo& i
 		a->SetAngularVelocity(a->GetAngularVelocity() + raxt * appliedT * invIA);
 		b->SetAngularVelocity(b->GetAngularVelocity() - rbxt * appliedT * invIB);
 
-		// 구름 저항.
-		// 마찰은 접촉점이 '미끄러질 때만' 작동한다. 미끄러지지 않고 구르는 공은
-		// 접촉점 상대속도가 0이라 마찰 충격량이 아예 생기지 않고, 그래서 계수를
-		// 아무리 올려도 안 멈춘다. 실제로 공을 멈추는 건 접촉면이 눌리며 생기는
-		// 저항이므로, 상대 '각속도'를 직접 줄이는 항을 따로 둔다.
+		// 구름 저항. 마찰은 미끄러질 때만 작동해서, 구르는 공은 접촉점 상대속도가 0이라
+		// 계수를 올려도 안 멈춘다. 그래서 상대 '각속도'를 직접 줄이는 항을 따로 둔다
 		float rollingMass = invIA + invIB;
 
 		if (rollingMass > 0.0f)
@@ -984,8 +954,7 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 
 	if (invMassA + invMassB <= 0.0f) return; // 스태틱 충돌
 
-	// 지난 프레임에 이 쌍이 닿아 있었는지. warm starting 여부와 무관하게 봐야
-	// 데미지 판정이 "새로 부딪힌 프레임"을 제대로 가려낸다.
+	// 지난 프레임에 닿아 있었는지. warm starting을 꺼도 봐야 데미지가 중복되지 않는다
 	const CollisionInfo* previous = FindPreviousManifold(a, b);
 	info.bNewContact = (previous == nullptr);
 
@@ -1037,8 +1006,7 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 		point.initialNormalVelocity = relativeVelocityNormal;
 		point.velocityBias = (relativeVelocityNormal < -restitutionThreshold) ? -restitution * relativeVelocityNormal : 0.0f;
 
-		// ID가 같은 접촉점의 지난 충격량을 이어받는다.
-		// initialNormalVelocity는 위에서 이미 기록됐으므로 데미지 판정은 영향 없음
+		// ID가 같은 점의 지난 충격량을 이어받는다 (속도는 위에서 이미 기록됨)
 		point.inheritedNormalImpulse = 0.0f;
 
 		if (previous)
@@ -1059,8 +1027,7 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 	}
 }
 
-// 이어받은 충격량 적용. 모든 InitContact가 끝난 뒤에 돌려야 한다.
-// 안 그러면 앞 쌍이 밀어낸 속도가 뒤 쌍의 접근 속도 측정에 섞인다.
+// 이어받은 충격량 적용. 모든 InitContact 뒤에 돌아야 앞 쌍의 속도가 뒤 쌍 측정에 안 섞인다
 void CollisionManager::WarmStartContact(ACollider* a, ACollider* b, const CollisionInfo& info)
 {
 	float invMassA = InvMass(a->GetMass());

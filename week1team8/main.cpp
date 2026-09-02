@@ -51,9 +51,8 @@ FVector ScreenToWorld(HWND hwnd, int MouseX, int MouseY)
 	return FVector(worldX, worldY, 0.0f);
 }
 
-// ScreenToWorld의 역변환.
-// 크기는 GetClientRect가 아니라 ImGui의 DisplaySize에서 가져와야 한다.
-// DPI 배율이 걸리면 둘이 달라서(150%면 1.5배) 그린 게 그만큼 밀린다.
+// ScreenToWorld의 역변환. 크기는 ImGui의 DisplaySize에서 가져와야 한다.
+// GetClientRect의 물리 픽셀을 쓰면 DPI 배율만큼 밀린다.
 ImVec2 WorldToScreen(const FVector& World)
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -130,6 +129,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 프레임 관리
 	const int targetFPS = 144;
 	const double targetFrameTime = 1000.0 / targetFPS;	// 한 프레임의 목표 시간 (밀리초 단위)
+
+	// 물리는 프레임과 분리해 항상 같은 크기로 진행한다.
+	// 큰 걸음 한 번 대신 작은 걸음 여러 번이라 물체가 접촉을 뛰어넘지 않는다.
+	const double fixedDeltaTime = 1000.0 / 144.0;
+	const double maxAccumulated = fixedDeltaTime * 5.0;
+	double accumulator = 0.0;
 
 	LARGE_INTEGER frequency;	// tick/sec
 	QueryPerformanceFrequency(&frequency);
@@ -305,22 +310,43 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-		// 일시정지 중에는 Step을 누른 프레임에만 한 번 진행. 렌더와 ImGui는 계속 돈다
-		bool bAdvancePhysics = !bPausePhysics || bStepOnce;
-		bStepOnce = false;
-
 		uiManager.Update(elapsedTime * 0.001);
 
-		if (bAdvancePhysics)
-		{
-			for (ACollider* Collider : CM.colliders)
+		// 물리 한 스텝. 항상 fixedDeltaTime만큼만 진행한다.
+		auto StepPhysics = [&]()
 			{
-				Collider->Move(elapsedTime);
-			}
+				for (ACollider* Collider : CM.colliders)
+				{
+					Collider->Move((float)fixedDeltaTime);
+				}
 
-			// 충돌 검사
-			uiManager.GetCollisionInfos(CM.CheckCollisionAll(elapsedTime));
+				// 충돌 검사
+				uiManager.GetCollisionInfos(CM.CheckCollisionAll((float)fixedDeltaTime));
+			};
+
+		// 흐른 시간을 쌓아두고 고정 크기로 꺼내 쓴다. 남은 건 다음 프레임으로 넘어간다.
+		if (bPausePhysics)
+		{
+			// 멈춘 동안 시간이 쌓이면 풀었을 때 한꺼번에 몰아서 돈다
+			accumulator = 0.0;
+
+			if (bStepOnce)
+			{
+				StepPhysics();   // Step은 정확히 한 스텝
+			}
 		}
+		else
+		{
+			accumulator += elapsedTime;
+
+			while (accumulator >= fixedDeltaTime)
+			{
+				StepPhysics();
+				accumulator -= fixedDeltaTime;
+			}
+		}
+
+		bStepOnce = false;
 
 		//
 
@@ -491,9 +517,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::SliderFloat("Angular Tol", &CM.angularSleepTolerance, 0.0f, 0.3f, "%.4f");
 		ImGui::SliderFloat("Time To Sleep", &CM.timeToSleep, 0.05f, 2.0f);
 
-		// 안 잠들 때 누가 붙잡고 있는지 보려는 것.
-		// 한 무리는 통째로 판정되므로, 속도가 임계값을 못 내려가는 물체 하나가
-		// 자기와 연결된 전부를 깨워둔다.
+		// 안 잠들 때 누가 붙잡고 있는지. 임계값을 못 넘는 물체 하나가 무리 전체를 깨워둔다
 		for (ACollider* c : CM.colliders)
 		{
 			if (c->GetMass() <= 0.0f) continue;
@@ -524,8 +548,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		ImGui::SeparatorText("Bodies");
 
-		// slip = 접촉점에서 실제로 미끄러지는 속도.
-		// 0이면 미끄러지지 않고 구르는 중이라 마찰이 할 일이 없다.
+		// slip = 접촉점에서 실제로 미끄러지는 속도. 0이면 구르는 중이라 마찰이 할 일이 없다
 		for (ACollider* c : CM.colliders)
 		{
 			if (c->GetMass() <= 0.0f) continue;                    // 정적 제외
@@ -642,10 +665,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			elapsedTime = (endTime.QuadPart - startTime.QuadPart) * 1000.0 / frequency.QuadPart;
 		} while (elapsedTime < targetFrameTime);
 
-		// 맵 로딩처럼 한 프레임이 크게 튀면 그 dt가 다음 Move에 그대로 들어가서
-		// 물체가 순간이동한다. 물리에 넘기는 값에 상한을 둔다.
-		// 제대로 된 해법은 고정 timestep + 누적기 (로드맵 06번).
-		elapsedTime = min(elapsedTime, targetFrameTime * 3.0);
+		// 크게 튄 프레임을 한 번에 갚으려다 더 밀리는 악순환을 막는다.
+		// 대신 물리가 잠깐 느려진다.
+		elapsedTime = min(elapsedTime, maxAccumulated);
 	}
 
 	//ImGui 리소스 해제

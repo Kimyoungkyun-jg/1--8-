@@ -65,8 +65,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			200
 		);
 		startbtn->SetOnClick([this]() {
-			// 페이지만 바꾸면 state가 Menu에 머물러서 CheckGameState가 통째로 안 돈다.
-			// 맵 로드도 클리어 판정도 거기 들어 있다.
+			// 페이지만 바꾸면 state가 Menu에 머물러 CheckGameState(맵 로드·클리어 판정)가 안 돈다
 			GameManager::GetInstance().Restart();
 			ChangePage(EPageType::InGame);
 		});

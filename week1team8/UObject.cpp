@@ -50,8 +50,7 @@ void ACollider::Move(float t)
 		return;
 	}
 
-	// 잠든 물체는 중력도 적분도 받지 않는다. 감쇠가 0에 수렴만 하고
-	// 도달하지 못하는 문제를 여기서 끊는다.
+	// 잠든 물체는 중력도 적분도 안 받는다. 감쇠가 0에 도달 못 하는 꼬리를 여기서 끊는다
 	if (bSleeping)
 	{
 		return;
@@ -72,8 +71,7 @@ void ACollider::Move(float t)
 	// 회전
 	Rotation += AngularVelocity * deltaTime;
 
-	// 화면 경계는 SpawnWalls()가 만든 정적 콜라이더가 처리한다.
-	// 예전의 하드코딩 반사는 솔버와 따로 놀아서 마찰도 회전도 안 먹었다.
+	// 화면 경계는 SpawnWalls()가 만든 정적 콜라이더가 처리한다
 }
 
 void ACollider::Pressed(FVector _Location)
