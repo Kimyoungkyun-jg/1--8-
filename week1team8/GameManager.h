@@ -79,7 +79,7 @@ private:
 	GameManager() = default;
 	~GameManager() = default;
 
-	ABird * SpawnWaitingBird(FVector Location, EBirdType BirdType);
+	ABird* SpawnWaitingBird(FVector Location, EBirdType BirdType);
 
 	ABird* ReloadedBird = nullptr;
 	ASlingShot* SlingShot = nullptr;

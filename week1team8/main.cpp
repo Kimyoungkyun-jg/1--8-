@@ -232,6 +232,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bool bFound = false;
 				if (gameManager.GetGameState() == GameState::Play)
 				{
+					if (gameManager.GetReloadedBird()->State == EBirdState::Shooting)
+					{
+						gameManager.GetReloadedBird()->Ability();
+					}
+
 					for (ACollider* Collider : CM.colliders)
 					{
 						if (!Collider->bEditing) continue;

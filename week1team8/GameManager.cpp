@@ -131,7 +131,7 @@ ABird *GameManager::SpawnWaitingBird(FVector Location, EBirdType BirdType)
 	else if (BirdType == EBirdType::FastBird)
 	{
 		Bird = SpawnColider<AFastBird>(Location, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
-		Bird->SetImage(L"Assets/img/bird.png");
+		Bird->SetImage(L"Assets/img/Fastbird.png");
 		Birds.push_back(Bird);
 	}
 
