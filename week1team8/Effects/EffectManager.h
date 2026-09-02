@@ -29,10 +29,14 @@ public:
 	/* 이펙트 풀 사전 생성 함수 (기본 스프라이트 시트 자동 연결) */
 	void SpawnColEffect(int maxCount, const wchar_t* uri = L"Assets/Sprites/coleffects.png", int frameX = 3, int frameY = 1, int totalFrames = 3, float frameRate = 0.05f);
 	void SpawnDisEffect(int maxCount, const wchar_t* uri = L"Assets/Sprites/boom.png", int frameX = 5, int frameY = 1, int totalFrames = 5, float frameRate = 0.06f);
+	void SpawnParticleEffect(int maxCount = 100);
 
 	/* 풀에서 이펙트 꺼내서 재생 (대상 액터 부착 지원) */
 	UEffect* PlayColEffect(const FVector& worldPos, AActor* targetActor = nullptr, const FVector& scale = { 0.15f, 0.15f, 1.0f });
 	UEffect* PlayDisEffect(const FVector& worldPos, const FVector& scale = { 0.25f, 0.25f, 1.0f });
+
+	/* 블록 파괴 시 파티클 비산 */
+	void SpawnBlockDebris(const FVector& worldPos, int count = 20);
 
 	/* 모든 이펙트 비활성화 */
 	void DeactivateAll();
@@ -43,6 +47,7 @@ public:
 public:
 	std::vector<UEffect*> colEffects;
 	std::vector<UEffect*> disEffects;
+	std::vector<UEffect*> particleEffects;
 
 private:
 	EffectManager() = default;

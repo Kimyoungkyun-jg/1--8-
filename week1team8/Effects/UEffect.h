@@ -40,6 +40,7 @@ public:
 
 	/* 단일 이미지 설정 */
 	void SetImage(const wchar_t* uri);
+	void SetBitmap(ID2D1Bitmap* bmp) { Bitmap = bmp; }
 
 	/* 스프라이트 시트 설정 (가로칸수, 세로칸수, 총프레임수, 프레임당시간, 반복여부) */
 	void SetSpriteSheet(const wchar_t* uri, int frameX, int frameY, int totalFrames, float frameRate = 0.05f, bool bLoop = false);

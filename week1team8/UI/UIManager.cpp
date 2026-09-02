@@ -96,8 +96,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		if (inGamePage->PauseBtn)
 		{
 			inGamePage->PauseBtn->SetOnClick([this]() {
+				GameManager::GetInstance().Pause();
 				ChangePage(EPageType::Pause);
-				});
+			});
 		}
 		Pages[EPageType::InGame] = inGamePage;
 	}
@@ -135,8 +136,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			110.0f
 		);
 		continueBtn->SetOnClick([this]() {
+			GameManager::GetInstance().Resume();
 			ChangePage(EPageType::InGame);
-			});
+		});
 		pausePage->AddChild(continueBtn);
 
 		//재시작 버튼
@@ -149,10 +151,11 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 
 		retryBtn->SetOnClick([this]() {
+			GameManager::GetInstance().Play();
 			LoadManager::Get().LoadMap(GameManager::GetInstance().GetCurlvl());
 			ResetScore();
 			ChangePage(EPageType::InGame);
-			});
+		});
 		pausePage->AddChild(retryBtn);
 
 		//게임 종료 버튼
@@ -195,7 +198,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		Pages[EPageType::Ending] = endPage;
 	}
 
-	ChangePage(EPageType::InGame);
+
 
 	return true;
 }
