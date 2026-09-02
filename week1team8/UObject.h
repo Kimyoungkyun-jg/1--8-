@@ -3,6 +3,8 @@
 #include "Renderer.h"
 #include <vector>
 #include "enums.h"
+#include <cmath>
+#include <DirectXMath.h>
 
 class ASlingShot;
 
@@ -23,6 +25,7 @@ public:
 	virtual void Clicked();
 	virtual void Released(FVector _Location);
 	void Destroy();
+	virtual void Tick();
 
 private:
 	inline static int IDMax = 0;
@@ -48,7 +51,7 @@ public:
 protected:
 	FVector Location = FVector(0, 0, 0);				// 위치
 	EPrimitive Primitive = EPrimitive::Circle;
-	float Rotation;
+	float Rotation = 0.f;
 	FVector Scale = { 1, 1, 1 };
 	
 };
@@ -128,6 +131,14 @@ public:
 	virtual ~ABlock() {}
 };
 
+
+enum class EBandState
+{
+	Idle,
+	Stretching,
+	Snapping
+};
+
 class ABand : public  AActor
 {
 public:
@@ -137,6 +148,13 @@ public:
 	void Stretched(FVector BirdLoc, float StretchedRate);
 	float Scaley;
 	FVector AttachedPoint;
+	virtual void Tick() override;
+
+private:
+	EBandState State = EBandState::Idle;
+	FVector TipLocation;
+	FVector TipVelocity;
+	FVector RestPoint;
 };
 
 class ASlingShot : public AActor

@@ -152,8 +152,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bResult = LoadManager.LoadMap(1, SlingShot, Bird);
 	if (!bResult)
 	{
-		SlingShot = SpawnActor<ASlingShot>({ -0.5, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
-		Bird = SpawnColider<ABird>({ -0.5, -0.6, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50);
+		SlingShot = SpawnActor<ASlingShot>({ -1.2, -0.6, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
+		Bird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50);
 
 		SlingShot->EquippedBird = Bird;
 		SlingShot->ShotPoint = Bird->GetLocation();
@@ -288,6 +288,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 충돌 검사
 		CollisionManager& ColManager = CollisionManager::GetInstance();
 		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
+
+		//매 프레임 UObject에 Tick 호출
+		for (UObject* Obj : ObjectManager.AllObjects)
+		{
+			Obj->Tick();
+		}
 
 		// 렌더 준비
 		renderer.Prepare();
