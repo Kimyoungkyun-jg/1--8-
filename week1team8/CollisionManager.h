@@ -23,6 +23,7 @@ struct ContactPoint
 
 	float normalImpulse = 0.0f;  // 누적 충격량 1: 법선
 	float tangentImpulse = 0.0f; // 누적 충격량 2: 마찰
+	float rollingImpulse = 0.0f; // 누적 충격량 3: 구름 저항 (각충격량)
 	float initialNormalVelocity = 0.0f;
 };
 
@@ -169,6 +170,10 @@ public:
 	int positionIterations = 15;
 	float baumgarte = 0.8f;      // 겹침을 한 번에 얼마나 밀어낼지
 	float slop = 0.0005f;         // 이 정도 침투는 무시
+
+	// 구름 저항의 팔 길이. 마찰 계수와 달리 무차원이 아니라 길이 단위다.
+	// 저항 토크 = 법선 하중 x 이 값. 재질이 얼마나 눌리는지에 해당한다.
+	float rollingResistance = 0.002f;
 
 	// 슬립
 	bool bSleepEnabled = true;

@@ -461,6 +461,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::SliderInt("Position Iter", &CM.positionIterations, 1, 20);
 		ImGui::SliderFloat("Baumgarte", &CM.baumgarte, 0.05f, 1.0f);
 		ImGui::SliderFloat("Slop", &CM.slop, 0.0f, 0.02f, "%.4f");
+		ImGui::SliderFloat("Rolling", &CM.rollingResistance, 0.0f, 0.02f, "%.4f");
 
 		// slop 근처에서 평평하면 수렴한 것
 		ImGui::Text("max penetration %.5f  (slop %.5f)", CM.maxPenetration, CM.slop);

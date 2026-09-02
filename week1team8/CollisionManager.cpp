@@ -919,6 +919,29 @@ void CollisionManager::SolveContact(ACollider* a, ACollider* b, CollisionInfo& i
 		b->SetVelocity(b->GetVelocity() - info.tangent * (appliedT * invMassB));
 		a->SetAngularVelocity(a->GetAngularVelocity() + raxt * appliedT * invIA);
 		b->SetAngularVelocity(b->GetAngularVelocity() - rbxt * appliedT * invIB);
+
+		// 구름 저항.
+		// 마찰은 접촉점이 '미끄러질 때만' 작동한다. 미끄러지지 않고 구르는 공은
+		// 접촉점 상대속도가 0이라 마찰 충격량이 아예 생기지 않고, 그래서 계수를
+		// 아무리 올려도 안 멈춘다. 실제로 공을 멈추는 건 접촉면이 눌리며 생기는
+		// 저항이므로, 상대 '각속도'를 직접 줄이는 항을 따로 둔다.
+		float rollingMass = invIA + invIB;
+
+		if (rollingMass > 0.0f)
+		{
+			float relativeAngular = a->GetAngularVelocity() - b->GetAngularVelocity();
+			float deltaR = -relativeAngular / rollingMass;
+
+			// 한계는 법선 하중에 비례한다. 눌리는 힘이 클수록 잘 멈춘다.
+			float maxRolling = point.normalImpulse * rollingResistance;
+
+			float oldR = point.rollingImpulse;
+			point.rollingImpulse = std::clamp(oldR + deltaR, -maxRolling, maxRolling);
+			float appliedR = point.rollingImpulse - oldR;
+
+			a->SetAngularVelocity(a->GetAngularVelocity() + appliedR * invIA);
+			b->SetAngularVelocity(b->GetAngularVelocity() - appliedR * invIB);
+		}
 	}
 }
 
@@ -947,6 +970,9 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 		point.tangentImpulse = 0.0f;
 		point.normalMass = 0.0f;
 		point.tangentMass = 0.0f;
+
+		// 구름 저항은 이월하지 않는다. 방향이 바뀌면 반대로 제동을 걸어버린다.
+		point.rollingImpulse = 0.0f;
 
 		FVector rA = point.position - a->GetLocation();
 		FVector rB = point.position - b->GetLocation();
