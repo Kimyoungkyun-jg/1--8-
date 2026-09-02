@@ -172,7 +172,7 @@ void GameManager::CheckGameState()
 {
 	if (state == GameState::Play)
 	{
-		if (PigCount == 0)
+		if (PigCount == 0 && ReloadedBird->GetVelocity(). < 0.5f)
 		{
 			if (LoadManager::Get().LoadMap(CurrentLevel + 1))
 			{

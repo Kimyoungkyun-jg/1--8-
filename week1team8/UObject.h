@@ -185,6 +185,23 @@ public:
 	virtual float minusHp();
 };
 
+class AFastBird : public ABird
+{
+public:
+	AFastBird()
+	{
+		StaticFriction = 0.3f;
+		DynamicFriction = 0.2f;
+		Restitution = 0.5f;
+	}
+	virtual ~AFastBird() {}
+
+	virtual void Boost();
+	virtual void Clicked() override;
+
+	bool bHasBoosted = false;
+};
+
 class APig : public ACircle
 {
 public:
