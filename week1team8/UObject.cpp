@@ -37,7 +37,7 @@ void ACollider::Move(float t)
 	// 속도 변화
 	if (bUseGravity)
 	{
-		Velocity += Global::G / 2 * deltaTime;
+		Velocity += Global::G * deltaTime;
 	}
 
 	// 위치 변화
@@ -104,7 +104,7 @@ void ACollider::Pressed(FVector _Location)
 	if (bEditing)
 	{
 		Location = _Location;
-		Velocity = 0.f;
+		Velocity = FVector();
 		bUseGravity = false;
 	}
 }

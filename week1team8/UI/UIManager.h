@@ -13,20 +13,12 @@
 #include <algorithm>
 #include <unordered_map>
 #include "../CollisionManager.h"
+#include "../Renderer.h"
 #include "UUIObject.h"
-#include "UFloatingText.h"
-#include "UHUDText.h"
-#include "UButton.h"
 #include "UPage.h"
-
-#pragma comment(lib, "d2d1.lib")
-#pragma comment(lib, "dwrite.lib")
-#pragma comment(lib, "windowscodecs.lib")
+#include "UUIIngamePage.h"
 
 using namespace std;
-
-static constexpr float TargetHUD_X = 50.0f;
-static constexpr float TargetHUD_Y = 40.0f;
 
 class UIManager
 {
@@ -39,7 +31,7 @@ public:
 
 	~UIManager();
 
-	bool Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight);
+	bool Initialize(URenderer& renderer, int nWidth, int nHeight);
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
@@ -77,32 +69,15 @@ public:
 	vector<UUIObject*> AllUIObjects;
 
 private:
-	ID2D1Factory* D2DFactory = nullptr;
-	IDWriteFactory* DWriteFactory = nullptr;
 	ID2D1RenderTarget* D2DRenderTarget = nullptr;
+	IDWriteFactory* DWriteFactory = nullptr;
 	ID2D1SolidColorBrush* Brush = nullptr;
-
 	IDWriteTextFormat* FloatingFont = nullptr;
 
-	IWICImagingFactory* WICFactory = nullptr;
-	ID2D1Bitmap* PauseButtonBitmap = nullptr;
-	D2D1_RECT_F PauseButtonRect = D2D1::RectF(800.0f, 30.0f, 900.0f, 130.0f);
-
-	UUIHUDText* MainHUD = nullptr;
-
-	int TargetScore = 0;
-	float DisplayScore = 0.0f;
-	vector<UUIFloatingText*> FloatingTexts;
-
-	vector<pair<float, float>> blockcolPoses;
-private:
-	UIManager() {};
-	std::pair<float, float> WorldToScreen(const FVector& worldPos);
-	void UpdateScore(float deltaTime);
-	void UpdateFloatingTexts(float deltaTime);
-	
 	int screenWidth = 0;
 	int screenHeight = 0;
 
-	ID2D1Bitmap* LoadBitmapFromFile(const wchar_t* uri);
+private:
+	UIManager() {};
+	std::pair<float, float> WorldToScreen(const FVector& worldPos);
 };

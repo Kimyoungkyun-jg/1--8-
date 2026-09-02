@@ -8,10 +8,12 @@ void URenderer::Create(HWND hWindow)
 	CreateDeviceAndSwapChain(hWindow);
 	CreateFrameBuffer();
 	CreateRasterizerState();
+	CreateD2D();
 }
 
 void URenderer::Release()
 {
+	ReleaseD2D();
 	ReleaseRasterizerState();
 	DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 	ReleaseFrameBuffer();
@@ -272,7 +274,7 @@ void URenderer::UpdateConstant(FVector Offset, float Rotation, FVector Scale)
 		FConstants* constants = (FConstants*)constantbufferMSR.pData;
 		{
 			constants->Offset = Offset;
-			constants->Rotation = DirectX::XMConvertToRadians(Rotation); // Radians
+			constants->Rotation = Rotation; // Radians
 			constants->Scale = Scale;
 			constants->AspectRatio = wAspectRatio;
 		}
@@ -310,4 +312,129 @@ void URenderer::RenderPrimitive(EPrimitive Primitive)
 void URenderer::SwapBuffer()
 {
 	SwapChain->Present(1, 0);
+}
+
+bool URenderer::CreateD2D()
+{
+	if (!SwapChain) return false;
+
+	HRESULT hr;
+	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &D2DFactory);
+	if (FAILED(hr)) return false;
+
+	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&DWriteFactory));
+	if (FAILED(hr)) return false;
+
+	IDXGISurface* surface = nullptr;
+	hr = SwapChain->GetBuffer(0, IID_PPV_ARGS(&surface));
+	if (FAILED(hr)) return false;
+
+	D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
+		D2D1_RENDER_TARGET_TYPE_DEFAULT,
+		D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)
+	);
+
+	hr = D2DFactory->CreateDxgiSurfaceRenderTarget(surface, &props, &D2DRenderTarget);
+	surface->Release();
+	if (FAILED(hr)) return false;
+
+	CoInitialize(nullptr);
+	hr = CoCreateInstance(
+		CLSID_WICImagingFactory,
+		nullptr,
+		CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS(&WICFactory)
+	);
+	if (FAILED(hr)) return false;
+
+	return true;
+}
+
+void URenderer::ReleaseD2D()
+{
+	if (D2DRenderTarget) { D2DRenderTarget->Release(); D2DRenderTarget = nullptr; }
+	if (DWriteFactory) { DWriteFactory->Release(); DWriteFactory = nullptr; }
+	if (D2DFactory) { D2DFactory->Release(); D2DFactory = nullptr; }
+	if (WICFactory) { WICFactory->Release(); WICFactory = nullptr; }
+}
+
+ID2D1Bitmap* URenderer::LoadBitmapFromFile(const wchar_t* uri)
+{
+	if (!WICFactory || !D2DRenderTarget) return nullptr;
+
+	IWICBitmapDecoder* decoder = nullptr;
+	IWICBitmapFrameDecode* frame = nullptr;
+	IWICFormatConverter* converter = nullptr;
+	ID2D1Bitmap* bitmap = nullptr;
+
+	if (FAILED(WICFactory->CreateDecoderFromFilename(uri, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder)))
+	{
+		return nullptr;
+	}
+
+	if (FAILED(decoder->GetFrame(0, &frame)))
+	{
+		decoder->Release();
+		return nullptr;
+	}
+
+	if (FAILED(WICFactory->CreateFormatConverter(&converter)))
+	{
+		frame->Release();
+		decoder->Release();
+		return nullptr;
+	}
+
+	converter->Initialize(
+		frame,
+		GUID_WICPixelFormat32bppPBGRA,
+		WICBitmapDitherTypeNone,
+		nullptr,
+		0.0f,
+		WICBitmapPaletteTypeMedianCut
+	);
+
+	D2DRenderTarget->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap);
+
+	converter->Release();
+	frame->Release();
+	decoder->Release();
+
+	return bitmap;
+}
+
+void URenderer::DrawBitmap(ID2D1Bitmap* bitmap, float left, float top, float width, float height, float opacity)
+{
+	if (!D2DRenderTarget || !bitmap) return;
+
+	D2D1_RECT_F destRect = D2D1::RectF(left, top, left + width, top + height);
+	D2DRenderTarget->BeginDraw();
+	D2DRenderTarget->DrawBitmap(bitmap, &destRect, opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+	D2DRenderTarget->EndDraw();
+}
+
+void URenderer::DrawWorldBitmap(ID2D1Bitmap* bitmap, const FVector& worldLocation, float rotation, const FVector& worldScale, float opacity)
+{
+	if (!D2DRenderTarget || !bitmap) return;
+
+	float aspect = (ViewportInfo.Height > 0.0f) ? (ViewportInfo.Width / ViewportInfo.Height) : (16.0f / 9.0f);
+	float screenX = (worldLocation.x / aspect + 1.0f) * 0.5f * ViewportInfo.Width;
+	float screenY = (1.0f - worldLocation.y) * 0.5f * ViewportInfo.Height;
+
+	float screenW = (worldScale.x / aspect) * 0.5f * ViewportInfo.Width;
+	float screenH = (worldScale.y) * 0.5f * ViewportInfo.Height;
+
+	D2D1_RECT_F destRect = D2D1::RectF(-screenW * 0.5f, -screenH * 0.5f, screenW * 0.5f, screenH * 0.5f);
+
+	D2DRenderTarget->BeginDraw();
+	D2D1::Matrix3x2F oldTransform;
+	D2DRenderTarget->GetTransform(&oldTransform);
+
+	D2D1::Matrix3x2F transform = D2D1::Matrix3x2F::Rotation(-rotation * (180.0f / 3.14159265f), D2D1::Point2F(0, 0))
+		* D2D1::Matrix3x2F::Translation(screenX, screenY);
+
+	D2DRenderTarget->SetTransform(transform);
+	D2DRenderTarget->DrawBitmap(bitmap, &destRect, opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+	D2DRenderTarget->SetTransform(oldTransform);
+	D2DRenderTarget->EndDraw();
 }

@@ -51,7 +51,7 @@ public:
 protected:
 	FVector Location = FVector(0, 0, 0);				// 위치
 	EPrimitive Primitive = EPrimitive::Circle;
-	float Rotation = 0.f;
+	float Rotation = 0.0f; // 라디안, 반시계 방향
 	FVector Scale = { 1, 1, 1 };
 };
 
@@ -79,6 +79,7 @@ public:
 
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
+	virtual float GetInertia() = 0;
 
 	bool bEditing = false;
 	bool bUseGravity = true;
@@ -98,9 +99,12 @@ protected:
 class ACircle : public ACollider
 {
 public:
-	ACircle() : Radius(Scale.x) {}
-protected:
-	float Radius;
+	float GetRadius() const { return Scale.x / 2; }
+	float GetInertia() override
+	{
+		float r = GetRadius();
+		return 0.5f * Mass * r * r;
+	}
 };
 
 class ABird : public ACircle
@@ -128,6 +132,10 @@ class ABlock : public ACollider
 {
 public:
 	ABlock() { colId = EColliderId::BLOCK; }
+	float GetInertia() override
+	{
+		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
+	}
 	virtual ~ABlock() {}
 };
 
