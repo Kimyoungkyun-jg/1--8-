@@ -51,6 +51,29 @@ FVector ScreenToWorld(HWND hwnd, int MouseX, int MouseY)
 	return FVector(worldX, worldY, 0.0f);
 }
 
+// ScreenToWorld의 역변환.
+// 크기는 GetClientRect가 아니라 ImGui의 DisplaySize에서 가져와야 한다.
+// DPI 배율이 걸리면 둘이 달라서(150%면 1.5배) 그린 게 그만큼 밀린다.
+ImVec2 WorldToScreen(const FVector& World)
+{
+	ImGuiIO& io = ImGui::GetIO();
+
+	float width = io.DisplaySize.x;
+	float height = io.DisplaySize.y;
+
+	if (width <= 0.0f || height <= 0.0f)
+	{
+		return ImVec2(0.0f, 0.0f);
+	}
+
+	float aspect = width / height;
+
+	float screenX = (World.x / aspect + 1.0f) * 0.5f * width;
+	float screenY = (1.0f - World.y) * 0.5f * height;
+
+	return ImVec2(screenX, screenY);
+}
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -125,6 +148,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	float PigWidth = 0.15, PigHeight = 0.15;
 	bool bEditorMode = false;
 
+	// 물리 디버그
+	bool bPausePhysics = false;		// 켜면 물리가 멈춘다 (렌더와 UI는 계속 돈다)
+	bool bStepOnce = false;			// Step 버튼이 눌린 프레임에만 한 번 진행
+	bool bDrawContacts = true;		// 접촉점/법선 그리기
+	bool bDrawColliders = true;		// 사각형 콜라이더의 OBB 외곽선 그리기
+	float NormalLength = 40.0f;		// 법선 표시 길이 (픽셀)
+
 	// 매니저 초기화
 	GameManager& gameManager = GameManager::GetInstance();
 	gameManager.Initialize();
@@ -151,14 +181,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 인게임 배경화면 로드
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
-	bool bResult = LoadManager.LoadMap(0);
-	if (!bResult)
-	{
-		gameManager.SpawnBirdAndSlingShot();
-	}
-
-	// 테스트 바닥
-	// ABlock* ground = SpawnColider<ABlock>({ 0, -0.95f, 0 }, EPrimitive::Rectangle, false, { 3.8f, 0.1f, 0 }, 0.0f);
+	// 레벨 0으로 시작. state를 Play로 올려야 CheckGameState가 돈다.
+	// 벽과 새총은 Restart -> ClearMap 안에서 같이 만들어진다.
+	gameManager.Restart();
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -280,23 +305,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
+		// 일시정지 중에는 Step을 누른 프레임에만 한 번 진행. 렌더와 ImGui는 계속 돈다
+		bool bAdvancePhysics = !bPausePhysics || bStepOnce;
+		bStepOnce = false;
 
 		uiManager.Update(elapsedTime * 0.001);
 
-
-		for (ACollider* Collider : CM.colliders)
+		if (bAdvancePhysics)
 		{
-			Collider->Move(elapsedTime);
-		}
+			for (ACollider* Collider : CM.colliders)
+			{
+				Collider->Move(elapsedTime);
+			}
 
-		// 충돌 검사
-		CollisionManager& ColManager = CollisionManager::GetInstance();
-		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
+			// 충돌 검사
+			uiManager.GetCollisionInfos(CM.CheckCollisionAll());
+		}
 
 		//
 
 		//매 프레임 UObject에 Tick 호출
-		for (int i = ObjectManager.AllObjects.size()-1; i >= 0; --i)
+		for (int i = ObjectManager.AllObjects.size() - 1; i >= 0; --i)
 		{
 			ObjectManager.AllObjects[i]->Tick(elapsedTime * 0.001);
 		}
@@ -354,12 +383,107 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
+		// 사각형 콜라이더의 OBB 외곽선. 스프라이트와 어긋나면 물리도 같이 어긋난 것
+		if (bDrawColliders)
+		{
+			ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
+
+			for (ACollider* Collider : CM.colliders)
+			{
+				if (Collider->GetPrimitive() != EPrimitive::Rectangle)
+				{
+					continue;
+				}
+
+				OBB Box = MakeOBB(Collider);
+
+				for (int i = 0; i < 4; i++)
+				{
+					DrawList->AddLine(WorldToScreen(Box.vertex[i]),
+						WorldToScreen(Box.vertex[(i + 1) % 4]),
+						IM_COL32(80, 200, 255, 255), 2.0f);
+				}
+
+				// 꼭짓점 0. 블록을 돌리면 이 점도 같이 돌아야 한다
+				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, IM_COL32(80, 200, 255, 255));
+			}
+		}
+
+		// 접촉점과 법선. 배경 draw list라 게임 화면 위, ImGui 창 아래에 그려진다
+		if (bDrawContacts)
+		{
+			ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
+
+			for (const CollisionInfo& Contact : CM.debugContacts)
+			{
+				for (int i = 0; i < Contact.pointCount; i++)
+				{
+					ImVec2 Point = WorldToScreen(Contact.points[i].position);
+
+					// 법선은 방향 벡터라 y 부호만 뒤집으면 된다 (화면 y는 아래로 증가)
+					ImVec2 Tip = ImVec2(Point.x + Contact.normal.x * NormalLength,
+						Point.y - Contact.normal.y * NormalLength);
+
+					// B -> A 방향, 즉 A를 밀어내는 쪽을 가리켜야 한다
+					DrawList->AddLine(Point, Tip, IM_COL32(255, 64, 64, 255), 2.0f);
+					DrawList->AddCircleFilled(Point, 4.0f, IM_COL32(255, 220, 0, 255));
+				}
+			}
+		}
+
 		ImGui::Begin("Physics Debug");
 
 		RECT rc; GetClientRect(hWnd, &rc);
 		ImGui::Text("aspect %.4f  (화면 x 범위 = +-%.4f)",
 			(float)(rc.right - rc.left) / (rc.bottom - rc.top),
 			(float)(rc.right - rc.left) / (rc.bottom - rc.top));
+
+		ImGui::Checkbox("Pause", &bPausePhysics);
+		ImGui::SameLine();
+		if (ImGui::Button("Step"))
+		{
+			// 다음 프레임 물리 구간에서 소비된다
+			bStepOnce = true;
+		}
+		ImGui::SameLine();
+		ImGui::Checkbox("Draw Contacts", &bDrawContacts);
+		ImGui::SameLine();
+		ImGui::Checkbox("Draw Colliders", &bDrawColliders);
+		ImGui::SliderFloat("Normal Length", &NormalLength, 10.0f, 120.0f);
+		ImGui::Checkbox("Warm Starting", &CM.bWarmStarting);
+
+		ImGui::SeparatorText("Solver");
+		ImGui::SliderInt("Velocity Iter", &CM.velocityIterations, 1, 20);
+		ImGui::SliderInt("Position Iter", &CM.positionIterations, 1, 20);
+		ImGui::SliderFloat("Baumgarte", &CM.baumgarte, 0.05f, 1.0f);
+		ImGui::SliderFloat("Slop", &CM.slop, 0.0f, 0.02f, "%.4f");
+
+		// slop 근처에서 평평하면 수렴한 것
+		ImGui::Text("max penetration %.5f  (slop %.5f)", CM.maxPenetration, CM.slop);
+		{
+			static float PenHistory[240] = {};
+			static int PenIndex = 0;
+			PenHistory[PenIndex] = CM.maxPenetration;
+			PenIndex = (PenIndex + 1) % 240;
+			ImGui::PlotLines("##pen", PenHistory, 240, PenIndex, nullptr, 0.0f, 0.02f, ImVec2(0, 60));
+		}
+
+		ImGui::SeparatorText("Contacts");
+		ImGui::Text("count: %d", (int)CM.debugContacts.size());
+		for (int i = 0; i < (int)CM.debugContacts.size(); i++)
+		{
+			const CollisionInfo& Contact = CM.debugContacts[i];
+
+			for (int k = 0; k < Contact.pointCount; k++)
+			{
+				const ContactPoint& Point = Contact.points[k];
+				ImGui::Text("[%2d.%d] id=%08X  n=(%+.2f, %+.2f)  pen=%.4f  Pn=%.3f  Pt=%+.3f",
+					i, k, Point.id, Contact.normal.x, Contact.normal.y,
+					Point.penetration, Point.normalImpulse, Point.tangentImpulse);
+			}
+		}
+
+		ImGui::SeparatorText("Bodies");
 
 		// 물리 디버깅 창
 		for (ACollider* c : CollisionManager::GetInstance().colliders)
@@ -393,8 +517,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
 		ImGui::Text("PressedColliderID %s", s.c_str());
 		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
-		FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
-		ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
+		//FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
+		//ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
 		ImGui::Text("GameState : %d", static_cast<int>(gameManager.GetGameState()));
 		ImGui::Text("Bird %d, Pig %d", gameManager.GetBirdCount(), gameManager.GetPigCount());
 		ImGui::SetNextItemWidth(100);
@@ -430,13 +554,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			LoadManager.SaveMap(BirdCount);
 		}
+		// Checkbox는 '값이 바뀐 프레임'에만 true다. 매 프레임 마찰을 덮어쓰지 않도록 분리
 		if (ImGui::Checkbox("EditorMode", &bEditorMode))
 		{
-			CollisionManager::GetInstance().SetAllCollisionFriction(1.f, 1.f);
-		}
-		else
-		{
-			CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
+			if (bEditorMode)
+			{
+				CollisionManager::GetInstance().SetAllCollisionFriction(1.f, 1.f);
+			}
+			else
+			{
+				CollisionManager::GetInstance().SetAllCollisionFriction(0.3f, 0.5f);
+			}
 		}
 		if (ImGui::Button("Delete Select Object", ImVec2(100, 20)))
 		{
@@ -457,6 +585,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 프레임 교체
 		renderer.SwapBuffer();
 
+		//PendingKill로 삭제 대기중인 UObject들을 삭제
+		ObjectManager.DistroyPendingKills();
+
 		do	// 프레임 대기
 		{
 			Sleep(0);
@@ -465,6 +596,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			// 한 프레임이 소요된 시간 계산 (밀리초 단위로 변환)
 			elapsedTime = (endTime.QuadPart - startTime.QuadPart) * 1000.0 / frequency.QuadPart;
 		} while (elapsedTime < targetFrameTime);
+
+		// 맵 로딩처럼 한 프레임이 크게 튀면 그 dt가 다음 Move에 그대로 들어가서
+		// 물체가 순간이동한다. 물리에 넘기는 값에 상한을 둔다.
+		// 제대로 된 해법은 고정 timestep + 누적기 (로드맵 06번).
+		elapsedTime = min(elapsedTime, targetFrameTime * 3.0);
 	}
 
 	//ImGui 리소스 해제
