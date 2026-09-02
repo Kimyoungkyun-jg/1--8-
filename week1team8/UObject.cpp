@@ -121,8 +121,8 @@ std::vector<FVector> Points;
 
 void ABird::Pressed(FVector _Location)
 {
-	WakeUp();
 	if (State == EBirdState::Waiting) return;
+	WakeUp();
 
 	Velocity = 0.f;
 	bUseGravity = false;
