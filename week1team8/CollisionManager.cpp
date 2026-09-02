@@ -4,6 +4,36 @@
 #include "ObjectManager.h"
 #include "GameManager.h"
 
+OBB MakeOBB(const ACollider* collider)
+{
+	// Rotation은 라디안, 반시계 방향 (UObject.h)
+	float angle = collider->GetRotation();
+	float cs = std::cos(angle);
+	float sn = std::sin(angle);
+
+	OBB box;
+	box.center = collider->GetLocation();
+
+	// 월드 x축, y축을 각각 angle만큼 돌린 것이 이 사각형의 로컬 축이다.
+	box.axis[0] = FVector(cs, sn, 0.0f);
+	box.axis[1] = FVector(-sn, cs, 0.0f);
+
+	box.half[0] = collider->GetScale().x * 0.5f;
+	box.half[1] = collider->GetScale().y * 0.5f;
+
+	// 중심에서 두 축 방향으로 반너비/반높이만큼 간 네 점.
+	// 회전이 0일 때 좌하 -> 우하 -> 우상 -> 좌상 순서가 되고, 회전해도 순서는 유지된다.
+	FVector ex = box.axis[0] * box.half[0];
+	FVector ey = box.axis[1] * box.half[1];
+
+	box.vertex[0] = box.center - ex - ey;
+	box.vertex[1] = box.center + ex - ey;
+	box.vertex[2] = box.center + ex + ey;
+	box.vertex[3] = box.center - ex + ey;
+
+	return box;
+}
+
 CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관리
 {
 	static CollisionManager instance;
@@ -85,6 +115,13 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 			// 충격량(속도) 해결
 			SolveContact(ab.first, ab.second, info);
 		}
+	}
+
+	// 디버그용 스냅샷. 충격량이 다 풀린 뒤라 normalImpulse가 최종값이다.
+	debugContacts.clear();
+	for (auto& [ab, info] : abinfos)
+	{
+		debugContacts.push_back(info);
 	}
 
 	for (int i = 0; i < 3; i++)
