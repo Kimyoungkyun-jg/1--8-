@@ -390,8 +390,8 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 
 	if (impulseMag > 80.0f)
 	{
-		AObstacle* oba = dynamic_cast<AObstacle*>(a);
-		AObstacle* obb = dynamic_cast<AObstacle*>(b);
+		ACollider* oba = dynamic_cast<ACollider*>(a);
+		ACollider* obb = dynamic_cast<ACollider*>(b);
 
 		//if (oba)
 		//{
