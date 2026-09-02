@@ -204,6 +204,10 @@ void ABird::SetWait()
 	isInvalid = true;
 }
 
+void ABird::Ability()
+{
+}
+
 void ASlingShot::SpawnBand()
 {
 
@@ -284,6 +288,15 @@ float APig::minusHp()
 
 float ABombBird::minusHp()
 {
+	Ability();
+
+	//확정 죽음
+	GameManager::GetInstance().ReloadBird();
+	return 0.f;
+}
+
+void ABombBird::Ability()
+{
 	//원을 쿼리
 	std::vector<ACollider*> Result;
 
@@ -301,7 +314,4 @@ float ABombBird::minusHp()
 			}
 		}
 	}
-	//확정 죽음
-	GameManager::GetInstance().ReloadBird();
-	return 0.f;
 }

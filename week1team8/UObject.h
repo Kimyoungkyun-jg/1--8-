@@ -171,6 +171,7 @@ public:
 	virtual float minusHp() override { return 1.0f; }
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
+	virtual void Ability();
 
 	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;
@@ -184,6 +185,7 @@ public:
 	virtual ~ABombBird() {}
 
 	virtual float minusHp();
+	virtual void Ability() override;
 };
 
 class APig : public ACircle
