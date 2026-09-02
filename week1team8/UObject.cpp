@@ -35,14 +35,26 @@ void ACollider::Move(float t)
 {
 	float deltaTime = t / 1000.0f;
 
+	if (Mass <= 0.0f)
+	{
+		return;
+	}
+
 	// 속도 변화
 	if (bUseGravity)
 	{
 		Velocity += Global::G * deltaTime;
 	}
 
+	Velocity = Velocity * (1.0f / (1.0f + deltaTime * LinearDamping));    // 2. 감쇠
+	AngularVelocity *= 1.0f / (1.0f + deltaTime * AngularDamping);
+
 	// 위치 변화
 	Location += Velocity * deltaTime;
+
+	// 회전
+	Rotation += AngularVelocity * deltaTime;
+
 
 	if (Primitive == EPrimitive::Circle)
 	{
@@ -119,7 +131,6 @@ void ACollider::Released(FVector _Location)
 		bUseGravity = true;
 	}
 }
-
 
 void UObject::Destroy()
 {
@@ -216,7 +227,7 @@ void ASlingShot::SpawnBand()
 	FVector FrontPoint = Location + FVector(Scale.x / 2, Scale.y / 2, 0);
 	FVector RestPoint = (BackPoint + FrontPoint) / 2;
 
-	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, {0.05, 0.05, 1});
+	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
 	FrontBand = SpawnActor<ABand>(FrontPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
 
 	BackBand->AttachedPoint = BackPoint;
