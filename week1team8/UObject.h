@@ -162,6 +162,7 @@ public:
 		DynamicFriction = 0.3f;
 		Restitution = 0.4f;      // 잘 튄다
 	}
+
 	virtual ~ABird() {}
 
 	virtual void Clicked() override;

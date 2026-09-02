@@ -103,6 +103,9 @@ void GameManager::ReloadBird()
 
 void GameManager::SpawnBirdAndSlingShot()
 {
+	AActor* hill = SpawnActor<AActor>({ -1.2, -0.4, 0 }, EPrimitive::Rectangle, { 1, 1.5, 1 });
+	hill->SetImage(L"Assets/img/hill.png");
+
 	SlingShot = SpawnActor<ASlingShot>({ -1.2, -0.6, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
 	SlingShot->SetImage(L"Assets/img/slingshot.png");
 
