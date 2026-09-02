@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 class ABird;
 class ASlingShot;
 
@@ -10,6 +11,12 @@ enum class GameState
 	Pause,
 	GameOver,
 	GameClear
+};
+
+enum EBirdType
+{
+	Basic,
+	BombBird
 };
 
 class GameManager
@@ -64,32 +71,40 @@ public:
 	}
 
 	void Restart();
-
-	void ReloadBird();
 	void SpawnBirdAndSlingShot();
 	void SpawnWalls();
 	ASlingShot* GetSlingShot() { return SlingShot; }
 	ABird* GetReloadedBird() { return ReloadedBird; }
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
-	void SetBirdCount(int NewBirdCount) { BirdCount = NewBirdCount; }
+	void SetBirdCount(int NewBirdCount)
+	{
+		for (int i = 0; i < NewBirdCount; i++)
+		{
+			int randi = rand() % 2;
+			Birds.push_back(randi);
+		}
+	}
 	int GetPigCount() const { return PigCount; }
-	int GetBirdCount() const { return BirdCount; }
+	int GetBirdCount() const { return Birds.size(); }
 	GameState GetGameState() const { return state; }
 	void PigDeath();
 	void CheckGameState();
 
 	int GetCurlvl() { return CurrentLevel; }
 
+	void ReloadBird();
+
 private:
 	GameManager() = default;
 	~GameManager() = default;
 
-	ABird* ReloadedBird;
-	ASlingShot* SlingShot;
+	ABird* ReloadedBird = nullptr;
+	ASlingShot* SlingShot = nullptr;
 	int PigCount = 0;
-	int BirdCount = 0;
 	int CurrentLevel = 0;
 
 	GameState state = GameState::Menu;
+	
+	std::vector<int> Birds = {EBirdType::Basic, EBirdType::BombBird, EBirdType::Basic};
 };
 

@@ -21,6 +21,11 @@ void UObject::Released(FVector _Location)
 	//empty
 }
 
+void UObject::PendingKill()
+{
+	bPendingkill = true;
+}
+
 void UObject::Tick(float deltaTime)
 {
 
@@ -265,4 +270,28 @@ float APig::minusHp()
 	}
 
 	return hp;
+}
+
+float ABombBird::minusHp()
+{
+	//원을 쿼리
+	std::vector<ACollider*> Result;
+
+	//원 내의 물체에 원 바깥 방향으로 속도 및 minushp 부여
+	if (TraceSphere(Location, 2.f, Result))
+	{
+		for (ACollider* Col : Result)
+		{
+			if (IsValid(Col))
+			{
+				FVector Direction = (Col->GetLocation() - Location);
+				Direction.Normalize();
+				Col->SetVelocity(Col->GetVelocity() + Direction * 3.f);
+				Col->minusHp();
+			}
+		}
+	}
+	//확정 죽음
+	PendingKill();
+	return 0.f;
 }

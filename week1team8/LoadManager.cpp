@@ -143,7 +143,7 @@ bool LoadManager::LoadMap(int num)
 		std::string str;
 		std::getline(savedfile, str);
 		int BirdCount = std::stoi(str);
-		GameManager::GetInstance().SetBirdCount(BirdCount - 1);
+		GameManager::GetInstance().SetBirdCount(BirdCount);
 
 
 		int PigCount = 0;

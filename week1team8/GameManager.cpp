@@ -8,7 +8,7 @@
 void GameManager::Restart()
 {
 	PigCount = 0;
-	BirdCount = 0;
+	Birds.clear();
 	CurrentLevel = 0;
 	SlingShot = nullptr;
 	ReloadedBird = nullptr;
@@ -51,14 +51,19 @@ void GameManager::SpawnWalls()
 //새의 속도가 일정 이하면 호출
 void GameManager::ReloadBird()
 {
-	if (BirdCount > 0)
+	if (Birds.size() > 0)
 	{
+		Birds.pop_back();
 		ReloadedBird = SpawnColider<ABird>({ -1.18, -0.35, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
 		ReloadedBird->SetImage(L"Assets/img/bird.png");
 		SlingShot->EquippedBird = ReloadedBird;
 		ReloadedBird->SlingShot = SlingShot;
 	}
-	--BirdCount;
+	else
+	{
+		state = GameState::GameOver;
+		UIManager::GetInstance().GotoEnding(state);
+	}
 }
 
 void GameManager::SpawnBirdAndSlingShot()
@@ -98,12 +103,6 @@ void GameManager::CheckGameState()
 				state = GameState::GameClear;
 				UIManager::GetInstance().GotoEnding(state);
 			}
-		}
-
-		if (BirdCount == -1)
-		{
-			state = GameState::GameOver;
-			UIManager::GetInstance().GotoEnding(state);
 		}
 	}
 }

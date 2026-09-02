@@ -12,11 +12,11 @@
 #include <cmath>
 #include <algorithm>
 #include <unordered_map>
+#include "../enums.h"
 #include "../CollisionManager.h"
 #include "../Renderer.h"
 #include "UUIObject.h"
 #include "UPage.h"
-#include "../GameManager.h"
 #include "UUIIngamePage.h"
 
 using namespace std;
@@ -37,6 +37,7 @@ public:
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
+	void ResetScore();
 
 	void SpawnFloatingText(float score, float screenX, float screenY, D2D1_COLOR_F color = { 1.0f, 0.843f, 0.0f, 1.0f });
 	void Release();
@@ -50,6 +51,7 @@ public:
 	void GotoEnding(GameState gs);
 	void DrawBirdPath(const std::vector<FVector>& vertices);
 
+	void LevelChanged(int curlevel);
 
 	UUIPage* GetPage(EPageType type)
 	{
