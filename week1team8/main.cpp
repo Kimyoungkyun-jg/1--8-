@@ -441,6 +441,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			PressedCollider->Destroy();
 		}
+		if (ImGui::Button("Restart", ImVec2(100, 20)))
+		{
+			gameManager.Restart();
+		}
+
 		ImGui::SetNextItemWidth(200);
 		ImGui::SetNextItemWidth(300);
 		ImGui::End();
