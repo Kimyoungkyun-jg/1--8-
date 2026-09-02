@@ -292,7 +292,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//매 프레임 UObject에 Tick 호출
 		for (UObject* Obj : ObjectManager.AllObjects)
 		{
-			Obj->Tick();
+			Obj->Tick(elapsedTime * 0.001);
 		}
 
 		// 렌더 준비
@@ -347,6 +347,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
 		ImGui::Text("PressedColliderID %s", s.c_str());
 		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
+		FVector TipLoc = SlingShot->GetBackBand()->TipLocation;
+		ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
 		ImGui::SetNextItemWidth(100);
 		ImGui::SetNextItemWidth(100);
 		ImGui::End();
