@@ -242,7 +242,6 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			{
 				GameManager::GetInstance().SetCurlvl(nextLvl);
 				GameManager::GetInstance().Play();
-				LevelChanged(nextLvl);
 				ChangePage(EPageType::InGame);
 			}
 			else
@@ -421,29 +420,47 @@ void UIManager::ChangePage(EPageType newPageType)
 		CurrentPage->Hide();
 	}
 
+
+
 	auto it = Pages.find(newPageType);
 	if (it != Pages.end())
 	{
 		CurrentPage = it->second;
-
-		if (newPageType == EPageType::StageClear)
+		std::wstring totalScoreStr = GetScoreString();
+		switch (newPageType)
 		{
+		case EPageType::Starting:
+
+			break;
+		case EPageType::InGame:
+			GameManager::GetInstance().IsClearLevel = false; //인겜들어가면 false
+
+			break;
+		case EPageType::Pause:
+			break;
+		case EPageType::Ending:
+			break;
+		case EPageType::StageClear:
 			if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
 			{
 				inGame->ClearFloatingText(true);
 			}
 
-			std::wstring totalScoreStr = GetScoreString();
+			totalScoreStr = GetScoreString();
 			for (UUIObject* obj : CurrentPage->ChildUIObjects)
 			{
 				if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
 				{
+					btn->ResetAnimation();
 					if (btn->imagePath && wcsstr(btn->imagePath, L"Scoreboard"))
 					{
 						btn->SetText(totalScoreStr, 0.0f, -20.0f, D2D1::ColorF(1.0f, 0.843f, 0.0f), 48.0f);
 					}
 				}
 			}
+			break;
+		default:
+			break;
 		}
 
 		CurrentPage->Show();

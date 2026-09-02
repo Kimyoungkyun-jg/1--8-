@@ -112,7 +112,7 @@ void GameManager::ReloadBird()
 			Birds[i]->SetLocation(WaitPoints[Birds.size()-i-1]);
 		}
 	}
-	else
+	else if(!IsClearLevel)
 	{
 		state = GameState::GameOver;
 		UIManager::GetInstance().GotoEnding(state);
@@ -147,6 +147,10 @@ ABird *GameManager::SpawnWaitingBird(FVector Location, EBirdType BirdType)
 
 void GameManager::SpawnBirdAndSlingShot()
 {
+	Birds.clear();
+	WaitPoints.clear();
+	ReloadedBird = nullptr;
+
 	AActor* hill = SpawnActor<AActor>({ -1.2, -0.4, 0 }, EPrimitive::Rectangle, {1, 1.5, 1});
 	hill->SetImage(L"Assets/img/hill.png");
 
@@ -192,8 +196,10 @@ void GameManager::CheckGameState()
 {
 	if (state == GameState::Play)
 	{
-		if (PigCount == 0 && ReloadedBird->GetVelocity().Length() < 0.5f)
+		if (PigCount == 0 && (!ReloadedBird || ReloadedBird->GetVelocity().Length() < 0.5f))
 		{	
+			state = GameState::StageClear;
+			IsClearLevel = true;
 			UIManager::GetInstance().LevelChanged(CurrentLevel);
 		}
 	}
