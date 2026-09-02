@@ -33,14 +33,21 @@ FVector ScreenToWorld(HWND hwnd, int MouseX, int MouseY)
 	RECT rec;
 	GetClientRect(hwnd, &rec);
 
-	float w = rec.right - rec.left;
-	float c = rec.top - rec.bottom;
+	float width = (float)(rec.right - rec.left);
+	float height = (float)(rec.bottom - rec.top);
 
-	FVector res;
-	res.x = max(-1, min(2 * MouseX / w - 1, 1));
-	res.y = max(-1, min(2 * MouseY / c + 1, 1));
+	if (width <= 0.0f || height <= 0.0f)
+	{
+		return FVector(0.0f, 0.0f, 0.0f);
+	}
 
-	return res;
+	float aspect = width / height;
+
+	
+	float worldX = (2.0f * (float)MouseX / width - 1.0f) * aspect;
+	float worldY = 1.0f - (2.0f * (float)MouseY / height);
+
+	return FVector(worldX, worldY, 0.0f);
 }
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -122,14 +129,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gameManager.Initialize();
 
 	UIManager& uiManager = UIManager::GetInstance();
-	uiManager.Initialize(renderer.SwapChain, windowWidth, windowHeight);
+	uiManager.Initialize(renderer.SwapChain, 1980, 1980);
 
 	UObjectManager& ObjectManager = UObjectManager::GetInstance();
 	CollisionManager& CM = CollisionManager::GetInstance();
 	LoadManager& LoadManager = LoadManager::Get();
 
 	SoundManager& SM = SoundManager::GetInstance();
-	SM.Initialize();
+	if (!SM.Initialize())
+	{
+		return 0;
+	}
 
 	// 루프 진입 전 필요한 리소스 생성
 	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
@@ -147,7 +157,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		SlingShot->EquippedBird = Bird;
 		SlingShot->ShotPoint = Bird->GetLocation();
-		Bird->SlingShot = SlingShot;
 	}
 
 	// 테스트용
@@ -276,7 +285,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// 충돌 검사
 		CollisionManager& ColManager = CollisionManager::GetInstance();
-		ColManager.CheckCollisionAll();
+		uiManager.GetCollisionInfos(ColManager.CheckCollisionAll());
 
 		// 렌더 준비
 		renderer.Prepare();

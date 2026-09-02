@@ -393,37 +393,37 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		AObstacle* oba = dynamic_cast<AObstacle*>(a);
 		AObstacle* obb = dynamic_cast<AObstacle*>(b);
 
-		if (oba)
-		{
-			if (oba->minusHp() == 0)
-			{
-				bool alreadyPending = false;
-				for (auto* p : pendingkills)
-				{
-					if (p == oba) { alreadyPending = true; break; }
-				}
-				if (!alreadyPending)
-				{
-					pendingkills.push_back(oba);
-				}
-			}
-		}
+		//if (oba)
+		//{
+		//	if (oba->minusHp() == 0)
+		//	{
+		//		bool alreadyPending = false;
+		//		for (auto* p : pendingkills)
+		//		{
+		//			if (p == oba) { alreadyPending = true; break; }
+		//		}
+		//		if (!alreadyPending)
+		//		{
+		//			pendingkills.push_back(oba);
+		//		}
+		//	}
+		//}
 
-		if (obb)
-		{
-			if (obb->minusHp() == 0)
-			{
-				bool alreadyPending = false;
-				for (auto* p : pendingkills)
-				{
-					if (p == obb) { alreadyPending = true; break; }
-				}
-				if (!alreadyPending)
-				{
-					pendingkills.push_back(obb);
-				}
-			}
-		}
+		//if (obb)
+		//{
+		//	if (obb->minusHp() == 0)
+		//	{
+		//		bool alreadyPending = false;
+		//		for (auto* p : pendingkills)
+		//		{
+		//			if (p == obb) { alreadyPending = true; break; }
+		//		}
+		//		if (!alreadyPending)
+		//		{
+		//			pendingkills.push_back(obb);
+		//		}
+		//	}
+		//}
 	}
 
 	return impulseMag;
