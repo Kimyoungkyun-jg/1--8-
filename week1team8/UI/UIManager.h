@@ -16,6 +16,7 @@
 #include "../Renderer.h"
 #include "UUIObject.h"
 #include "UPage.h"
+#include "../GameManager.h"
 #include "UUIIngamePage.h"
 
 using namespace std;
@@ -45,26 +46,10 @@ public:
 	void CalPos(EColliderId colAId, EColliderId colBId, float colposx, float colposy);
 	void GetCollisionInfos(std::vector<CollisionInfo> infos);
 
-	void ChangePage(EPageType newPageType)
-	{
-		if (CurrentPage)
-		{
-			CurrentPage->Hide();
-		}
+	void ChangePage(EPageType newPageType);
 
-		auto it = Pages.find(newPageType);
-		if (it != Pages.end())
-		{
-			CurrentPage = it->second;
+	void GotoEnding(GameState gs);
 
-			if (newPageType == EPageType::Ending)
-			{
-				CurrentPage->Show(false);
-			}
-			else
-				CurrentPage->Show();
-		}
-	}
 
 	UUIPage* GetPage(EPageType type)
 	{

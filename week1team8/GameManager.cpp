@@ -2,6 +2,7 @@
 #include "UObject.h"
 #include "TemplateLibrary.h"
 #include "LoadManager.h"
+#include "UI/UIManager.h"
 
 //새의 속도가 일정 이하면 호출
 void GameManager::ReloadBird()
@@ -46,6 +47,8 @@ void GameManager::CheckGameState()
 		else
 		{
 			state = GameState::GameClear;
+			UIManager::GetInstance().GotoEnding(state);
+
 		}
 	}
 

@@ -325,6 +325,52 @@ void UIManager::GetCollisionInfos(std::vector<CollisionInfo> infos)
 	}
 }
 
+void UIManager::ChangePage(EPageType newPageType)
+{
+	if (CurrentPage)
+	{
+		CurrentPage->Hide();
+	}
+
+	auto it = Pages.find(EPageType::Ending);
+	if (it != Pages.end())
+	{
+		CurrentPage = it->second;
+		CurrentPage->Show();
+	}
+}
+
+
+
+void UIManager::GotoEnding(GameState gs)
+{
+	if (CurrentPage)
+	{
+		CurrentPage->Hide();
+	}
+
+	auto it = Pages.find(EPageType::Ending);
+	if (it != Pages.end())
+	{
+		CurrentPage = it->second;
+
+		switch (gs)
+		{
+		case GameState::GameOver:
+			CurrentPage->Show(false);
+			break;
+		case GameState::GameClear:
+			CurrentPage->Show(true);
+			break;
+		default:
+			break;
+		}
+		
+	}
+}
+
+
+
 std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos) 
 {
 	float aspect = (screenHeight > 0) ? (static_cast<float>(screenWidth) / static_cast<float>(screenHeight)) : (16.0f / 9.0f);
