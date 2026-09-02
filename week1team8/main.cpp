@@ -182,6 +182,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SM.LoadSound("bgm_main", L"Assets/bgm_main.wav");
 	SM.LoadSound("sfx_bird", L"Assets/sfx_bird.wav");
+	SM.LoadSound("sfx_pig", L"Assets/sfx_pig.wav");
+	SM.LoadSound("sfx_rock", L"Assets/sfx_rock.wav");
 
 	SM.PlayBGM("bgm_main", true, 0.5f);
 
