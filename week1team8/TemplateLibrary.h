@@ -69,11 +69,3 @@ inline bool TraceSphere(FVector Location, float Radius, std::vector<ACollider*> 
 
 	return bFound;
 }
-
-inline bool IsValid(UObject* Object)
-{
-	if (Object && !Object->IsPendingKill())
-		return true;
-
-	return false;
-}

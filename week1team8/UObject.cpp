@@ -21,11 +21,6 @@ void UObject::Released(FVector _Location)
 	//empty
 }
 
-void UObject::PendingKill()
-{
-	bPendingkill = true;
-}
-
 void UObject::Tick(float deltaTime)
 {
 
@@ -101,6 +96,8 @@ void UObject::Destroy()
 
 void ABird::Clicked()
 {
+	if (State == EBirdState::Waiting) return;
+
 	if (SlingShot)
 	{
 		ABand* BackBand = SlingShot->GetBackBand();
@@ -119,6 +116,8 @@ std::vector<FVector> Points;
 
 void ABird::Pressed(FVector _Location)
 {
+	if (State == EBirdState::Waiting) return;
+
 	Velocity = 0.f;
 	bUseGravity = false;
 
@@ -183,6 +182,12 @@ void ABird::Tick(float deltaTime)
 		GameManager::GetInstance().ReloadBird();
 		State = EBirdState::Shooted;
 	}
+}
+
+void ABird::SetWait()
+{
+	State = EBirdState::Waiting;
+	bUseGravity = false;
 }
 
 void ASlingShot::SpawnBand()
@@ -263,6 +268,7 @@ float APig::minusHp()
 	return hp;
 }
 
+
 float ABombBird::minusHp()
 {
 	//원을 쿼리
@@ -273,16 +279,16 @@ float ABombBird::minusHp()
 	{
 		for (ACollider* Col : Result)
 		{
-			if (IsValid(Col))
+			if (Col)
 			{
 				FVector Direction = (Col->GetLocation() - Location);
 				Direction.Normalize();
-				Col->SetVelocity(Col->GetVelocity() + Direction * 3.f);
-				Col->minusHp();
+				Col->SetVelocity(Col->GetVelocity() + Direction * 0.1f);
+				//Col->minusHp();
 			}
 		}
 	}
 	//확정 죽음
-	PendingKill();
+	GameManager::GetInstance().ReloadBird();
 	return 0.f;
 }

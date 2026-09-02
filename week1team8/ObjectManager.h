@@ -64,27 +64,6 @@ public:
 		}
 	}
 
-	void DistroyPendingKills()
-	{
-		for (int i = AllObjects.size() - 1; i >= 0; --i)
-		{
-			if (!AllObjects[i]->IsPendingKill())
-			{
-				continue;
-			}
-
-			if (AActor* Actor = dynamic_cast<AActor*>(AllObjects[i]))
-			{
-				CollisionManager::GetInstance().DeleteColider(Actor->GetID());
-			}
-
-			UObject* temp = AllObjects[i];
-			std::swap(AllObjects[i], AllObjects.back());
-			AllObjects.pop_back();
-			delete(temp);
-		}
-	}
-
 	UObject* Find(int ID)
 	{
 		for (UObject* Obj : AllObjects)

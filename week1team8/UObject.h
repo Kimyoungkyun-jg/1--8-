@@ -27,12 +27,9 @@ public:
 	void Destroy();
 
 	//프레임 끝에서 Destroy 호출
-	void PendingKill();
 	virtual void Tick(float deltaTime);
-	bool IsPendingKill() {	return bPendingkill; }
 
 private:
-	bool bPendingkill = false;
 	inline static int IDMax = 0;
 	int ID;
 };
@@ -139,6 +136,7 @@ public:
 
 enum class EBirdState
 {
+	Waiting,
 	Idle,
 	Shooting,
 	Shooted
@@ -154,6 +152,8 @@ public:
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual void Tick(float deltaTime) override;
+	void SetWait();
+	void SetState(EBirdState NewState) { State = NewState; }
 
 	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;

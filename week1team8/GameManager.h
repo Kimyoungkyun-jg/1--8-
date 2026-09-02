@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "Vector.h"
 class ABird;
 class ASlingShot;
 
@@ -81,7 +82,7 @@ public:
 		for (int i = 0; i < NewBirdCount; i++)
 		{
 			int randi = rand() % 2;
-			Birds.push_back(randi);
+			BirdTypes.push_back(randi);
 		}
 	}
 	int GetPigCount() const { return PigCount; }
@@ -98,6 +99,8 @@ private:
 	GameManager() = default;
 	~GameManager() = default;
 
+	ABird * SpawnWaitingBird(FVector Location, EBirdType BirdType);
+
 	ABird* ReloadedBird = nullptr;
 	ASlingShot* SlingShot = nullptr;
 	int PigCount = 0;
@@ -105,6 +108,9 @@ private:
 
 	GameState state = GameState::Menu;
 	
-	std::vector<int> Birds = {EBirdType::Basic, EBirdType::BombBird, EBirdType::Basic};
+	std::vector<int> BirdTypes;
+	std::vector<ABird*> Birds;
+
+	FVector ShotPoint = { -1.18, -0.35, 0 };
 };
 

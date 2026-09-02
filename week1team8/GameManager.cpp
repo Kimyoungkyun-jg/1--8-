@@ -9,6 +9,7 @@ void GameManager::Restart()
 {
 	PigCount = 0;
 	Birds.clear();
+	BirdTypes.clear();
 	CurrentLevel = 0;
 	SlingShot = nullptr;
 	ReloadedBird = nullptr;
@@ -47,10 +48,14 @@ void GameManager::ReloadBird()
 {
 	if (Birds.size() > 0)
 	{
+		ReloadedBird = Birds.back();
+		ReloadedBird->SetLocation(ShotPoint);
+		ReloadedBird->SetVelocity(0.f);
+		ReloadedBird->SetState(EBirdState::Idle);
+
 		Birds.pop_back();
-		ReloadedBird = SpawnColider<ABird>({ -1.18, -0.35, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
-		ReloadedBird->SetImage(L"Assets/img/bird.png");
 		SlingShot->EquippedBird = ReloadedBird;
+		SlingShot->ShotPoint = ReloadedBird->GetLocation();
 		ReloadedBird->SlingShot = SlingShot;
 	}
 	else
@@ -60,6 +65,26 @@ void GameManager::ReloadBird()
 	}
 }
 
+ABird *GameManager::SpawnWaitingBird(FVector Location, EBirdType BirdType)
+{
+	ABird* Bird = nullptr;
+	if (BirdType == EBirdType::Basic)
+	{
+		Bird = SpawnColider<ABird>(Location, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+		Bird->SetImage(L"Assets/img/bird.png");
+		Birds.push_back(Bird);
+	}
+	else if (BirdType == EBirdType::BombBird)
+	{
+		Bird = SpawnColider<ABombBird>(Location, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+		Bird->SetImage(L"Assets/img/bomb.png");
+		Birds.push_back(Bird);
+	}
+
+	Bird->SetWait();
+	return Bird;
+}
+
 void GameManager::SpawnBirdAndSlingShot()
 {
 	AActor* hill = SpawnActor<AActor>({ -1.2, -0.4, 0 }, EPrimitive::Rectangle, {1, 1.5, 1});
@@ -67,14 +92,27 @@ void GameManager::SpawnBirdAndSlingShot()
 
 	SlingShot = SpawnActor<ASlingShot>({ -1.18, -0.45, 0 }, EPrimitive::Rectangle, { 0.1, 0.2, 0 });
 	SlingShot->SetImage(L"Assets/img/slingshot.png");
+	SlingShot->SpawnBand();
 
-	ReloadedBird = SpawnColider<ABird>({ -1.18, -0.35, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
-	ReloadedBird->SetImage(L"Assets/img/bird.png");
+	//대기하는 새들을 언덕에 스폰하여 배치한다. 언덕에 있는 새들은 클릭과 중력을 비활성화한다.
+	FVector WaitPoint = ShotPoint;
+	for (int i = 0; i < BirdTypes.size() - 1; ++i)
+	{
+		EBirdType BirdType = static_cast<EBirdType>(BirdTypes[i]);
+		WaitPoint.x -= 0.1;
+		SpawnWaitingBird(WaitPoint, BirdType);
+	}
 
+	//가장 뒤의 새를 새총에 배치한다.
+	EBirdType BirdType = static_cast<EBirdType>(BirdTypes.back());
+	ReloadedBird = SpawnWaitingBird(ShotPoint, BirdType);
 	SlingShot->EquippedBird = ReloadedBird;
 	SlingShot->ShotPoint = ReloadedBird->GetLocation();
-	SlingShot->SpawnBand();
 	ReloadedBird->SlingShot = SlingShot;
+	ReloadedBird->SetState(EBirdState::Idle);
+
+	//Reloaded된 새는 제외
+	Birds.pop_back();
 }
 
 void GameManager::PigDeath()

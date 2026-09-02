@@ -138,13 +138,14 @@ bool LoadManager::LoadMap(int num)
 
 	if (savedfile.is_open())
 	{
-		ClearMap();
+		if (GameManager::GetInstance().GetGameState() != GameState::Menu)
+			ClearMap();
 
 		std::string str;
 		std::getline(savedfile, str);
 		int BirdCount = std::stoi(str);
 		GameManager::GetInstance().SetBirdCount(BirdCount);
-
+		GameManager::GetInstance().SpawnBirdAndSlingShot();
 
 		int PigCount = 0;
 		while (getline(savedfile, str))
@@ -177,5 +178,4 @@ void LoadManager::ClearMap()
 {
 	UObjectManager::GetInstance().DistroyAllActors();
 	GameManager::GetInstance().SpawnWalls();
-	GameManager::GetInstance().SpawnBirdAndSlingShot();
 }
