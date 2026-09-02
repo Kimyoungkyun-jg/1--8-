@@ -450,11 +450,9 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 	{
 		for (size_t j = i + 1; j < n; j++)
 		{
-			// 둘 다 움직일 수 없으면 풀 게 없다 (정적끼리, 잠든 것끼리, 정적-잠듦)
-			bool aMovable = colliders[i]->GetMass() > 0.0f && !colliders[i]->IsSleeping();
-			bool bMovable = colliders[j]->GetMass() > 0.0f && !colliders[j]->IsSleeping();
-
-			if (!aMovable && !bMovable)
+			// 정적끼리는 아예 볼 것도 없다.
+			// 잠든 쌍은 감지까지는 한다 — 무리를 잇고 파괴 때 깨우려면 접촉 그래프가 온전해야 한다.
+			if (colliders[i]->GetMass() + colliders[j]->GetMass() <= 0.0f)
 			{
 				continue;
 			}
@@ -476,12 +474,16 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 
 	for (auto& [ab, info] : abinfos)
 	{
+		if (!IsPairSolvable(ab.first, ab.second)) continue;
+
 		InitContact(ab.first, ab.second, info);
 	}
 
 	// 이월받은 충격량 적용. 모든 InitContact가 끝난 뒤에 따로 돈다.
 	for (auto& [ab, info] : abinfos)
 	{
+		if (!IsPairSolvable(ab.first, ab.second)) continue;
+
 		WarmStartContact(ab.first, ab.second, info);
 	}
 
@@ -489,6 +491,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 	{
 		for (auto& [ab, info] : abinfos)
 		{
+			if (!IsPairSolvable(ab.first, ab.second)) continue;
+
 			// 충격량(속도) 해결
 			SolveContact(ab.first, ab.second, info);
 		}
@@ -502,7 +506,22 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 
 		for (auto& [ab, info] : abinfos)
 		{
-			currentManifolds[MakePairKey(ab.first, ab.second)] = info;
+			unsigned long long key = MakePairKey(ab.first, ab.second);
+
+			if (IsPairSolvable(ab.first, ab.second))
+			{
+				currentManifolds[key] = info;
+				continue;
+			}
+
+			// 잠든 쌍은 이번 프레임에 풀지 않았으므로 충격량이 0이다.
+			// 그대로 저장하면 깨어날 때 warm start가 날아가고, '새 접촉'으로 잘못 잡혀
+			// 데미지가 한 번 더 들어간다. 지난 값을 그대로 들고 간다.
+			auto found = previousManifolds.find(key);
+			if (found != previousManifolds.end())
+			{
+				currentManifolds[key] = found->second;
+			}
 		}
 
 		previousManifolds = std::move(currentManifolds);
@@ -520,6 +539,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 	{
 		for (auto& [ab, info] : abinfos)
 		{
+			if (!IsPairSolvable(ab.first, ab.second)) continue;
+
 			ResolvePosition(ab.first, ab.second, info);
 		}
 	}
@@ -570,17 +591,21 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 
 	for (auto& [ab, info] : abinfos)
 	{
-		// 접촉점이 여러 개면 가장 빠르게 부딪힌 점과 충격량 합으로 판단한다
+		// 한 번의 충돌이 여러 프레임 이어져도 데미지는 처음 닿은 프레임에만 준다
+		if (!info.bNewContact) continue;
+
+		// 이월받은 몫은 '위에 얹힌 무게를 떠받치는 힘'이라 충돌의 세기가 아니다.
+		// 빼주지 않으면 밑에 깔린 블록일수록 세게 맞아서가 아니라 위치 때문에 먼저 깨진다.
 		float approachSpeed = 0.0f;
-		float totalNormalImpulse = 0.0f;
+		float impactImpulse = 0.0f;
 		for (int i = 0; i < info.pointCount; i++)
 		{
 			approachSpeed = std::fmin(approachSpeed, info.points[i].initialNormalVelocity);
-			totalNormalImpulse += info.points[i].normalImpulse;
+			impactImpulse += std::fmax(info.points[i].normalImpulse - info.points[i].inheritedNormalImpulse, 0.0f);
 		}
 
-		if (approachSpeed > -MinDamageSpeed)          continue;   // 충분히 빠르게 부딪혔나
-		if (totalNormalImpulse <= CollisionThreshold) continue;   // 충분히 셌나
+		if (approachSpeed > -MinDamageSpeed)      continue;   // 충분히 빠르게 부딪혔나
+		if (impactImpulse <= CollisionThreshold)  continue;   // 충분히 셌나
 
 		infos.push_back(info);
 
@@ -959,8 +984,16 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 
 	if (invMassA + invMassB <= 0.0f) return; // 스태틱 충돌
 
+	// 지난 프레임에 이 쌍이 닿아 있었는지. warm starting 여부와 무관하게 봐야
+	// 데미지 판정이 "새로 부딪힌 프레임"을 제대로 가려낸다.
+	const CollisionInfo* previous = FindPreviousManifold(a, b);
+	info.bNewContact = (previous == nullptr);
+
 	// warm starting: 0에서 다시 풀면 반복 안에 못 끝내서 탑이 매 프레임 가라앉는다
-	const CollisionInfo* previous = bWarmStarting ? FindPreviousManifold(a, b) : nullptr;
+	if (!bWarmStarting)
+	{
+		previous = nullptr;
+	}
 
 	for (int i = 0; i < info.pointCount; i++)
 	{
@@ -1006,6 +1039,8 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 
 		// ID가 같은 접촉점의 지난 충격량을 이어받는다.
 		// initialNormalVelocity는 위에서 이미 기록됐으므로 데미지 판정은 영향 없음
+		point.inheritedNormalImpulse = 0.0f;
+
 		if (previous)
 		{
 			for (int j = 0; j < previous->pointCount; j++)
@@ -1017,6 +1052,7 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 
 				point.normalImpulse = previous->points[j].normalImpulse;
 				point.tangentImpulse = previous->points[j].tangentImpulse;
+				point.inheritedNormalImpulse = point.normalImpulse;
 				break;
 			}
 		}

@@ -25,6 +25,10 @@ struct ContactPoint
 	float tangentImpulse = 0.0f; // 누적 충격량 2: 마찰
 	float rollingImpulse = 0.0f; // 누적 충격량 3: 구름 저항 (각충격량)
 	float initialNormalVelocity = 0.0f;
+
+	// 지난 프레임에서 이월받은 법선 충격량 = 위에 얹힌 무게를 떠받치는 몫.
+	// normalImpulse에서 이걸 빼면 이번 충돌로 새로 생긴 충격량만 남는다.
+	float inheritedNormalImpulse = 0.0f;
 };
 
 // 한 쌍의 충돌. 법선은 공유하고 접촉점만 여러 개 (면끼리 닿으면 2개)
@@ -33,6 +37,7 @@ struct CollisionInfo
 	FVector normal = FVector();  // B -> A 방향
 	FVector tangent = FVector(); // 접선 방향 (고정)
 	bool isCollision = false;
+	bool bNewContact = false;    // 지난 프레임엔 안 닿아 있었다 = 이번에 새로 부딪힘
 	EColliderId colAId = EColliderId::NONE;
 	EColliderId colBId = EColliderId::NONE;
 
@@ -133,6 +138,14 @@ public:
 	}
 
 	void SetAllCollisionFriction(float _dynamic, float _static);
+
+	// 둘 다 못 움직이는 쌍은 풀 필요가 없다 (정적끼리, 잠든 것끼리, 정적-잠듦).
+	// 감지는 그래도 한다 — 접촉 그래프가 비면 무리도 깨우기도 성립하지 않는다.
+	static bool IsPairSolvable(const ACollider* a, const ACollider* b)
+	{
+		return (a->GetMass() > 0.0f && !a->IsSleeping())
+			|| (b->GetMass() > 0.0f && !b->IsSleeping());
+	}
 
 	std::vector<CollisionInfo> CheckCollisionAll(float t);
 
