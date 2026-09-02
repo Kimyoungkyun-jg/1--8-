@@ -22,7 +22,7 @@ class URenderer
 	struct FConstants
 	{
 		FVector Offset;
-		float Rotation;	// degree (반시계 회전)
+		float Rotation; // 라디안
 		FVector Scale;	// (width, height, depth)
 		float AspectRatio;
 	};

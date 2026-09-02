@@ -272,7 +272,7 @@ void URenderer::UpdateConstant(FVector Offset, float Rotation, FVector Scale)
 		FConstants* constants = (FConstants*)constantbufferMSR.pData;
 		{
 			constants->Offset = Offset;
-			constants->Rotation = DirectX::XMConvertToRadians(Rotation); // Radians
+			constants->Rotation = Rotation; // Radians
 			constants->Scale = Scale;
 			constants->AspectRatio = wAspectRatio;
 		}

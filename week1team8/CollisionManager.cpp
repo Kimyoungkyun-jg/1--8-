@@ -49,8 +49,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 			if (info.isCollision)
 			{
-				float impulse = ResolveCollision(colliders[i], colliders[j], info);
-				if (impulse > 10.0f)
+				float impulse = GetImpulse(colliders[i], colliders[j], info);
+				if (impulse > CollisionThreshold)
 				{
 					infos.push_back(info);
 				}
@@ -328,7 +328,7 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 	}
 }
 
-// 충돌해결
+// 충돌해결 (법선 B->A)
 float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
 {
 	FVector normal = info.normal;
@@ -388,7 +388,7 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		b->SetVelocity(b->GetVelocity() - tangent * (frictionImpulseMag * invMassB));
 	}
 
-	if (impulseMag > 80.0f)
+	if (impulseMag > CollisionThreshold)
 	{
 		ACollider* oba = dynamic_cast<ACollider*>(a);
 		ACollider* obb = dynamic_cast<ACollider*>(b);
@@ -425,6 +425,39 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		//	}
 		//}
 	}
+
+	return impulseMag;
+}
+
+// 충돌해결
+float CollisionManager::GetImpulse(ACollider* a, ACollider* b, const CollisionInfo& info)
+{
+	FVector normal = info.normal;
+	float penetration = info.penetration;
+
+	float invMassA = InvMass(a->GetMass());
+	float invMassB = InvMass(b->GetMass());
+
+	// 스태틱 충돌 (추후 수정)
+	if (invMassA + invMassB <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	FVector relativeVelocity = a->GetVelocity() - b->GetVelocity(); // 상대 속도
+	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
+
+	// 충돌 지점에서 멀어지는 중 (내적의 결과가 양수 = 충돌 방향과 상대 속도가 예각을 이룸
+	if (relativeVelocityNormal >= 0)
+	{
+		return 0.0f;
+	}
+
+	const float restitutionThreshold = 1.0f; // 튜닝 값
+	float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.8f;
+
+	// 충격량 계산
+	float impulseMag = -(1.0f + restitution) * relativeVelocityNormal / (invMassA + invMassB); // 충격량
 
 	return impulseMag;
 }

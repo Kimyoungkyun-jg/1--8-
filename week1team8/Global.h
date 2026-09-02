@@ -7,5 +7,5 @@ namespace Global
 	constexpr float rightBorder = 1.7f;
 	constexpr float topBorder = 1.0f;
 	constexpr float bottomBorder = -1.0f;
-	const FVector G(0.0f, -9.8f, 0.0f);
+	const FVector G(0.0f, -4.9f, 0.0f);
 }

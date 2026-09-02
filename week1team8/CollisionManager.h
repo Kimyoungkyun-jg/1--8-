@@ -31,6 +31,7 @@ public:
 
 	std::vector<ACollider*> colliders;
 	std::vector<ACollider*> pendingkills;
+	float CollisionThreshold = 100.0f;
 
 	void AddColider(ACollider* col)
 	{
@@ -71,4 +72,5 @@ public:
 
 	// 충돌해결
 	float ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info);
+	float GetImpulse(ACollider* a, ACollider* b, const CollisionInfo& info);
 };
