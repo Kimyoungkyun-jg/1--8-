@@ -39,13 +39,14 @@ inline T* SpawnActor(FVector Location, EPrimitive Primitive, FVector Scale = { 0
 }
 
 template<class T>
-inline T* SpawnColider(FVector Location, EPrimitive Primitive, bool bUseGravity = true, FVector Scale = { 0.1, 0.1, 1 }, float Mass = 10)
+inline T* SpawnColider(FVector Location, EPrimitive Primitive, bool bUseGravity = true, FVector Scale = { 0.1, 0.1, 1 }, float Mass = 10, float hp = 1)
 {
 	static_assert(std::is_base_of_v<ACollider, T>);
 	ACollider* Colider = SpawnActor<T>(Location, Primitive, Scale);
 
 	Colider->bUseGravity = bUseGravity;
 	Colider->SetMass(Mass);
+	Colider->SetHp(hp);
 	CollisionManager::GetInstance().AddColider(Colider);
 
 	return static_cast<T*>(Colider);

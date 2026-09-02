@@ -2,6 +2,7 @@
 
 #include "CollisionManager.h"
 #include "ObjectManager.h"
+#include "GameManager.h"
 
 CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관리
 {
@@ -388,42 +389,49 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 		b->SetVelocity(b->GetVelocity() - tangent * (frictionImpulseMag * invMassB));
 	}
 
-	if (impulseMag > CollisionThreshold)
+	if (ABird * Bird = GameManager::GetInstance().GetReloadedBird())
 	{
-		ACollider* oba = dynamic_cast<ACollider*>(a);
-		ACollider* obb = dynamic_cast<ACollider*>(b);
+		if (Bird->State == EBirdState::Shooting)
+		{
+			if (impulseMag > CollisionThreshold)
+			{
+				ACollider* oba = dynamic_cast<ACollider*>(a);
+				ACollider* obb = dynamic_cast<ACollider*>(b);
 
-		//if (oba)
-		//{
-		//	if (oba->minusHp() == 0)
-		//	{
-		//		bool alreadyPending = false;
-		//		for (auto* p : pendingkills)
-		//		{
-		//			if (p == oba) { alreadyPending = true; break; }
-		//		}
-		//		if (!alreadyPending)
-		//		{
-		//			pendingkills.push_back(oba);
-		//		}
-		//	}
-		//}
+				if (oba)
+				{
+					if (oba->minusHp() == 0)
+					{
+						bool alreadyPending = false;
+						for (auto* p : pendingkills)
+						{
+							if (p == oba) { alreadyPending = true; break; }
+						}
+						if (!alreadyPending)
+						{
+							pendingkills.push_back(oba);
+						}
+					}
+				}
 
-		//if (obb)
-		//{
-		//	if (obb->minusHp() == 0)
-		//	{
-		//		bool alreadyPending = false;
-		//		for (auto* p : pendingkills)
-		//		{
-		//			if (p == obb) { alreadyPending = true; break; }
-		//		}
-		//		if (!alreadyPending)
-		//		{
-		//			pendingkills.push_back(obb);
-		//		}
-		//	}
-		//}
+				if (obb)
+				{
+					if (obb->minusHp() == 0)
+					{
+						bool alreadyPending = false;
+						for (auto* p : pendingkills)
+						{
+							if (p == obb) { alreadyPending = true; break; }
+						}
+						if (!alreadyPending)
+						{
+							pendingkills.push_back(obb);
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 	return impulseMag;

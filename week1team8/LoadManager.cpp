@@ -156,6 +156,7 @@ bool LoadManager::LoadMap(int num)
 				break;
 			}
 		}
+		GameManager::GetInstance().SetPigCount(PigCount);
 		return true;
 	}
 
