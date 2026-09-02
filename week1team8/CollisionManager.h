@@ -6,14 +6,15 @@
 
 #include "UObject.h"
 
+
 struct CollisionInfo
 {
 	FVector contactPoint = FVector();
 	FVector normal = FVector();
 	float penetration = 0.0f;
 	bool isCollision = false;
-	ACollider* a;
-	ACollider* b;
+	EColliderId colAId;
+	EColliderId colBId;
 };
 
 class CollisionManager
@@ -29,6 +30,7 @@ public:
 	float InvMass(float mass);
 
 	std::vector<ACollider*> colliders;
+	std::vector<ACollider*> pendingkills;
 
 	void AddColider(ACollider* col)
 	{
@@ -50,6 +52,8 @@ public:
 		return false;
 	}
 
+	void SetAllCollisionFriction(float _dynamic, float _static);
+
 	std::vector<CollisionInfo> CheckCollisionAll();
 
 	// 충돌 감지
@@ -62,6 +66,8 @@ public:
 
 	// a == Circle, b == Rectangle
 	CollisionInfo CheckCollisionCircleRectangle(ACollider* a, ACollider* b);
+
+	void ResolvePosition(ACollider* a, ACollider* b, const CollisionInfo& info);
 
 	// 충돌해결
 	float ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info);

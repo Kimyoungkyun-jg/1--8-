@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include "CollisionManager.h"
+#include "ObjectManager.h"
 
 CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관리
 {
@@ -21,27 +22,79 @@ float CollisionManager::InvMass(float mass)
 	return 1.0f / mass;
 }
 
+void CollisionManager::SetAllCollisionFriction(float _dynamic, float _static)
+{
+	size_t n = colliders.size();
+	for (size_t i = 0; i < n; i++)
+	{
+		colliders[i]->SetdynamicFriction(_dynamic);
+		colliders[i]->SetStaticFriction(_static);
+	}
+}
+
 std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 {
 	std::vector<CollisionInfo> infos;
+	std::vector<std::pair<std::pair<ACollider*, ACollider*>, CollisionInfo>> abinfos;
 	size_t n = colliders.size();
+
 
 	for (size_t i = 0; i < n; i++)
 	{
 		for (size_t j = i + 1; j < n; j++)
 		{
 			CollisionInfo info = CheckCollision(colliders[i], colliders[j]);
-			info.a = colliders[i];
-			info.b = colliders[j];
-
+			info.colAId = colliders[i]->GetColliderId();
+			info.colBId = colliders[j]->GetColliderId();
 
 			if (info.isCollision)
 			{
 				float impulse = ResolveCollision(colliders[i], colliders[j], info);
-				infos.push_back(info);
+				if (impulse > 10.0f)
+				{
+					infos.push_back(info);
+				}
+				abinfos.push_back({ { colliders[i] , colliders[j] }, info });
 			}
 		}
 	}
+
+	std::sort(abinfos.begin(), abinfos.end(), [](const auto& a, const auto& b) {
+		return a.second.contactPoint.y < b.second.contactPoint.y;
+		});
+
+	for (int i = 0; i < 10; i++)
+	{
+		for (auto& [ab, info] : abinfos)
+		{
+			// 충격량(속도) 해결
+			ResolveCollision(ab.first, ab.second, info);
+		}
+	}
+
+	for (int i = 0; i < 20; i++)
+	{
+		for (auto& [ab, info] : abinfos)
+		{
+			// 앞선 루프나 충격량 처리에 의해 위치가 변경되었으므로,
+			// 현재 위치를 기준으로 겹침(penetration)을 '다시' 계산해야 합니다.
+			CollisionInfo currentInfo = CheckCollision(ab.first, ab.second);
+
+			if (currentInfo.isCollision)
+			{
+				// 새롭게 계산된 정보(currentInfo)로 위치 보정
+				ResolvePosition(ab.first, ab.second, currentInfo);
+			}
+		}
+	}
+
+	for (int i = (int)pendingkills.size() - 1; i >= 0; i--)
+	{
+		UObjectManager::GetInstance().Destroy(pendingkills[i]);
+	}
+
+	pendingkills.clear();
+
 
 	return infos;
 }
@@ -107,6 +160,7 @@ CollisionInfo CollisionManager::CheckCollisionCircleCircle(ACollider* a, ACollid
 		penetration,
 		isCollision
 	};
+
 
 	return info;
 }
@@ -192,6 +246,7 @@ CollisionInfo CollisionManager::CheckCollisionRectangleRectangle(ACollider* a, A
 		isCollision
 	};
 
+
 	return info;
 }
 
@@ -246,6 +301,33 @@ CollisionInfo CollisionManager::CheckCollisionCircleRectangle(ACollider* a, ACol
 	return info;
 }
 
+void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const CollisionInfo& info)
+{
+	FVector normal = info.normal;
+	float penetration = info.penetration;
+
+	float invMassA = InvMass(a->GetMass());
+	float invMassB = InvMass(b->GetMass());
+
+	// 스태틱 충돌 (추후 수정)
+	if (invMassA + invMassB <= 0.0f)
+	{
+		return;
+	}
+
+	// 위치 보정
+	const float slop = 0.001f; // 이 정도 침투는 무시
+	const float baumgarte = 0.5f;   // 나중에 dt 기반으로 변경
+
+	float correctionAmount = std::fmax(penetration - slop, 0.0f);
+	if (correctionAmount > 0.0f)
+	{
+		FVector correction = normal * correctionAmount * baumgarte / (invMassA + invMassB);
+		a->SetLocation(a->GetLocation() + correction * invMassA);
+		b->SetLocation(b->GetLocation() - correction * invMassB);
+	}
+}
+
 // 충돌해결
 float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
 {
@@ -260,19 +342,6 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 	{
 		return 0.0f;
 	}
-
-	// 위치 보정
-	const float slop = 0.0001f; // 이 정도 침투는 무시
-	const float baumgarte = 1.0f;   // 나중에 dt 기반으로 변경
-
-	float correctionAmount = std::fmax(penetration - slop, 0.0f);
-	if (correctionAmount > 0.0f)
-	{
-		FVector correction = normal * correctionAmount * baumgarte / (invMassA + invMassB);
-		a->SetLocation(a->GetLocation() + correction * invMassA);
-		b->SetLocation(b->GetLocation() - correction * invMassB);
-	}
-
 
 	FVector relativeVelocity = a->GetVelocity() - b->GetVelocity(); // 상대 속도
 	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
@@ -317,6 +386,44 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 
 		a->SetVelocity(a->GetVelocity() + tangent * (frictionImpulseMag * invMassA));
 		b->SetVelocity(b->GetVelocity() - tangent * (frictionImpulseMag * invMassB));
+	}
+
+	if (impulseMag > 80.0f)
+	{
+		AObstacle* oba = dynamic_cast<AObstacle*>(a);
+		AObstacle* obb = dynamic_cast<AObstacle*>(b);
+
+		//if (oba)
+		//{
+		//	if (oba->minusHp() == 0)
+		//	{
+		//		bool alreadyPending = false;
+		//		for (auto* p : pendingkills)
+		//		{
+		//			if (p == oba) { alreadyPending = true; break; }
+		//		}
+		//		if (!alreadyPending)
+		//		{
+		//			pendingkills.push_back(oba);
+		//		}
+		//	}
+		//}
+
+		//if (obb)
+		//{
+		//	if (obb->minusHp() == 0)
+		//	{
+		//		bool alreadyPending = false;
+		//		for (auto* p : pendingkills)
+		//		{
+		//			if (p == obb) { alreadyPending = true; break; }
+		//		}
+		//		if (!alreadyPending)
+		//		{
+		//			pendingkills.push_back(obb);
+		//		}
+		//	}
+		//}
 	}
 
 	return impulseMag;

@@ -29,7 +29,9 @@ public:
 				UObject* temp = AllObjects[i];
 				std::swap(AllObjects[i], AllObjects.back());
 				AllObjects.pop_back();
+				
 				delete(temp);
+
 
 				break;
 			}
@@ -38,6 +40,11 @@ public:
 
 	void DestroyAllObjects()
 	{
+		for (int i = AllObjects.size() - 1; i >= 0; --i)
+		{
+			delete(AllObjects[i]);
+		}
+
 		AllObjects.clear();
 	}
 
@@ -54,8 +61,6 @@ public:
 			std::swap(AllObjects[i], AllObjects.back());
 			AllObjects.pop_back();
 			delete(temp);
-
-			break;
 		}
 	}
 

@@ -137,8 +137,14 @@
     <ClCompile Include="LoadManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SoundManager.cpp" />
-    <ClCompile Include="UIManager.cpp" />
+    <ClCompile Include="UI\UButton.cpp" />
+    <ClCompile Include="UI\UFloatingText.cpp" />
+    <ClCompile Include="UI\UHUDText.cpp" />
+    <ClCompile Include="UI\UIManager.cpp" />
     <ClCompile Include="UObject.cpp" />
+    <ClCompile Include="UI\UPage.cpp" />
+    <ClCompile Include="UI\UUIObject.cpp" />
+    <ClCompile Include="UI\UUIBackground.cpp" />
     <ClCompile Include="Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,11 +170,17 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Sphere.h" />
-    <ClInclude Include="UIManager.h" />
+    <ClInclude Include="TemplateLibrary.h" />
+    <ClInclude Include="UI\UButton.h" />
+    <ClInclude Include="UI\UFloatingText.h" />
+    <ClInclude Include="UI\UHUDText.h" />
+    <ClInclude Include="UI\UIManager.h" />
     <ClInclude Include="UObject.h" />
+    <ClInclude Include="UI\UPage.h" />
+    <ClInclude Include="UI\UUIObject.h" />
+    <ClInclude Include="UI\UUIBackground.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="VertexSimple.h" />
-    <ClInclude Include="TemplateLibrary.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

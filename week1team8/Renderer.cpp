@@ -42,6 +42,8 @@ void URenderer::CreateDeviceAndSwapChain(HWND hWindow)
 	ViewportInfo = { 0.0f, 0.0f,
 		(float)swapchaindesc.BufferDesc.Width, (float)swapchaindesc.BufferDesc.Height,
 		0.0f, 1.0f };
+
+	wAspectRatio = (float)swapchaindesc.BufferDesc.Width / (float)swapchaindesc.BufferDesc.Height;
 }
 
 void URenderer::ReleaseDeviceAndSwapChain()
@@ -272,6 +274,7 @@ void URenderer::UpdateConstant(FVector Offset, float Rotation, FVector Scale)
 			constants->Offset = Offset;
 			constants->Rotation = DirectX::XMConvertToRadians(Rotation); // Radians
 			constants->Scale = Scale;
+			constants->AspectRatio = wAspectRatio;
 		}
 		DeviceContext->Unmap(ConstantBuffer, 0);
 	}
@@ -279,7 +282,7 @@ void URenderer::UpdateConstant(FVector Offset, float Rotation, FVector Scale)
 
 void URenderer::UpdateConstant(FVector Offset, FVector Scale)
 {
-	// Scale.y *= ViewportInfo.Width / ViewportInfo.Height;
+	//Scale.y *= ViewportInfo.Width / ViewportInfo.Height;
 	UpdateConstant(Offset, 0.0f, Scale);
 }
 

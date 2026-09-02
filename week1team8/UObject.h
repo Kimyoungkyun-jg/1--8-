@@ -4,6 +4,7 @@
 #include <vector>
 #include "enums.h"
 
+class ASlingShot;
 
 class UObject
 {
@@ -72,6 +73,8 @@ public:
 	EColliderId GetColliderId() const { return colId; }
 	float GetStaticFriction() const { return StaticFriction; }
 	float GetDynamicFriction() const { return DynamicFriction; }
+	void SetStaticFriction(float _f) { StaticFriction = _f; }
+	void SetdynamicFriction(float _f) { DynamicFriction = _f; }
 
 	bool bUseGravity = true;
 
@@ -79,8 +82,8 @@ protected:
 	FVector Velocity;						// 속도
 	float Mass = 10;						// 질량
 	EColliderId colId = EColliderId::NONE;	// collider 종류
-	float StaticFriction = 0.5f;
-	float DynamicFriction = 0.3f;
+	float StaticFriction = 0.3f;
+	float DynamicFriction = 0.2f;
 };
 
 class ABird : public ACollider
@@ -89,8 +92,12 @@ public:
 	ABird() { colId = EColliderId::BIRD; }
 	virtual ~ABird() {}
 
+	virtual void Clicked() override;
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
+
+	ASlingShot* SlingShot = nullptr;
+	float CanStretcheLength = 0.6;
 };
 
 class AObstacle : public ACollider
@@ -121,20 +128,37 @@ public:
 	virtual ~ABlock() {}
 };
 
+class ABand : public  AActor
+{
+public:
+	ABand() {}
+	virtual ~ABand() {}
+
+	void Stretched(FVector BirdLoc, float StretchedRate);
+	float Scaley;
+	FVector AttachedPoint;
+};
+
 class ASlingShot : public AActor
 {
 public:
-	ASlingShot() { }
-	virtual ~ASlingShot() {}
+	ASlingShot(){}
+	virtual ~ASlingShot(){}
 
+	void SpawnBand();
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
+	ABand* GetBackBand() { return BackBand; }
+	ABand* GetFrontBand() { return FrontBand; }
 
-	ABird* EquippedBird;
+	ABird* EquippedBird = nullptr;
 
 	//새총 발사 지점
 	FVector ShotPoint;
 
 	//새총 강도
-	float Power = 7.f;
+	float Power = 10.f;
+private:
+	ABand* BackBand = nullptr;
+	ABand* FrontBand = nullptr;
 };
