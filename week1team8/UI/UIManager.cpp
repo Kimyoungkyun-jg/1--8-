@@ -6,30 +6,13 @@ UIManager::~UIManager()
 	Release();
 }
 
-bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight)
+bool UIManager::Initialize(URenderer& renderer, int nWidth, int nHeight)
 {
-	if (!swapChain) return false;
+	D2DRenderTarget = renderer.D2DRenderTarget;
+	DWriteFactory = renderer.DWriteFactory;
+	if (!D2DRenderTarget || !DWriteFactory) return false;
 
 	HRESULT hr;
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &D2DFactory);
-	if (FAILED(hr)) return false;
-
-	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&DWriteFactory));
-	if (FAILED(hr)) return false;
-
-	IDXGISurface* surface = nullptr;
-	hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&surface));
-	if (FAILED(hr)) return false;
-
-	D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
-		D2D1_RENDER_TARGET_TYPE_DEFAULT,
-		D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)
-	);
-
-	hr = D2DFactory->CreateDxgiSurfaceRenderTarget(surface, &props, &D2DRenderTarget);
-	surface->Release();
-	if (FAILED(hr)) return false;
-
 	hr = D2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &Brush);
 	if (FAILED(hr)) return false;
 
@@ -44,14 +27,6 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight)
 		&FloatingFont
 	);
 	if (FAILED(hr)) return false;
-
-	CoInitialize(nullptr);
-	CoCreateInstance(
-		CLSID_WICImagingFactory,
-		nullptr,
-		CLSCTX_INPROC_SERVER,
-		IID_PPV_ARGS(&WICFactory)
-	);
 
 	screenWidth = nWidth;
 	screenHeight = nHeight;
@@ -71,12 +46,9 @@ bool UIManager::Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight)
 		case EPageType::InGame:
 		{
 			UUIIngamePage* inGamePage = new UUIIngamePage();
-			const wchar_t* pauseBtnPath = L"Assets\\img\\pausebtn.png";
-			const wchar_t* bgPath = L"Assets\\img]\\ingamebackground.jpg";
-
-			ID2D1Bitmap* pauseBtnBmp = LoadBitmapFromFile(pauseBtnPath);
-			ID2D1Bitmap* bgBtnBmp = nullptr;
-			inGamePage->Initialize(DWriteFactory, D2DRenderTarget, pauseBtnBmp, bgBtnBmp, screenWidth, screenHeight);
+			const wchar_t* pauseBtnPath = L"Assets/img/pausebtn.png";
+			ID2D1Bitmap* pauseBtnBmp = renderer.LoadBitmapFromFile(pauseBtnPath);
+			inGamePage->Initialize(DWriteFactory, D2DRenderTarget, pauseBtnBmp, nullptr, screenWidth, screenHeight);
 			Pages[pageType] = inGamePage;
 			break;
 		}
@@ -145,12 +117,10 @@ void UIManager::Render(int birdsLeft)
 
 void UIManager::Release()
 {
-	if (WICFactory) { WICFactory->Release(); WICFactory = nullptr; }
 	if (FloatingFont) { FloatingFont->Release(); FloatingFont = nullptr; }
 	if (Brush) { Brush->Release(); Brush = nullptr; }
-	if (D2DRenderTarget) { D2DRenderTarget->Release(); D2DRenderTarget = nullptr; }
-	if (DWriteFactory) { DWriteFactory->Release(); DWriteFactory = nullptr; }
-	if (D2DFactory) { D2DFactory->Release(); D2DFactory = nullptr; }
+	D2DRenderTarget = nullptr;
+	DWriteFactory = nullptr;
 
 	for (auto& pair : Pages)
 	{
@@ -242,49 +212,4 @@ std::pair<float, float> UIManager::WorldToScreen(const FVector& worldPos)
 	float screenY = (1.0f - worldPos.y) * 0.5f * screenHeight;
 
 	return { screenX, screenY };
-}
-
-ID2D1Bitmap* UIManager::LoadBitmapFromFile(const wchar_t* uri) 
-{
-	if (!WICFactory || !D2DRenderTarget) return nullptr;
-
-	IWICBitmapDecoder* decoder = nullptr;
-	IWICBitmapFrameDecode* frame = nullptr;
-	IWICFormatConverter* converter = nullptr;
-	ID2D1Bitmap* bitmap = nullptr;
-
-	if (FAILED(WICFactory->CreateDecoderFromFilename(uri, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder)))
-	{
-		return nullptr;
-	}
-
-	if (FAILED(decoder->GetFrame(0, &frame)))
-	{
-		decoder->Release();
-		return nullptr;
-	}
-
-	if (FAILED(WICFactory->CreateFormatConverter(&converter)))
-	{
-		frame->Release();
-		decoder->Release();
-		return nullptr;
-	}
-
-	converter->Initialize(
-		frame,
-		GUID_WICPixelFormat32bppPBGRA,
-		WICBitmapDitherTypeNone,
-		nullptr,
-		0.0f,
-		WICBitmapPaletteTypeMedianCut
-	);
-
-	D2DRenderTarget->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap);
-
-	converter->Release();
-	frame->Release();
-	decoder->Release();
-
-	return bitmap;
 }

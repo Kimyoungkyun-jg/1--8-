@@ -13,13 +13,10 @@
 #include <algorithm>
 #include <unordered_map>
 #include "../CollisionManager.h"
+#include "../Renderer.h"
 #include "UUIObject.h"
 #include "UPage.h"
 #include "UUIIngamePage.h"
-
-#pragma comment(lib, "d2d1.lib")
-#pragma comment(lib, "dwrite.lib")
-#pragma comment(lib, "windowscodecs.lib")
 
 using namespace std;
 
@@ -34,7 +31,7 @@ public:
 
 	~UIManager();
 
-	bool Initialize(IDXGISwapChain* swapChain, int nWidth, int nHeight);
+	bool Initialize(URenderer& renderer, int nWidth, int nHeight);
 	void Update(float deltaTime);
 	void Render(int birdsLeft);
 	void AddScore(int points);
@@ -66,22 +63,16 @@ public:
 		return (it != Pages.end()) ? it->second : nullptr;
 	}
 
-	ID2D1Bitmap* LoadBitmapFromFile(const wchar_t* uri);
-
 public:
 	UUIPage* CurrentPage = nullptr;
 	unordered_map<EPageType, UUIPage*> Pages;
 	vector<UUIObject*> AllUIObjects;
 
-
-
 private:
-	ID2D1Factory* D2DFactory = nullptr;
-	IDWriteFactory* DWriteFactory = nullptr;
 	ID2D1RenderTarget* D2DRenderTarget = nullptr;
+	IDWriteFactory* DWriteFactory = nullptr;
 	ID2D1SolidColorBrush* Brush = nullptr;
 	IDWriteTextFormat* FloatingFont = nullptr;
-	IWICImagingFactory* WICFactory = nullptr;
 
 	int screenWidth = 0;
 	int screenHeight = 0;
@@ -89,5 +80,4 @@ private:
 private:
 	UIManager() {};
 	std::pair<float, float> WorldToScreen(const FVector& worldPos);
-	
 };
