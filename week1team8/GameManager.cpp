@@ -3,6 +3,18 @@
 #include "TemplateLibrary.h"
 #include "LoadManager.h"
 
+void GameManager::Restart()
+{
+	PigCount = 0;
+	BirdCount = 0;
+	CurrentLevel = 0;
+	SlingShot = nullptr;
+	ReloadedBird = nullptr;
+
+	state = GameState::Play;
+	LoadManager::Get().LoadMap(0);
+}
+
 //새의 속도가 일정 이하면 호출
 void GameManager::ReloadBird()
 {
@@ -33,20 +45,23 @@ void GameManager::PigDeath()
 
 void GameManager::CheckGameState()
 {
-	if (PigCount == 0)
+	if (state == GameState::Play)
 	{
-		if (LoadManager::Get().LoadMap(CurrentLevel + 1))
+		if (PigCount == 0)
 		{
-			CurrentLevel += 1;
+			if (LoadManager::Get().LoadMap(CurrentLevel + 1))
+			{
+				CurrentLevel += 1;
+			}
+			else
+			{
+				state = GameState::GameClear;
+			}
 		}
-		else
-		{
-			state = GameState::GameClear;
-		}
-	}
 
-	if (BirdCount == -1)
-	{
-		state = GameState::GameOver;
+		if (BirdCount == -1)
+		{
+			state = GameState::GameOver;
+		}
 	}
 }

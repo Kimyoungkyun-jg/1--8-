@@ -63,6 +63,8 @@ public:
 		// 프로그램 종료
 	}
 
+	void Restart();
+
 	void ReloadBird();
 	void SpawnBirdAndSlingShot();
 	ASlingShot* GetSlingShot() { return SlingShot; }
