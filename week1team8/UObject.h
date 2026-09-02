@@ -90,9 +90,12 @@ public:
 	float GetDynamicFriction() const { return DynamicFriction; }
 	void SetdynamicFriction(float _f) { DynamicFriction = _f; }
 
+	float GetAngularVelocity() const { return AngularVelocity; }
+	void SetAngularVelocity(float value) { AngularVelocity = value; }
+
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
-	virtual float GetInertia() = 0;
+	virtual float GetInertia() const = 0;
 
 	void SetHp(float _hp) { hp = _hp; }
 	virtual float minusHp() { hp -= 1; return hp; }
@@ -105,22 +108,21 @@ public:
 protected:
 	EColliderId colId = EColliderId::NONE;	// collider 종류
 	FVector Velocity;						// 속도
-	float StaticFriction = 0.0f;
-	float DynamicFriction = 0.0f;
+	float StaticFriction = 0.5f;
+	float DynamicFriction = 0.3f;
 	float Mass = 10;						// 질량
 	float AngularVelocity = 0;
-	float Inertia = 0;
 	float Restitution = 1.0f;
 	float hp = 1.0f;
-
-
+	float LinearDamping = 0.0f;
+	float AngularDamping = 2.0f;
 };
 
 class ACircle : public ACollider
 {
 public:
 	float GetRadius() const { return Scale.x / 2; }
-	float GetInertia() override
+	float GetInertia() const override
 	{
 		float r = GetRadius();
 		return 0.5f * Mass * r * r;
@@ -163,13 +165,12 @@ class ABlock : public ACollider
 {
 public:
 	ABlock() { colId = EColliderId::BLOCK; }
-	float GetInertia() override
+	float GetInertia() const override
 	{
 		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
 	}
 	virtual ~ABlock() {}
 };
-
 
 enum class EBandState
 {

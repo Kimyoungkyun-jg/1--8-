@@ -15,6 +15,15 @@ struct CollisionInfo
 	bool isCollision = false;
 	EColliderId colAId;
 	EColliderId colBId;
+	FVector rA, rB;              // 질량중심 -> 접촉점 (지금 매번 계산하던 것)
+	FVector tangent;             // 접선 방향 (고정)
+	float normalMass = 0.0f;     // 1 / validMass       (미리 나눠둔 값)
+	float tangentMass = 0.0f;    // 1 / validMassTangent
+	float velocityBias = 0.0f;   // 목표 분리 속도
+
+	float normalImpulse = 0.0f;  // 누적 충격량 1: 법선
+	float tangentImpulse = 0.0f; // 누적 충격량 2: 마찰
+	float initialNormalVelocity = 0.0f;
 };
 
 class CollisionManager
@@ -28,6 +37,8 @@ public:
 	~CollisionManager();
 
 	float InvMass(float mass);
+
+	float InvInertia(float mass);
 
 	std::vector<ACollider*> colliders;
 	std::vector<ACollider*> pendingkills;
@@ -71,6 +82,6 @@ public:
 	void ResolvePosition(ACollider* a, ACollider* b, const CollisionInfo& info);
 
 	// 충돌해결
-	float ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info);
-	float GetImpulse(ACollider* a, ACollider* b, const CollisionInfo& info);
+	void SolveContact(ACollider* a, ACollider* b, CollisionInfo& info);
+	void InitContact(ACollider* a, ACollider* b, CollisionInfo& info);
 };

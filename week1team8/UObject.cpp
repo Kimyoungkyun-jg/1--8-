@@ -44,14 +44,26 @@ void ACollider::Move(float t)
 {
 	float deltaTime = t / 1000.0f;
 
+	if (Mass <= 0.0f)
+	{
+		return;
+	}
+
 	// 속도 변화
 	if (bUseGravity)
 	{
 		Velocity += Global::G * deltaTime;
 	}
 
+	Velocity = Velocity * (1.0f / (1.0f + deltaTime * LinearDamping));    // 2. 감쇠
+	AngularVelocity *= 1.0f / (1.0f + deltaTime * AngularDamping);
+
 	// 위치 변화
 	Location += Velocity * deltaTime;
+
+	// 회전
+	Rotation += AngularVelocity * deltaTime;
+
 
 	if (Primitive == EPrimitive::Circle)
 	{
@@ -129,7 +141,6 @@ void ACollider::Released(FVector _Location)
 	}
 }
 
-
 void UObject::Destroy()
 {
 	UObjectManager::GetInstance().Destroy(this);
@@ -162,7 +173,7 @@ void ABird::Pressed(FVector _Location)
 		ABand* FrontBand = SlingShot->GetFrontBand();
 		if (BackBand && FrontBand)
 		{
-			//새가 이동할 수 있는 거리는 n
+			//새가 당겨질 수 있는 거리는 n
 			//새의 위치 = AttachedPoint + 새총->새 벡터 * (n / 새총->새 벡터 길이);
 			FVector Point = (BackBand->AttachedPoint + FrontBand->AttachedPoint) / 2;
 			float Length = (_Location - Point).Length();
@@ -171,6 +182,17 @@ void ABird::Pressed(FVector _Location)
 			float StretchedRate = Length / CanStretcheLength;
 			BackBand->Stretched(Location, StretchedRate);
 			FrontBand->Stretched(Location, StretchedRate);
+
+			//새가 이동할 포물선 경로
+			std::vector<FVector> Points(10);
+			FVector vel = Velocity, loc = Location;
+			static const float delta = 0.00694;
+			for (int i = 0; i < 10; i++)
+			{
+				vel += Global::G * delta;
+				loc += vel * delta;
+				Points[i] = loc;
+			}
 		}
 	}
 }
@@ -199,7 +221,7 @@ void ABird::Released(FVector _Location)
 
 void ABird::Tick(float deltaTime)
 {
-	if (State == EBirdState::Shooting && Velocity.LengthSquared() < 0.001f)
+	if (State == EBirdState::Shooting && Velocity.LengthSquared() < 0.05f)
 	{
 		GameManager::GetInstance().ReloadBird();
 		State = EBirdState::Shooted;
@@ -214,7 +236,7 @@ void ASlingShot::SpawnBand()
 	FVector FrontPoint = Location + FVector(Scale.x / 2, Scale.y / 2, 0);
 	FVector RestPoint = (BackPoint + FrontPoint) / 2;
 
-	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, {0.05, 0.05, 1});
+	BackBand = SpawnActor<ABand>(BackPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
 	FrontBand = SpawnActor<ABand>(FrontPoint, EPrimitive::Rectangle, { 0.05, 0.05, 1 });
 
 	BackBand->AttachedPoint = BackPoint;
