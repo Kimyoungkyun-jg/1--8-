@@ -250,9 +250,22 @@ void UObject::Released(FVector _Location)
 //	UObjectManager::Get().Destroy(this);
 //}
 
+void ABird::Clicked()
+{
+	if (SlingShot)
+	{
+		ABand* BackBand = SlingShot->GetBackBand();
+		ABand* FrontBand = SlingShot->GetFrontBand();
+		if (BackBand && FrontBand)
+		{
+			BackBand->Scaley = Scale.y;
+			FrontBand->Scaley = Scale.y;
+		}
+	}
+}
+
 void ABird::Pressed(FVector _Location)
 {
-	Location = _Location;
 	Velocity = 0.f;
 	bUseGravity = false;
 
@@ -260,13 +273,17 @@ void ABird::Pressed(FVector _Location)
 	{
 		ABand* BackBand = SlingShot->GetBackBand();
 		ABand* FrontBand = SlingShot->GetFrontBand();
-
 		if (BackBand && FrontBand)
 		{
-			//밴드 포인트와 새 사이 중간점에 밴드를 위치시키고,
-			BackBand->SetLocation((BackBand->GetLocation() + Location) / 2);
-			FrontBand->SetLocation((FrontBand->GetLocation() + Location) / 2);
-			//밴드 포인트와 새 사이 벡터의 tan 값으로 회전시킨다?
+			//새가 이동할 수 있는 거리는 n
+			//새의 위치 = AttachedPoint + 새총->새 벡터 * (n / 새총->새 벡터 길이);
+			FVector Point = (BackBand->AttachedPoint + FrontBand->AttachedPoint) / 2;
+			float Length = (_Location - Point).Length();
+			Location = Length <= CanStretcheLength ? _Location : Point + (_Location - Point) * (CanStretcheLength / Length);
+
+			float StretchedRate = Length / CanStretcheLength;
+			BackBand->Stretched(Location, StretchedRate);
+			FrontBand->Stretched(Location, StretchedRate);
 		}
 	}
 }
@@ -282,11 +299,11 @@ void ASlingShot::SpawnBand()
 	FrontBand = SpawnActor<ABand>(Location, EPrimitive::Rectangle);
 
 	//새총의 왼쪽 위를 Back에, 오른쪽 위를 Front에
-	FVector BackPoint = Location + FVector(-Scale.x / 2, -Scale.y / 2, 0);
-	FVector FrontPoint = Location + FVector(Scale.x / 2, -Scale.y / 2, 0);
+	FVector BackPoint = Location + FVector(-Scale.x / 2, Scale.y / 2, 0);
+	FVector FrontPoint = Location + FVector(Scale.x / 2, Scale.y / 2, 0);
 
-	BackBand->AttachPoint(BackPoint);
-	FrontBand->AttachPoint(FrontPoint);
+	BackBand->AttachedPoint = BackPoint;
+	FrontBand->AttachedPoint = FrontPoint;
 }
 
 void ASlingShot::Pressed(FVector _Location)
@@ -309,6 +326,7 @@ void ASlingShot::Released(FVector _Location)
 	}
 }
 
+
 void AObstacle::Pressed(FVector _Location)
 {
 	if (bEditing)
@@ -329,13 +347,15 @@ void AObstacle::Released(FVector _Location)
 	}
 }
 
-void ABand::AttachPoint(FVector Point)
+void ABand::Stretched(FVector BirdLoc, float StretchedRate)
 {
-	AttachedPoint = Point;
-	////밴드의 오른쪽 지점을 구한다.
-	//FVector RightPoint
-}
+	//밴드 포인트와 새 사이 중간점에 밴드를 위치시키고,
+	Location = (GetLocation() + BirdLoc) / 2;
 
-void ABand::Stretched(FVector BirdLoc)
-{
+	//밴드 길이를 밴드 포인터와 새 사이 길이만큼 증가시키고,
+	// 비례해 두깨는 줄인다
+	Scale.x = (AttachedPoint - BirdLoc).Length();
+	Scale.y = Scaley * (1 - StretchedRate);
+
+	//밴드 포인트와 새 사이 벡터의 tan 값으로 회전시킨다?
 }

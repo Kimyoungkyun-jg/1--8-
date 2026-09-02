@@ -92,10 +92,12 @@ public:
 	ABird() { colId = EColliderId::BIRD; }
 	virtual ~ABird() {}
 
+	virtual void Clicked() override;
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 
 	ASlingShot* SlingShot = nullptr;
+	float CanStretcheLength = 0.6;
 };
 
 class AObstacle : public ACollider
@@ -132,10 +134,8 @@ public:
 	ABand() {}
 	virtual ~ABand() {}
 
-	void AttachPoint(FVector Point);
-	void Stretched(FVector BirdLoc);
-
-private:
+	void Stretched(FVector BirdLoc, float StretchedRate);
+	float Scaley;
 	FVector AttachedPoint;
 };
 

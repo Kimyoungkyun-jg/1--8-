@@ -395,7 +395,7 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 
 		if (oba)
 		{
-			if (oba->minusHp() == 0)
+			/*if (oba->minusHp() == 0)
 			{
 				bool alreadyPending = false;
 				for (auto* p : pendingkills)
@@ -406,12 +406,12 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 				{
 					pendingkills.push_back(oba);
 				}
-			}
+			}*/
 		}
 
 		if (obb)
 		{
-			if (obb->minusHp() == 0)
+			/*if (obb->minusHp() == 0)
 			{
 				bool alreadyPending = false;
 				for (auto* p : pendingkills)
@@ -422,7 +422,7 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 				{
 					pendingkills.push_back(obb);
 				}
-			}
+			}*/
 		}
 	}
 

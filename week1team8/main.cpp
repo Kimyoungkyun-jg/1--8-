@@ -144,6 +144,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		SlingShot->EquippedBird = Bird;
 		SlingShot->ShotPoint = Bird->GetLocation();
+		SlingShot->SpawnBand();
 		Bird->SlingShot = SlingShot;
 	}
 
