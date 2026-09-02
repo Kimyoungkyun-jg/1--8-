@@ -518,8 +518,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
 		ImGui::Text("PressedColliderID %s", s.c_str());
 		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
-		FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
-		ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
+		//FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
+		//ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
 		ImGui::Text("GameState : %d", static_cast<int>(gameManager.GetGameState()));
 		ImGui::Text("Bird %d, Pig %d", gameManager.GetBirdCount(), gameManager.GetPigCount());
 		ImGui::SetNextItemWidth(100);
