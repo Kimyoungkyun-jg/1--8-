@@ -16,6 +16,7 @@ struct ContactPoint
 	unsigned int id = 0;         // 어느 면·꼭짓점에서 나왔는지. warm starting이 이걸로 짝을 찾음
 
 	FVector rA, rB;              // 질량중심 -> 접촉점
+	FVector localA, localB;      // 각 물체의 로컬 좌표로 본 접촉점 (위치 보정이 분리 거리를 다시 잴 때)
 	float normalMass = 0.0f;     // 1 / validMass       (미리 나눠둔 값)
 	float tangentMass = 0.0f;    // 1 / validMassTangent
 	float velocityBias = 0.0f;   // 목표 분리 속도
@@ -157,7 +158,7 @@ public:
 	// 솔버 튜닝 값 (Physics Debug에서 실시간 조절).
 	// 속도 반복 = 충격량이 접촉을 타고 전파되는 횟수라 높이 쌓을수록 더 필요하다
 	int velocityIterations = 8;
-	int positionIterations = 10;
+	int positionIterations = 15;
 	float baumgarte = 0.8f;      // 겹침을 한 번에 얼마나 밀어낼지
 	float slop = 0.0005f;         // 이 정도 침투는 무시
 

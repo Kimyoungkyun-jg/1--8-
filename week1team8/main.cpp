@@ -181,14 +181,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 인게임 배경화면 로드
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
-	/*bool bResult = LoadManager.LoadMap(0);
-	if (!bResult)
-	{
-		gameManager.SpawnBirdAndSlingShot();
-	}*/
-
-	// 화면 경계 벽 (Clear Map 해도 ClearMap()이 다시 만든다)
-	gameManager.SpawnWalls();
+	// 레벨 0으로 시작. state를 Play로 올려야 CheckGameState가 돈다.
+	// 벽과 새총은 Restart -> ClearMap 안에서 같이 만들어진다.
+	gameManager.Restart();
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -601,6 +596,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			// 한 프레임이 소요된 시간 계산 (밀리초 단위로 변환)
 			elapsedTime = (endTime.QuadPart - startTime.QuadPart) * 1000.0 / frequency.QuadPart;
 		} while (elapsedTime < targetFrameTime);
+
+		// 맵 로딩처럼 한 프레임이 크게 튀면 그 dt가 다음 Move에 그대로 들어가서
+		// 물체가 순간이동한다. 물리에 넘기는 값에 상한을 둔다.
+		// 제대로 된 해법은 고정 timestep + 누적기 (로드맵 06번).
+		elapsedTime = min(elapsedTime, targetFrameTime * 3.0);
 	}
 
 	//ImGui 리소스 해제
