@@ -24,7 +24,7 @@ class URenderer
 		FVector Offset;
 		float Rotation;	// degree (반시계 회전)
 		FVector Scale;	// (width, height, depth)
-		float Pad;
+		float AspectRatio;
 	};
 
 public:
@@ -52,6 +52,7 @@ public:
 	D3D11_VIEWPORT ViewportInfo;
 	FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
 	unsigned int Stride;
+	float wAspectRatio;
 
 public:
 	void Create(HWND hWindow);
