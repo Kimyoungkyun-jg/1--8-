@@ -4,6 +4,7 @@
 #include <vector>
 #include "enums.h"
 
+class ASlingShot;
 
 class UObject
 {
@@ -93,6 +94,8 @@ public:
 
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
+
+	ASlingShot* SlingShot = nullptr;
 };
 
 class AObstacle : public ACollider
@@ -100,19 +103,6 @@ class AObstacle : public ACollider
 public:
 	AObstacle(float _hp = 1.0f) : hp(_hp) {}
 	virtual ~AObstacle() {}
-
-	void SetHP(int ammount)
-	{
-		hp = ammount;
-	}
-
-	int minusHp(int ammount = 1)
-	{
-		hp -= ammount;
-		if (hp < 0) hp = 0;
-
-		return hp;
-	}
 
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
@@ -158,6 +148,8 @@ public:
 	void SpawnBand();
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
+	ABand* GetBackBand() { return BackBand; }
+	ABand* GetFrontBand() { return FrontBand; }
 
 	ABird* EquippedBird = nullptr;
 
@@ -167,6 +159,6 @@ public:
 	//새총 강도
 	float Power = 10.f;
 private:
-	ABand* BackBand;
-	ABand* FrontBand;
+	ABand* BackBand = nullptr;
+	ABand* FrontBand = nullptr;
 };

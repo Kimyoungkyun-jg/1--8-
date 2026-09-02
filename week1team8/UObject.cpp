@@ -255,6 +255,20 @@ void ABird::Pressed(FVector _Location)
 	Location = _Location;
 	Velocity = 0.f;
 	bUseGravity = false;
+
+	if (SlingShot)
+	{
+		ABand* BackBand = SlingShot->GetBackBand();
+		ABand* FrontBand = SlingShot->GetFrontBand();
+
+		if (BackBand && FrontBand)
+		{
+			//밴드 포인트와 새 사이 중간점에 밴드를 위치시키고,
+			BackBand->SetLocation((BackBand->GetLocation() + Location) / 2);
+			FrontBand->SetLocation((FrontBand->GetLocation() + Location) / 2);
+			//밴드 포인트와 새 사이 벡터의 tan 값으로 회전시킨다?
+		}
+	}
 }
 
 void ABird::Released(FVector _Location)
