@@ -6,6 +6,7 @@
 #include "UObject.h"
 #include "CollisionManager.h"
 #include "TemplateLibrary.h"
+#include "GameManager.h"
 
 struct FSpawnInfo
 {
@@ -125,7 +126,7 @@ FSpawnInfo MakeSpawnInfo(std::string str, bool bIsActor)
 	return { Loc, Primitive, Scale, Mass, ColliderId };
 }
 
-bool LoadManager::LoadMap(int num, ASlingShot*& SlingShot, ABird*& Bird)
+bool LoadManager::LoadMap(int num)
 {
 
 	std::string filePath = "Map/map_" + std::to_string(num) + ".txt";
@@ -134,9 +135,10 @@ bool LoadManager::LoadMap(int num, ASlingShot*& SlingShot, ABird*& Bird)
 
 	if (savedfile.is_open())
 	{
-		ClearMap(SlingShot, Bird);
+		ClearMap();
 
 		std::string str;
+		int PigCount = 0;
 		while (getline(savedfile, str))
 		{
 			if (savedfile.eof()) break;
@@ -148,6 +150,7 @@ bool LoadManager::LoadMap(int num, ASlingShot*& SlingShot, ABird*& Bird)
 				break;
 			case EColliderId::PIG :
 				SpawnColider<APig>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass);
+				PigCount++;
 				break;
 			default:
 				break;
@@ -159,15 +162,8 @@ bool LoadManager::LoadMap(int num, ASlingShot*& SlingShot, ABird*& Bird)
 	return false;
 }
 
-void LoadManager::ClearMap(ASlingShot*& SlingShot, ABird*& Bird)
+void LoadManager::ClearMap()
 {
 	UObjectManager::GetInstance().DistroyAllActors();
-
-	SlingShot = SpawnActor<ASlingShot>({ -1.2, -1.0, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 1 });
-	Bird = SpawnColider<ABird>({ -1.2, -0.6, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0.1 }, 50);
-
-	SlingShot->EquippedBird = Bird;
-	SlingShot->ShotPoint = Bird->GetLocation();
-	SlingShot->SpawnBand();
-	Bird->SlingShot = SlingShot;
+	GameManager::GetInstance().SpawnBirdAndSlingShot();
 }

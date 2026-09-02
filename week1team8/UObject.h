@@ -109,6 +109,12 @@ public:
 	}
 };
 
+enum class EBirdState
+{
+	Idle,
+	Shooted
+};
+
 class ABird : public ACircle
 {
 public:
@@ -118,7 +124,9 @@ public:
 	virtual void Clicked() override;
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
+	virtual void Tick(float deltaTime) override;
 
+	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;
 	float CanStretcheLength = 0.6;
 };

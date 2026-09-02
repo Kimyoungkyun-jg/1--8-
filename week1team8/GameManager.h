@@ -1,5 +1,8 @@
 #pragma once
 
+class ABird;
+class ASlingShot;
+
 enum class GameState
 {
 	Menu,
@@ -60,9 +63,19 @@ public:
 		// 프로그램 종료
 	}
 
+	void ReloadBird();
+	void SpawnBirdAndSlingShot();
+	ASlingShot* GetSlingShot() { return SlingShot; }
+	ABird* GetReloadedBird() { return ReloadedBird; }
+	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
+
 private:
 	GameManager() = default;
 	~GameManager() = default;
+
+	ABird* ReloadedBird;
+	ASlingShot* SlingShot;
+	int PigCount = 0;
 
 	GameState state = GameState::Menu;
 };
