@@ -209,6 +209,7 @@ void UIManager::AddScore(int points)
 	}
 }
 
+
 void UIManager::ResetScore()
 {
 	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
@@ -419,8 +420,20 @@ void UIManager::LevelChanged(int curlevel)
 	}
 }
 
-void UIManager::DrawBirdPath(const std::vector<FVector> &vertices)
+void UIManager::DrawBirdPath(const std::vector<FVector>& vertices)
 {
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+	{
+		inGame->SetTrajectoryPoints(vertices);
+	}
+}
+
+void UIManager::ClearBirdPath()
+{
+	if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
+	{
+		inGame->ClearTrajectoryPoints();
+	}
 }
 
 

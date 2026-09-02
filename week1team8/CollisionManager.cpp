@@ -3,6 +3,7 @@
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "GameManager.h"
+#include "Effects/EffectManager.h"
 
 CollisionManager& CollisionManager::GetInstance() // 싱글톤 패턴으로 관리
 {
@@ -124,10 +125,19 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 	for (auto& [ab, info] : abinfos)
 	{
-		if (info.initialNormalVelocity > -MinDamageSpeed) continue;  // 충분히 빠르게 부딪혔나
-		if (info.normalImpulse <= CollisionThreshold)    continue;   // 충분히 셌나
+		if (info.initialNormalVelocity > -MinDamageSpeed) continue;
+		if (info.normalImpulse <= CollisionThreshold)    continue;
 
 		infos.push_back(info);
+
+		if (ab.first->GetColliderId() == EColliderId::BIRD)
+		{
+			EffectManager::GetInstance().PlayColEffect(info.contactPoint, ab.first);
+		}
+		else if (ab.second->GetColliderId() == EColliderId::BIRD)
+		{
+			EffectManager::GetInstance().PlayColEffect(info.contactPoint, ab.second);
+		}
 
 		if (!bCanDamage) continue;
 
@@ -137,7 +147,17 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 
 	for (int i = (int)pendingkills.size() - 1; i >= 0; i--)
 	{
-		UObjectManager::GetInstance().Destroy(pendingkills[i]);
+		ACollider* target = pendingkills[i];
+		if (target)
+		{
+			EColliderId id = target->GetColliderId();
+			if (id == EColliderId::PIG || id == EColliderId::BLOCK)
+			{
+				EffectManager::GetInstance().PlayDisEffect(target->GetLocation());
+			}
+
+			UObjectManager::GetInstance().Destroy(target);
+		}
 	}
 
 	pendingkills.clear();

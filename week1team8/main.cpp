@@ -26,6 +26,7 @@
 #include "CollisionManager.h"
 #include "ObjectManager.h"
 #include "SoundManager.h"
+#include "Effects/EffectManager.h"
 
 bool bUseGravity = true;
 
@@ -135,6 +136,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UObjectManager& ObjectManager = UObjectManager::GetInstance();
 	CollisionManager& CM = CollisionManager::GetInstance();
 	LoadManager& LoadManager = LoadManager::Get();
+	EffectManager& effectManager = EffectManager::GetInstance();
+	effectManager.Initialize();
 
 	SoundManager& SM = SoundManager::GetInstance();
 	if (!SM.Initialize())
@@ -282,7 +285,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 		uiManager.Update(elapsedTime * 0.001);
-
+		effectManager.Update(elapsedTime * 0.001);
 
 		for (ACollider* Collider : CM.colliders)
 		{
@@ -311,6 +314,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		renderer.PrepareShader();
+
+		//이펙트 그리기
+		effectManager.Render(renderer);
+
 
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)

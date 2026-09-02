@@ -186,15 +186,18 @@ void ABird::Pressed(FVector _Location)
 			BackBand->Stretched(Location, StretchedRate);
 			FrontBand->Stretched(Location, StretchedRate);
 
-			//새가 이동할 포물선 경로
+			//새가 이동할 포물선 경로 계산
 			Points.clear();
-			FVector vel = Velocity, loc = Location;
-			static const float delta = 0.00694;
-			for (int i = 0; i < 10; i++)
+			FVector startPos = Location;
+			FVector launchVel = (SlingShot->ShotPoint - startPos) * SlingShot->Power;
+
+			float dt = 0.035f;
+			for (int i = 1; i <= 18; i++)
 			{
-				vel += Global::G * delta;
-				loc += vel * delta;
-				Points.emplace_back(loc);
+				float t = i * dt;
+				float x = startPos.x + launchVel.x * t;
+				float y = startPos.y + launchVel.y * t + 0.5f * Global::G.y * t * t;
+				Points.emplace_back(FVector(x, y, 0.0f));
 			}
 
 			UIManager::GetInstance().DrawBirdPath(Points);
@@ -207,6 +210,8 @@ void ABird::Released(FVector _Location)
 	bUseGravity = true;
 	State = EBirdState::Shooting;
 	bEditing = false;
+
+	UIManager::GetInstance().ClearBirdPath();
 
 	if (SlingShot)
 	{

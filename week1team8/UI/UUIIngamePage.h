@@ -5,6 +5,7 @@
 #include "UButton.h"
 #include "UFloatingText.h"
 #include "UUIBackground.h"
+#include "../Vector.h"
 #include <vector>
 
 class UUIIngamePage : public UUIPage
@@ -22,6 +23,9 @@ public:
 	void SetBirdsLeft(int count) { BirdsLeft = count; }
 	int GetScore() const { return TargetScore; }
 
+	void SetTrajectoryPoints(const std::vector<FVector>& points) { TrajectoryPoints = points; }
+	void ClearTrajectoryPoints() { TrajectoryPoints.clear(); }
+
 	virtual void Update(float deltaTime) override;
 	virtual void Update(float deltaTime, float mouseX, float mouseY) override;
 	virtual void Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* brush, IDWriteTextFormat* font) override;
@@ -33,6 +37,7 @@ public:
 	UUIHUDText* InGameHUD = nullptr;
 	UUIButton* PauseBtn = nullptr;
 	std::vector<UUIFloatingText*> FloatingTexts;
+	std::vector<FVector> TrajectoryPoints;
 
 	int TargetScore = 0;
 	float DisplayScore = 0.0f;
