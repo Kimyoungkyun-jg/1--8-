@@ -48,22 +48,21 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 	std::vector<std::pair<std::pair<ACollider*, ACollider*>, CollisionInfo>> abinfos;
 	size_t n = colliders.size();
 
-
 	for (size_t i = 0; i < n; i++)
 	{
 		for (size_t j = i + 1; j < n; j++)
 		{
+			if (colliders[i]->GetMass() + colliders[j]->GetMass() <= 0.0f)
+			{
+				continue;
+			}
+
 			CollisionInfo info = CheckCollision(colliders[i], colliders[j]);
 			info.colAId = colliders[i]->GetColliderId();
 			info.colBId = colliders[j]->GetColliderId();
 
 			if (info.isCollision)
 			{
-				float impulse = GetImpulse(colliders[i], colliders[j], info);
-				if (impulse > CollisionThreshold)
-				{
-					infos.push_back(info);
-				}
 				abinfos.push_back({ { colliders[i] , colliders[j] }, info });
 			}
 		}
@@ -73,12 +72,17 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		return a.second.contactPoint.y < b.second.contactPoint.y;
 		});
 
+	for (auto& [ab, info] : abinfos)
+	{
+		InitContact(ab.first, ab.second, info);
+	}
+
 	for (int i = 0; i < 10; i++)
 	{
 		for (auto& [ab, info] : abinfos)
 		{
 			// 충격량(속도) 해결
-			ResolveCollision(ab.first, ab.second, info);
+			SolveContact(ab.first, ab.second, info);
 		}
 	}
 
@@ -95,6 +99,15 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 				// 새롭게 계산된 정보(currentInfo)로 위치 보정
 				ResolvePosition(ab.first, ab.second, currentInfo);
 			}
+		}
+	}
+	
+	// infos 채우기
+	for (auto& [ab, info] : abinfos)
+	{
+		if (info.initialNormalVelocity > 0.1f && info.normalImpulse > 10.0f)
+		{
+			infos.push_back(info);
 		}
 	}
 
@@ -339,10 +352,10 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 }
 
 // 충돌해결 (법선 B->A)
-float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const CollisionInfo& info)
+void CollisionManager::SolveContact(ACollider* a, ACollider* b, CollisionInfo& info)
 {
-	FVector rA = info.contactPoint - a->GetLocation();
-	FVector rB = info.contactPoint - b->GetLocation();
+	FVector rA = info.rA;
+	FVector rB = info.rB;
 
 	FVector normal = info.normal;
 	float penetration = info.penetration;
@@ -352,29 +365,14 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 	float invIA = InvInertia(a->GetInertia());
 	float invIB = InvInertia(b->GetInertia());
 
-	// 스태틱 충돌 (추후 수정)
-	if (invMassA + invMassB <= 0.0f)
-	{
-		return 0.0f;
-	}
-
 	FVector relativeVelocity = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
 		(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB)); // 상대 속도
 	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
 
-	// 충돌 지점에서 멀어지는 중 (내적의 결과가 양수 = 충돌 방향과 상대 속도가 예각을 이룸
-	if (relativeVelocityNormal >= 0)
-	{
-		return 0.0f;
-	}
-
-	const float restitutionThreshold = 1.0f; // 튜닝 값
-	float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.8f;
-
 	// 충격량 적용
 	float raxn = FVector::Cross(rA, normal);
 	float rbxn = FVector::Cross(rB, normal);
-	float validMass = invMassA + invMassB + raxn * raxn * invIA + rbxn * rbxn * invIB;
+	float validMass = info.normalMass;
 	float impulseMag = -(1.0f + restitution) * relativeVelocityNormal / (validMass); // 충격량
 	a->SetVelocity(a->GetVelocity() + normal * (impulseMag * invMassA));
 	b->SetVelocity(b->GetVelocity() - normal * (impulseMag * invMassB));
@@ -395,7 +393,7 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 
 		float raxt = FVector::Cross(rA, tangent);
 		float rbxt = FVector::Cross(rB, tangent);
-		float validMassTangent = invMassA + invMassB + raxt * raxt * invIA + rbxt * rbxt * invIB;
+		float validMassTangent = info.tangentMass;
 		float frictionImpulseMag = -relativeVelocityTangent / (validMassTangent); // 마찰 임펄스 크기
 
 		float staticFriction = std::sqrt(a->GetStaticFriction() * b->GetStaticFriction()); // 정지 마찰 계수
@@ -457,34 +455,47 @@ float CollisionManager::ResolveCollision(ACollider* a, ACollider* b, const Colli
 	return impulseMag;
 }
 
-float CollisionManager::GetImpulse(ACollider* a, ACollider* b, const CollisionInfo& info)
+void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& info)
 {
+	info.normalImpulse = 0.0f;
+	info.tangentImpulse = 0.0f;
+	info.normalMass = 0.0f;
+	info.tangentMass = 0.0f;
+
+	FVector rA = info.contactPoint - a->GetLocation();
+	FVector rB = info.contactPoint - b->GetLocation();
+
 	FVector normal = info.normal;
-	float penetration = info.penetration;
 
 	float invMassA = InvMass(a->GetMass());
 	float invMassB = InvMass(b->GetMass());
+	float invIA = InvInertia(a->GetInertia());
+	float invIB = InvInertia(b->GetInertia());
 
-	// 스태틱 충돌 (추후 수정)
-	if (invMassA + invMassB <= 0.0f)
-	{
-		return 0.0f;
-	}
+	if (invMassA + invMassB <= 0.0f) return; // 스태틱 충돌
 
-	FVector relativeVelocity = a->GetVelocity() - b->GetVelocity(); // 상대 속도
+	FVector relativeVelocity = (a->GetVelocity() + FVector::Cross(a->GetAngularVelocity(), rA)) -
+		(b->GetVelocity() + FVector::Cross(b->GetAngularVelocity(), rB)); // 상대 속도
 	float relativeVelocityNormal = normal.DotProduct(relativeVelocity); // 상대 속도의 충돌 방향 성분
-
-	// 충돌 지점에서 멀어지는 중 (내적의 결과가 양수 = 충돌 방향과 상대 속도가 예각을 이룸
-	if (relativeVelocityNormal >= 0)
-	{
-		return 0.0f;
-	}
 
 	const float restitutionThreshold = 1.0f; // 튜닝 값
 	float restitution = (std::fabs(relativeVelocityNormal) < restitutionThreshold) ? 0.0f : 0.8f;
 
-	// 충격량 계산
-	float impulseMag = -(1.0f + restitution) * relativeVelocityNormal / (invMassA + invMassB); // 충격량
+	// 충격량
+	float raxn = FVector::Cross(rA, normal);
+	float rbxn = FVector::Cross(rB, normal);
+	float validMass = invMassA + invMassB + raxn * raxn * invIA + rbxn * rbxn * invIB;
 
-	return impulseMag;
+	info.tangent = FVector::Cross(normal, 1.0f);
+
+	float raxt = FVector::Cross(rA, info.tangent);
+	float rbxt = FVector::Cross(rB, info.tangent);
+	float validMassTangent = invMassA + invMassB + raxt * raxt * invIA + rbxt * rbxt * invIB;
+
+	info.rA = rA;
+	info.rB = rB;
+	info.normalMass = 1.0f / validMass;
+	info.tangentMass = 1.0f / validMassTangent;
+	info.initialNormalVelocity = relativeVelocityNormal;
+	info.velocityBias = (relativeVelocityNormal < -restitutionThreshold) ? -restitution * vn0 : 0.0f;
 }

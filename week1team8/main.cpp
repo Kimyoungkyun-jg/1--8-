@@ -44,7 +44,7 @@ FVector ScreenToWorld(HWND hwnd, int MouseX, int MouseY)
 
 	float aspect = width / height;
 
-	
+
 	float worldX = (2.0f * (float)MouseX / width - 1.0f) * aspect;
 	float worldY = 1.0f - (2.0f * (float)MouseY / height);
 
@@ -151,12 +151,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// 인게임 배경화면 로드
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
-
 	bool bResult = LoadManager.LoadMap(0);
 	if (!bResult)
 	{
 		gameManager.SpawnBirdAndSlingShot();
 	}
+
+	// 테스트 바닥
+	ABlock* ground = SpawnColider<ABlock>({ 0, -0.95f, 0 }, EPrimitive::Rectangle, false, { 3.8f, 0.1f, 0 }, 0.0f);
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -266,7 +268,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 		}
 
-
 		for (ACollider* Collider : CM.colliders)
 		{
 			Collider->Move(elapsedTime);
@@ -335,6 +336,40 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
+
+		ImGui::Begin("Physics Debug");
+
+		RECT rc; GetClientRect(hWnd, &rc);
+		ImGui::Text("aspect %.4f  (화면 x 범위 = +-%.4f)",
+			(float)(rc.right - rc.left) / (rc.bottom - rc.top),
+			(float)(rc.right - rc.left) / (rc.bottom - rc.top));
+
+		// 물리 디버깅 창
+		for (ACollider* c : CollisionManager::GetInstance().colliders)
+		{
+			if (c->GetMass() <= 0.0f) continue;                    // 정적 제외
+			ACircle* circle = dynamic_cast<ACircle*>(c);
+			if (!circle) continue;                                 // 원만
+
+			float slip = c->GetVelocity().x + c->GetAngularVelocity() * circle->GetRadius();
+			ImGui::Text("ID %2d  v=(%+.3f, %+.3f)  w=%+8.3f  slip=%+.5f",
+				c->GetID(), c->GetVelocity().x, c->GetVelocity().y,
+				c->GetAngularVelocity(), slip);
+
+			static float hist[240] = {};
+			static int idx = 0;
+			hist[idx] = slip;
+			idx = (idx + 1) % 240;
+			ImGui::PlotLines("slip", hist, 240, idx, nullptr, -3.0f, 3.0f, ImVec2(0, 80));
+
+			float energy = 0.0f;
+			for (ACollider* c : CollisionManager::GetInstance().colliders)
+				if (c->GetMass() > 0.0f)
+					energy += 0.5f * c->GetMass() * c->GetVelocity().LengthSquared()
+					+ 0.5f * c->GetInertia() * c->GetAngularVelocity() * c->GetAngularVelocity();
+		}
+
+		ImGui::End();
 
 		ImGui::Begin("Screen Info");
 		ImGui::Text("Mouse Coord : %d %d", MouseX, MouseY);

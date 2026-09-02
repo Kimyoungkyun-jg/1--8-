@@ -90,12 +90,14 @@ public:
 protected:
 	EColliderId colId = EColliderId::NONE;	// collider 종류
 	FVector Velocity;						// 속도
-	float StaticFriction = 0.0f;
-	float DynamicFriction = 0.0f;
+	float StaticFriction = 0.5f;
+	float DynamicFriction = 0.3f;
 	float Mass = 10;						// 질량
 	float AngularVelocity = 0;
 	float Restitution = 1.0f;
 	float hp = 1.0f;
+	float LinearDamping = 0.0f;
+	float AngularDamping = 2.0f;
 };
 
 class ACircle : public ACollider
@@ -148,7 +150,6 @@ public:
 	}
 	virtual ~ABlock() {}
 };
-
 
 enum class EBandState
 {
