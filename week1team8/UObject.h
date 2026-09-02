@@ -25,9 +25,14 @@ public:
 	virtual void Clicked();
 	virtual void Released(FVector _Location);
 	void Destroy();
+
+	//프레임 끝에서 Destroy 호출
+	void PendingKill();
 	virtual void Tick(float deltaTime);
+	bool IsPendingKill() {	return bPendingkill; }
 
 private:
+	bool bPendingkill = false;
 	inline static int IDMax = 0;
 	int ID;
 };
@@ -93,6 +98,9 @@ public:
 	float GetAngularVelocity() const { return AngularVelocity; }
 	void SetAngularVelocity(float value) { AngularVelocity = value; }
 
+	float GetRestitution() const { return Restitution; }
+	void SetRestitution(float _r) { Restitution = _r; }
+
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual float GetInertia() const = 0;
@@ -112,7 +120,7 @@ protected:
 	float DynamicFriction = 0.3f;
 	float Mass = 10;						// 질량
 	float AngularVelocity = 0;
-	float Restitution = 1.0f;
+	float Restitution = 0.2f;	// 반발계수. 0이면 안 튀고 1이면 속도를 그대로 되돌린다
 	float hp = 1.0f;
 	float LinearDamping = 0.0f;
 	float AngularDamping = 2.0f;
@@ -152,6 +160,15 @@ public:
 	float CanStretcheLength = 0.6;
 };
 
+class ABombBird : public ABird
+{
+public:
+	ABombBird(){}
+	virtual ~ABombBird() {}
+
+	virtual float minusHp();
+};
+
 class APig : public ACircle
 {
 public:
@@ -170,6 +187,18 @@ public:
 		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
 	}
 	virtual ~ABlock() {}
+};
+
+// 화면 경계 벽. 질량 0으로 생성해서 움직이지 않는다.
+class AGround : public ACollider
+{
+public:
+	AGround() { colId = EColliderId::GROUND; }
+	float GetInertia() const override
+	{
+		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
+	}
+	virtual ~AGround() {}
 };
 
 enum class EBandState

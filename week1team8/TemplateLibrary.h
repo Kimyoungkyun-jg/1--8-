@@ -5,6 +5,7 @@
 #include "UObject.h"
 #include "ObjectManager.h"
 #include "CollisionManager.h"
+#include <vector>
 
 
 template<class T>
@@ -50,4 +51,29 @@ inline T* SpawnColider(FVector Location, EPrimitive Primitive, bool bUseGravity 
 	CollisionManager::GetInstance().AddColider(Colider);
 
 	return static_cast<T*>(Colider);
+}
+
+
+inline bool TraceSphere(FVector Location, float Radius, std::vector<ACollider*> &Result)
+{
+	bool bFound = false;
+	std::vector<ACollider*> Colliders = CollisionManager::GetInstance().colliders;
+	for (ACollider* c : Colliders)
+	{
+		if ((c->GetLocation() - Location).LengthSquared() <= Radius * Radius)
+		{
+			Result.push_back(c);
+			bFound = true;
+		}
+	}
+
+	return bFound;
+}
+
+inline bool IsValid(UObject* Object)
+{
+	if (Object && !Object->IsPendingKill())
+		return true;
+
+	return false;
 }
