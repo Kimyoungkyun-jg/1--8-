@@ -32,12 +32,16 @@ struct ContactPoint
 
 struct CollisionInfo
 {
-	FVector normal = FVector(); 
-	FVector tangent = FVector(); 
+	FVector normal = FVector();
+	FVector tangent = FVector();
+	float staticFriction = 0.0f;    // 쌍이 정하는 값이라 접촉점마다 같다
+	float dynamicFriction = 0.0f;
 	bool isCollision = false;
 	bool bNewContact = false;    // 지난 프레임엔 안 닿아 있었다 = 이번에 새로 부딪힘
 	EColliderId colAId = EColliderId::NONE;
 	EColliderId colBId = EColliderId::NONE;
+	int bodyA = 0;               // 디버그에서 물체 목록과 접촉 목록을 연결하는 용도
+	int bodyB = 0;
 
 	int pointCount = 0;
 	ContactPoint points[2];

@@ -166,6 +166,7 @@ void ABird::Released(FVector _Location)
 {
 	WakeUp();
 	bUseGravity = true;
+	isInvalid = false;
 	State = EBirdState::Shooting;
 	bEditing = false;
 
@@ -200,6 +201,7 @@ void ABird::SetWait()
 {
 	State = EBirdState::Waiting;
 	bUseGravity = false;
+	isInvalid = true;
 }
 
 void ASlingShot::SpawnBand()
@@ -280,23 +282,22 @@ float APig::minusHp()
 	return hp;
 }
 
-
 float ABombBird::minusHp()
 {
 	//원을 쿼리
 	std::vector<ACollider*> Result;
 
 	//원 내의 물체에 원 바깥 방향으로 속도 및 minushp 부여
-	if (TraceSphere(Location, 2.f, Result))
+	if (TraceSphere(Location, 0.5f, Result))
 	{
 		for (ACollider* Col : Result)
 		{
-			if (Col)
+			if (Col->GetColliderId() != EColliderId::BIRD)
 			{
 				FVector Direction = (Col->GetLocation() - Location);
 				Direction.Normalize();
-				Col->SetVelocity(Col->GetVelocity() + Direction * 0.1f);
-				//Col->minusHp();
+				Col->SetVelocity(Col->GetVelocity() + Direction * 0.4f);
+				Col->minusHp();
 			}
 		}
 	}

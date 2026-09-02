@@ -114,6 +114,7 @@ public:
 
 	bool bEditing = false;
 	bool bUseGravity = true;
+	bool isInvalid = false;
 
 protected:
 	EColliderId colId = EColliderId::NONE;	// collider 종류

@@ -185,11 +185,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SM.LoadSound("sfx_pig", L"Assets/sfx_pig.wav");
 	SM.LoadSound("sfx_rock", L"Assets/sfx_rock.wav");
 
-	SM.PlayBGM("bgm_main", true, 0.5f);
+	SM.PlayBGM("bgm_main", true, 0.3f);
 
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
 	gameManager.Menu();
+	int BirdCount = 3;
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -333,7 +334,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					if (info.colAId == EColliderId::BLOCK || info.colBId == EColliderId::BLOCK)
 					{
-						SM.PlaySFX("sfx_rock");
+						SM.PlaySFX("sfx_rock", 0.7f);
 					}
 					if (info.colAId == EColliderId::PIG || info.colBId == EColliderId::PIG)
 					{
@@ -546,13 +547,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			if (c->GetMass() <= 0.0f) continue;
 
-			float speed = c->GetVelocity().Length();
+			FVector v = c->GetVelocity();
+			float speed = v.Length();
 
-			ImGui::Text("ID %2d %s  v=%.4f %s  w=%+.4f %s  t=%.2f",
+			// 실제로 움직인 거리와, 속도가 설명하는 거리를 나란히 본다.
+			// 둘이 비슷하면 정상적인 이동. moved가 훨씬 크면 속도를 거치지 않고
+			// 좌표가 직접 옮겨졌다는 뜻이고, 그건 마찰이 손댈 수 없는 경로다.
+			static std::unordered_map<int, FVector> PrevLocations;
+
+			FVector cur = c->GetLocation();
+			auto found = PrevLocations.find(c->GetID());
+			FVector prev = (found != PrevLocations.end()) ? found->second : cur;
+			PrevLocations[c->GetID()] = cur;
+
+			float movedX = cur.x - prev.x;
+			float expectedX = v.x * (float)fixedDeltaTime;
+
+			ImGui::Text("ID %2d %s v=(%+.4f,%+.4f) %s w=%+.4f %s  movedX=%+.6f  vdt=%+.6f",
 				c->GetID(), c->IsSleeping() ? "zzz" : "   ",
-				speed, speed < CM.linearSleepTolerance ? "ok" : "  ",
+				v.x, v.y, speed < CM.linearSleepTolerance ? "ok" : "  ",
 				c->GetAngularVelocity(), fabsf(c->GetAngularVelocity()) < CM.angularSleepTolerance ? "ok" : "  ",
-				c->GetSleepTimer());
+				movedX, expectedX);
 		}
 
 		ImGui::SeparatorText("Contacts");
@@ -564,9 +579,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			for (int k = 0; k < Contact.pointCount; k++)
 			{
 				const ContactPoint& Point = Contact.points[k];
-				ImGui::Text("[%2d.%d] id=%08X  n=(%+.2f, %+.2f)  pen=%.4f  Pn=%.3f  Pt=%+.3f",
-					i, k, Point.id, Contact.normal.x, Contact.normal.y,
-					Point.penetration, Point.normalImpulse, Point.tangentImpulse);
+
+				// 마찰이 한계까지 쓰고도 못 버티면 SLIP. 한계에 한참 못 미치는데
+				// 물체가 계속 미끄러진다면 마찰이 아니라 다른 게 밀고 있는 것이다.
+				float FrictionLimit = Point.normalImpulse * Contact.staticFriction;
+				bool bSlipping = fabsf(Point.tangentImpulse) >= FrictionLimit - 1e-6f;
+
+				ImGui::Text("%3d-%3d.%d n=(%+.2f,%+.2f) pen=%.4f Pn=%.3f Pt=%+.3f/%.3f %s",
+					Contact.bodyA, Contact.bodyB, k,
+					Contact.normal.x, Contact.normal.y,
+					Point.penetration, Point.normalImpulse,
+					Point.tangentImpulse, FrictionLimit,
+					bSlipping ? "SLIP" : "hold");
 			}
 		}
 
@@ -643,7 +667,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			LoadManager.ClearMap();
 		}
-		int BirdCount = 3;
 		ImGui::InputInt("Bird Count on This Level", &BirdCount);
 		if (ImGui::Button("Save Map", ImVec2(100, 20)))
 		{

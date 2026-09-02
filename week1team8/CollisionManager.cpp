@@ -427,8 +427,18 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 
 	for (size_t i = 0; i < n; i++)
 	{
+		if (colliders[i]->isInvalid)
+		{
+			continue;
+		}
+
 		for (size_t j = i + 1; j < n; j++)
 		{
+			if (colliders[j]->isInvalid)
+			{
+				continue;
+			}
+
 			// 잠든 쌍도 감지는 한다. 접촉 그래프가 비면 무리도 깨우기도 성립하지 않는다
 			if (colliders[i]->GetMass() + colliders[j]->GetMass() <= 0.0f)
 			{
@@ -438,6 +448,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 			CollisionInfo info = CheckCollision(colliders[i], colliders[j]);
 			info.colAId = colliders[i]->GetColliderId();
 			info.colBId = colliders[j]->GetColliderId();
+			info.bodyA = colliders[i]->GetID();
+			info.bodyB = colliders[j]->GetID();
 
 			if (info.isCollision)
 			{
@@ -874,9 +886,8 @@ void CollisionManager::SolveContact(ACollider* a, ACollider* b, CollisionInfo& i
 	float invIA = InvInertia(a->GetInertia());
 	float invIB = InvInertia(b->GetInertia());
 
-	// 마찰 계수는 쌍이 정하므로 접촉점마다 같다
-	float staticFriction = std::sqrt(a->GetStaticFriction() * b->GetStaticFriction()); // 정지 마찰 계수
-	float dynamicFriction = std::sqrt(a->GetDynamicFriction() * b->GetDynamicFriction());
+	float staticFriction = info.staticFriction;
+	float dynamicFriction = info.dynamicFriction;
 
 	for (int i = 0; i < info.pointCount; i++)
 	{
@@ -959,8 +970,10 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 {
 	FVector normal = info.normal;
 
-	// 접선은 법선에서 나오므로 접촉점과 무관
+	// 접선과 마찰 계수는 쌍이 정하므로 접촉점과 무관. 한 번만 구한다
 	info.tangent = FVector::Cross(normal, 1.0f);
+	info.staticFriction = std::sqrt(a->GetStaticFriction() * b->GetStaticFriction());
+	info.dynamicFriction = std::sqrt(a->GetDynamicFriction() * b->GetDynamicFriction());
 
 	float invMassA = InvMass(a->GetMass());
 	float invMassB = InvMass(b->GetMass());
