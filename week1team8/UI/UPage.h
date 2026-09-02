@@ -24,6 +24,7 @@ public:
 
 	void AddChild(UUIObject* uiObject);
 	virtual void Show();
+	virtual void Show(bool IsClear);
 	virtual void Hide();
 	virtual void Update(float deltaTime) override;
 	virtual void Update(float deltaTime, float mouseX, float mouseY);
@@ -32,4 +33,6 @@ public:
 	virtual void OnMouseMove(float mouseX, float mouseY);
 	virtual bool OnMouseDown(float mouseX, float mouseY);
 	virtual void OnMouseUp(float mouseX, float mouseY);
+
+	
 };

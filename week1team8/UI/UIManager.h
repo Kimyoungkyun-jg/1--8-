@@ -56,7 +56,13 @@ public:
 		if (it != Pages.end())
 		{
 			CurrentPage = it->second;
-			CurrentPage->Show();
+
+			if (newPageType == EPageType::Ending)
+			{
+				CurrentPage->Show(false);
+			}
+			else
+				CurrentPage->Show();
 		}
 	}
 

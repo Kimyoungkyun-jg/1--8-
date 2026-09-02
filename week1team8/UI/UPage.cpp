@@ -37,6 +37,25 @@ void UUIPage::Show()
 	}
 }
 
+void UUIPage::Show(bool IsClear)
+{
+	SetVisible(true);
+	for (UUIObject* obj : ChildUIObjects)
+	{
+		if (UUIButton* bg = dynamic_cast<UUIButton*>(obj))
+		{
+			if (IsClear)
+			{
+				bg->SetImagePath(L"Assets/img/GameClear.png");
+			}
+			else
+				bg->SetImagePath(L"Assets/img/GameOver.png");
+		}
+
+		if (obj) obj->SetVisible(true);
+	}
+}
+
 void UUIPage::Hide()
 {
 	SetVisible(false);

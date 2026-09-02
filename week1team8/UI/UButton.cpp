@@ -3,13 +3,17 @@
 #include "../Global.h"
 #include <cmath>
 
-UUIButton::UUIButton(const wchar_t* url, float centerX, float centerY, float sizeX, float sizeY)
+UUIButton::UUIButton(const wchar_t* url, float centerX, float centerY, float sizeX, float sizeY, bool bAnimate, float startOffsetY)
 	: imagePath(url)
 {
 	SetCenterPoisition(centerX, centerY, sizeX, sizeY);
 	if (url)
 	{
 		ButtonBitmap = UIManager::LoadBitmapFromFile(url);
+	}
+	if (bAnimate)
+	{
+		SetSlideAnimation(true, startOffsetY);
 	}
 }
 
@@ -22,12 +26,43 @@ UUIButton::~UUIButton()
 	}
 }
 
+void UUIButton::SetSlideAnimation(bool bEnable, float startOffsetY, float speed)
+{
+	bUseSlideAnimation = bEnable;
+	SlideSpeed = speed;
+	if (bEnable)
+	{
+		CurrentCenterY = startOffsetY;
+		bIsSlideAnimating = true;
+	}
+}
+
+void UUIButton::StartSlideUp(float startY, float targetY, float speed)
+{
+	bUseSlideAnimation = true;
+	SlideSpeed = speed;
+	TargetCenterY = targetY;
+	CurrentCenterY = startY;
+	bIsSlideAnimating = true;
+}
+
+void UUIButton::ResetAnimation(float startOffsetY)
+{
+	if (bUseSlideAnimation)
+	{
+		CurrentCenterY = startOffsetY;
+		bIsSlideAnimating = true;
+	}
+}
+
 bool UUIButton::IsPointInside(float x, float y) const
 {
 	float halfW = (BaseWidth * 0.5f) * CurrentScale;
 	float halfH = (BaseHeight * 0.5f) * CurrentScale;
+	float curY = bIsSlideAnimating ? CurrentCenterY : CenterY;
+
 	return (x >= CenterX - halfW && x <= CenterX + halfW &&
-	        y >= CenterY - halfH && y <= CenterY + halfH);
+	        y >= curY - halfH && y <= curY + halfH);
 }
 
 void UUIButton::OnMouseMove(float mouseX, float mouseY)
@@ -68,6 +103,18 @@ void UUIButton::Update(float deltaTime, float mouseX, float mouseY)
 		bIsPressed = false;
 		bWasPressed = false;
 		return;
+	}
+
+	// 슬라이드 업 애니메이션 이동 (Lerp)
+	if (bIsSlideAnimating)
+	{
+		CurrentCenterY += (TargetCenterY - CurrentCenterY) * (SlideSpeed * deltaTime);
+		if (std::abs(TargetCenterY - CurrentCenterY) < 0.5f)
+		{
+			CurrentCenterY = TargetCenterY;
+			bIsSlideAnimating = false;
+		}
+		CenterY = CurrentCenterY;
 	}
 
 	// 마우스 호버 여부 갱신
@@ -131,14 +178,15 @@ void UUIButton::Render(ID2D1RenderTarget* renderTarget)
 {
 	if (ButtonBitmap && renderTarget && GetVisible())
 	{
-		// 중심점(CenterX, CenterY)을 기준으로 확대/축소 사각형 계산
 		float halfW = (BaseWidth * 0.5f) * CurrentScale;
 		float halfH = (BaseHeight * 0.5f) * CurrentScale;
+		float curY = bIsSlideAnimating ? CurrentCenterY : CenterY;
+
 		D2D1_RECT_F drawRect = D2D1::RectF(
 			CenterX - halfW,
-			CenterY - halfH,
+			curY - halfH,
 			CenterX + halfW,
-			CenterY + halfH
+			curY + halfH
 		);
 
 		renderTarget->DrawBitmap(

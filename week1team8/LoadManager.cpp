@@ -149,9 +149,12 @@ bool LoadManager::LoadMap(int num)
 				SpawnColider<ABlock>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass);
 				break;
 			case EColliderId::PIG :
-				SpawnColider<APig>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass);
+			{
+				APig* pig = SpawnColider<APig>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass);
+				pig->SetImage(L"Assets/img/pig.png");
 				PigCount++;
 				break;
+			}
 			default:
 				break;
 			}

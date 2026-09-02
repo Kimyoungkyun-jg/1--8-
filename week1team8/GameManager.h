@@ -70,6 +70,8 @@ public:
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
 	void PigDeath();
 
+	int GetCurlvl() { return CurrentLevel; }
+
 private:
 	GameManager() = default;
 	~GameManager() = default;

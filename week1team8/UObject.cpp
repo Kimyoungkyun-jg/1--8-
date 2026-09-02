@@ -27,8 +27,17 @@ void UObject::Tick(float deltaTime)
 
 void AActor::Draw(URenderer& renderer)
 {
-	renderer.UpdateConstant(Location, Rotation, Scale);
-	renderer.RenderPrimitive(Primitive);
+	if (Bitmap)
+	{
+		//이미지가 있으면 텍스처
+		renderer.DrawWorldBitmap(Bitmap, Location, Rotation, Scale);
+	}
+	else
+	{
+		//이미지가 없으면 기본 도형
+		renderer.UpdateConstant(Location, Rotation, Scale);
+		renderer.RenderPrimitive(Primitive);
+	}
 }
 
 void ACollider::Move(float t)

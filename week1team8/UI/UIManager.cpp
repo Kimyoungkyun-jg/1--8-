@@ -1,5 +1,6 @@
 #include "UIManager.h"
 #include "../GameManager.h"
+#include "../LoadManager.h"
 #include <cmath>
 
 
@@ -103,14 +104,14 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		UUIPage* pausePage = new UUIPage(EPageType::Pause);
 
 		//반투명 검은색 배경 생성
-		UUIBackground* pauseDimBg = new UUIBackground(
+		UUIBackground* pauseBg = new UUIBackground(
 			0.6f,
 			screenWidth * 0.5f,
 			screenHeight * 0.5f,
 			static_cast<float>(screenWidth),
 			static_cast<float>(screenHeight)
 		);
-		pausePage->AddChild(pauseDimBg);
+		pausePage->AddChild(pauseBg);
 
 		//일시정지 팝업
 		UUIBackground* popupBoard = new UUIBackground(
@@ -145,6 +146,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 
 		retryBtn->SetOnClick([this]() {
+			LoadManager::Get().LoadMap(GameManager::GetInstance().GetCurlvl());
 			ChangePage(EPageType::InGame);
 		});
 		pausePage->AddChild(retryBtn);
@@ -171,10 +173,24 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 	//엔딩페이지
 	{
 		UUIPage* endPage = new UUIPage(EPageType::Ending);
+
+		UUIButton* Resultbtn = new UUIButton(
+			L"Assets/img/GameClear.png",
+			screenWidth * 0.5f, screenHeight * 0.5f, 450, 850,
+			true,
+			1200.0f
+		);
+
+		Resultbtn->SetOnClick([this]() {
+			ChangePage(EPageType::Starting);
+			});
+
+		endPage->AddChild(Resultbtn);
+
 		Pages[EPageType::Ending] = endPage;
 	}
 
-	ChangePage(EPageType::Pause);
+	ChangePage(EPageType::Ending);
 
 	return true;
 }

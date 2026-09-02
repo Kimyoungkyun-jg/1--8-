@@ -7,6 +7,7 @@
 void GameManager::ReloadBird()
 {
 	ReloadedBird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+	ReloadedBird->SetImage(L"Assets/img/bird.png");
 	SlingShot->EquippedBird = ReloadedBird;
 	ReloadedBird->SlingShot = SlingShot;
 }
@@ -14,7 +15,10 @@ void GameManager::ReloadBird()
 void GameManager::SpawnBirdAndSlingShot()
 {
 	SlingShot = SpawnActor<ASlingShot>({ -1.2, -0.6, 0 }, EPrimitive::Rectangle, { 0.05, 0.8, 0 });
+	SlingShot->SetImage(L"Assets/img/slingshot.png");
+
 	ReloadedBird = SpawnColider<ABird>({ -1.2, -0.2, 0 }, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+	ReloadedBird->SetImage(L"Assets/img/bird.png");
 
 	SlingShot->EquippedBird = ReloadedBird;
 	SlingShot->ShotPoint = ReloadedBird->GetLocation();
