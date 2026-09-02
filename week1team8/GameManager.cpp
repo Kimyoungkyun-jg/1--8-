@@ -5,6 +5,40 @@
 #include "LoadManager.h"
 #include "UI/UIManager.h"
 
+void GameManager::Initialize()
+{
+
+}
+
+void GameManager::Play()
+{
+	state = GameState::Play;
+	//UIManager::GetInstance().ChangePage(EPageType::InGame);
+}
+
+void GameManager::Pause()
+{
+	state = GameState::Pause;
+	//UIManager::GetInstance().ChangePage(EPageType::Pause);
+}
+
+void GameManager::Resume()
+{
+	state = GameState::Play;
+	//UIManager::GetInstance().ChangePage(EPageType::InGame);
+}
+
+void GameManager::Menu()
+{
+	state = GameState::Menu;
+	UIManager::GetInstance().ChangePage(EPageType::Starting);
+}
+
+void GameManager::Exit()
+{
+	PostQuitMessage(0);
+}
+
 void GameManager::Restart()
 {
 	PigCount = 0;

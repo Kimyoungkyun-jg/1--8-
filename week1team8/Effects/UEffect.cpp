@@ -12,11 +12,7 @@ UEffect::UEffect(const FVector& location, const FVector& velocity, float lifeTim
 
 UEffect::~UEffect()
 {
-	if (Bitmap)
-	{
-		Bitmap->Release();
-		Bitmap = nullptr;
-	}
+	Bitmap = nullptr;
 }
 
 void UEffect::Activate(const FVector& loc, const FVector& vel, const FVector& scale)

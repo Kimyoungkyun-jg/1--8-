@@ -614,9 +614,14 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 		if (target)
 		{
 			EColliderId id = target->GetColliderId();
-			if (id == EColliderId::PIG || id == EColliderId::BLOCK)
+			if (id == EColliderId::PIG)
 			{
 				EffectManager::GetInstance().PlayDisEffect(target->GetLocation());
+			}
+			else if (id == EColliderId::BLOCK)
+			{
+				EffectManager::GetInstance().PlayDisEffect(target->GetLocation());
+				EffectManager::GetInstance().SpawnBlockDebris(target->GetLocation(), 20);
 			}
 
 			UObjectManager::GetInstance().Destroy(target);

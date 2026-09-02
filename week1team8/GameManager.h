@@ -35,41 +35,13 @@ public:
 	GameManager(GameManager&&) = delete;					// 이동생성자
 	GameManager& operator=(GameManager&&) = delete;			// 이동 대입 연산자
 
-	void Initialize()
-	{
-		Play();
-	}
-
-	// Menu -> Play
-	void Play()
-	{
-		state = GameState::Play;
-	}
-
-	// Play -> Pause
-	void Pause()
-	{
-		state = GameState::Pause;
-	}
-
-	// Pause -> Play
-	void Resume()
-	{
-		state = GameState::Play;
-	}
-
-	// Pause -> Menu
-	void Menu()
-	{
-		state = GameState::Menu;
-		// UIManager::GetInstance().Menu()
-	}
-
-	// Menu -> Exit
-	void Exit()
-	{
-		// 프로그램 종료
-	}
+	/* 상태 전이 및 초기화 함수 */
+	void Initialize();
+	void Play();
+	void Pause();
+	void Resume();
+	void Menu();
+	void Exit();
 
 	void Restart();
 	void SpawnBirdAndSlingShot();
@@ -79,6 +51,7 @@ public:
 	void SetPigCount(int NewPigCount) { PigCount = NewPigCount; }
 	void SetBirdCount(int NewBirdCount)
 	{
+		Birds.clear();
 		for (int i = 0; i < NewBirdCount; i++)
 		{
 			int randi = rand() % 2;
