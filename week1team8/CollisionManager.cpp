@@ -55,6 +55,26 @@ namespace
 		}
 	}
 
+	// 월드 좌표 <-> 물체 로컬 좌표. 물체가 움직여도 접촉점을 따라가게 하려고 쓴다.
+	FVector ToLocal(const ACollider* body, const FVector& world)
+	{
+		FVector d = world - body->GetLocation();
+		float angle = body->GetRotation();
+		float cs = std::cos(angle);
+		float sn = std::sin(angle);
+
+		return FVector(d.x * cs + d.y * sn, -d.x * sn + d.y * cs, 0.0f);
+	}
+
+	FVector ToWorld(const ACollider* body, const FVector& local)
+	{
+		float angle = body->GetRotation();
+		float cs = std::cos(angle);
+		float sn = std::sin(angle);
+
+		return body->GetLocation() + FVector(local.x * cs - local.y * sn, local.x * sn + local.y * cs, 0.0f);
+	}
+
 	// box의 면 중 dir과 가장 잘 맞는(내적이 가장 큰) 면의 번호
 	int BestFace(const OBB& box, const FVector& dir)
 	{
@@ -358,19 +378,12 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll()
 		debugContacts.push_back(info);
 	}
 
+	// 겹침 해소. ResolvePosition이 로컬 앵커로 깊이를 다시 재므로 재감지가 필요 없다.
 	for (int i = 0; i < positionIterations; i++)
 	{
 		for (auto& [ab, info] : abinfos)
 		{
-			// 앞선 루프나 충격량 처리에 의해 위치가 변경되었으므로,
-			// 현재 위치를 기준으로 겹침(penetration)을 '다시' 계산해야 합니다.
-			CollisionInfo currentInfo = CheckCollision(ab.first, ab.second);
-
-			if (currentInfo.isCollision)
-			{
-				// 새롭게 계산된 정보(currentInfo)로 위치 보정
-				ResolvePosition(ab.first, ab.second, currentInfo);
-			}
+			ResolvePosition(ab.first, ab.second, info);
 		}
 	}
 
@@ -611,19 +624,28 @@ void CollisionManager::ResolvePosition(ACollider* a, ACollider* b, const Collisi
 
 	// 접촉점마다 따로, 회전까지 보정한다 (속도 솔버와 같은 구조).
 	// 가장 깊은 값으로 통째로 평행이동하면 기울어진 블록의 얕은 쪽이 바닥에서 들린다.
+	//
+	// 법선은 감지 시점 값으로 고정하고, 겹친 깊이만 로컬 앵커로 다시 잰다.
+	// 반복마다 재감지하면 법선이 조금씩 다른 방향으로 잡히고, 그 차이가 쌓여
+	// 물체가 옆으로 밀린다. 위치 보정은 속도를 안 거치므로 마찰이 이걸 못 막는다.
 	for (int i = 0; i < info.pointCount; i++)
 	{
 		const ContactPoint& point = info.points[i];
 
-		float correctionAmount = std::fmax(point.penetration - slop, 0.0f);
+		// 두 앵커는 감지 시점엔 같은 점이었다. 그동안 법선 방향으로 벌어진 만큼이
+		// 겹침이 줄어든 양이다.
+		FVector worldA = ToWorld(a, point.localA);
+		FVector worldB = ToWorld(b, point.localB);
+		float penetration = point.penetration - normal.DotProduct(worldA - worldB);
+
+		float correctionAmount = std::fmax(penetration - slop, 0.0f);
 		if (correctionAmount <= 0.0f)
 		{
 			continue;
 		}
 
-		// 앞 접촉점을 보정하면서 위치와 각도가 이미 바뀌었으므로 매번 다시 구한다
-		FVector rA = point.position - a->GetLocation();
-		FVector rB = point.position - b->GetLocation();
+		FVector rA = worldA - a->GetLocation();
+		FVector rB = worldB - b->GetLocation();
 
 		float raxn = FVector::Cross(rA, normal);
 		float rbxn = FVector::Cross(rB, normal);
@@ -764,6 +786,8 @@ void CollisionManager::InitContact(ACollider* a, ACollider* b, CollisionInfo& in
 
 		point.rA = rA;
 		point.rB = rB;
+		point.localA = ToLocal(a, point.position);
+		point.localB = ToLocal(b, point.position);
 		point.normalMass = 1.0f / validMass;
 		point.tangentMass = 1.0f / validMassTangent;
 		point.initialNormalVelocity = relativeVelocityNormal;
