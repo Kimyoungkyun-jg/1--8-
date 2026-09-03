@@ -112,18 +112,8 @@ void GameManager::ReloadBird()
 			Birds[i]->SetLocation(WaitPoints[Birds.size() - i - 1]);
 		}
 	}
-	else if (!IsClearLevel && PigCount > 0)
-	{
-		state = GameState::GameOver;
-		UIManager::GetInstance().GotoEnding(state);
-	}
-	else
-	{
-		ReloadedBird = nullptr;
-
-	}
-
 }
+
 
 ABird *GameManager::SpawnWaitingBird(FVector Location, EBirdType BirdType)
 {
@@ -200,13 +190,18 @@ void GameManager::PigDeath()
 
 void GameManager::CheckGameState()
 {
-	if (state == GameState::Play)
+	if (state == GameState::Play && CollisionManager::GetInstance().bIsAllStop)
 	{
-		if (PigCount == 0 && (!ReloadedBird || ReloadedBird->GetVelocity().Length() < 0.5f))
+		if (PigCount == 0)
 		{	
 			state = GameState::StageClear;
 			IsClearLevel = true;
 			UIManager::GetInstance().LevelChanged(CurrentLevel);
+		}
+		else if (PigCount > 0 && Birds.empty())
+		{
+			state = GameState::GameOver;
+			UIManager::GetInstance().GotoEnding(state);
 		}
 	}
 }

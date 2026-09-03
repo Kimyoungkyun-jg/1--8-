@@ -157,6 +157,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bDrawColliders = true;		// 사각형 콜라이더의 OBB 외곽선 그리기
 	float NormalLength = 40.0f;		// 법선 표시 길이 (픽셀)
 
+
 	// 매니저 초기화
 	UIManager& uiManager = UIManager::GetInstance();
 	uiManager.Initialize(renderer, windowWidth, windowHeight);
@@ -188,7 +189,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SM.PlayBGM("bgm_main", true, 0.1f);
 
-	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
+	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.png");
 
 	gameManager.Menu();
 
@@ -242,7 +243,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bool bFound = false;
 				if (gameManager.GetGameState() == GameState::Play)
 				{
-					if (gameManager.GetReloadedBird()->State == EBirdState::Shooting)
+					if (gameManager.GetReloadedBird() && gameManager.GetReloadedBird()->State == EBirdState::Shooting)
 					{
 						gameManager.GetReloadedBird()->Ability();
 					}
@@ -403,7 +404,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			// 월드 공간 ShakeOffset을 배경의 스크린 픽셀 오프셋으로 환산 (DrawWorldBitmap과 동일한 스케일)
 			float shakePixelX = renderer.ShakeOffset.x / renderer.wAspectRatio * 0.5f * (float)windowWidth;
 			float shakePixelY = -renderer.ShakeOffset.y * 0.5f * (float)windowHeight;
-			renderer.DrawBitmap(InGameBackgroundBitmap, shakePixelX, shakePixelY, (float)windowWidth, (float)windowHeight);
+
+			// 흔들릴 때 가장자리가 비지 않도록 1.1배로 키우고, 커진 만큼 중앙 기준이 되도록 당긴다
+			constexpr float BackgroundScale = 1.1f;
+			float scaledWidth = (float)windowWidth * BackgroundScale;
+			float scaledHeight = (float)windowHeight * BackgroundScale;
+			float centerLeft = ((float)windowWidth - scaledWidth) * 0.5f;
+			float centerTop = ((float)windowHeight - scaledHeight) * 0.5f;
+
+			renderer.DrawBitmap(InGameBackgroundBitmap, centerLeft + shakePixelX, centerTop + shakePixelY, scaledWidth, scaledHeight);
 		}
 
 		renderer.PrepareShader();
@@ -446,7 +455,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		// UI 그리기
-		uiManager.Render(gameManager.GetBirdCount()+1);
+		uiManager.Render(gameManager.GetBirdCount() + 1);
 
 		// ImGui
 		ImGui_ImplDX11_NewFrame();
@@ -551,6 +560,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			for (ACollider* c : CM.colliders)
 			{
 				if (c->GetMass() <= 0.0f) continue;
+				if (c == gameManager.GetReloadedBird()) continue;	// 손으로 잡고 조준 중인 새는 판정에서 제외
 				DynamicCount++;
 				if (c->IsSleeping()) SleepingCount++;
 			}
