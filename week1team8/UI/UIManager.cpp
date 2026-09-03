@@ -173,9 +173,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		});
 		pausePage->AddChild(retryBtn);
 
-		//게임 종료 버튼
+		//메인 매뉴 버튼
 		UUIButton* finishbtn = new UUIButton(
-			L"Assets/img/gameoverbutton.png",
+			L"Assets/img/mainmenu.png",
 			screenWidth * 0.5f,
 			screenHeight * 0.65f,
 			300.0f,
