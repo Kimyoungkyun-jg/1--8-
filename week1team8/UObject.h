@@ -227,6 +227,15 @@ public:
 	virtual float minusHp() override;
 };
 
+enum class EBlockType
+{
+	Pannel,
+	Ice1,
+	Ice2,
+	Rock1,
+	Rock2,
+};
+
 class ABlock : public ACollider
 {
 public:
@@ -243,6 +252,11 @@ public:
 	}
 	virtual ~ABlock() {}
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_rock", 0.5f); }
+	EBlockType GetBlockType() const { return BlockType; }
+	void SetBlockType(EBlockType _T) { BlockType = _T; }
+
+private:
+	EBlockType BlockType;
 };
 
 // 화면 경계 벽. 질량 0으로 생성해서 움직이지 않는다.

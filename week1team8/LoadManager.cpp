@@ -3,19 +3,9 @@
 #include <string>
 #include <sstream>
 #include <filesystem>
-#include "UObject.h"
 #include "CollisionManager.h"
 #include "TemplateLibrary.h"
 #include "GameManager.h"
-
-struct FSpawnInfo
-{
-	FVector Location;
-	EPrimitive Primitive;
-	FVector Scale;
-	float Mass;
-	EColliderId ColliderId;
-};
 
 static const std::string to_string(FVector v)
 {
@@ -29,7 +19,12 @@ const std::string MakeActorInfo(const AActor* Actor)
 
 const std::string MakeColliderInfo(const ACollider *Collider)
 {
-	return MakeActorInfo(Collider) + " " + std::to_string(Collider->GetMass()) + " " + std::to_string(static_cast<int>(Collider->GetColliderId()));
+	std::string temp = MakeActorInfo(Collider) + " " + std::to_string(Collider->GetMass()) + " " + std::to_string(static_cast<int>(Collider->GetColliderId()));
+	if (const ABlock* Block = dynamic_cast<const ABlock*>(Collider))
+	{
+		temp += " " + std::to_string(static_cast<int>(Block->GetBlockType()));
+	}
+	return temp;
 }
 
 void LoadManager::SaveMap(int BirdCount)
@@ -102,13 +97,14 @@ FSpawnInfo MakeSpawnInfo(std::string str, bool bIsActor)
 	Scale.z = stof(str);
 
 	if (bIsActor)
-		return { Loc, Primitive, Scale };
+		return { Loc, Primitive, Scale, 0, EColliderId::NONE, EBlockType::Ice1 };
 
 	float Mass;
 	std::getline(ss, str, ' ');
 	Mass = stof(str);
 
 	EColliderId ColliderId = EColliderId::BIRD;
+	EBlockType BlockType = EBlockType::Pannel;
 	std::getline(ss, str, ' ');
 	switch (stoi(str))
 	{
@@ -120,13 +116,17 @@ FSpawnInfo MakeSpawnInfo(std::string str, bool bIsActor)
 		break;
 	case 2:
 		ColliderId = EColliderId::BLOCK;
+		{
+			std::getline(ss, str, ' ');
+			BlockType = static_cast<EBlockType>(stoi(str));
+		}
 		break;
 	default:
 		ColliderId = EColliderId::NONE;
 		break;
 	}
 
-	return { Loc, Primitive, Scale, Mass, ColliderId };
+	return { Loc, Primitive, Scale, Mass, ColliderId, BlockType };
 }
 
 bool LoadManager::LoadMap(int num)
@@ -153,11 +153,7 @@ bool LoadManager::LoadMap(int num)
 			FSpawnInfo ObstacleInfo = MakeSpawnInfo(str, false);
 			if (ObstacleInfo.ColliderId == EColliderId::BLOCK)
 			{
-				ABlock* Block = SpawnColider<ABlock>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass, 3.0f);
-				if (ObstacleInfo.Scale.x >= ObstacleInfo.Scale.y)
-					Block->SetImage(L"Assets/img/plank.png");
-				else
-					Block->SetImage(L"Assets/img/plank_v.png");
+				SpawnBlock(ObstacleInfo);
 			}
 			else if (ObstacleInfo.ColliderId == EColliderId::PIG)
 			{
@@ -181,4 +177,56 @@ void LoadManager::ClearMap()
 {
 	UObjectManager::GetInstance().DistroyAllActors();
 	GameManager::GetInstance().SpawnWalls();
+}
+
+void LoadManager::SetBlockImage(ABlock* Block, const FSpawnInfo &ObstacleInfo)
+{
+	switch (ObstacleInfo.BlockType)
+	{
+	case EBlockType::Pannel :
+		if (ObstacleInfo.Scale.x >= ObstacleInfo.Scale.y)
+			Block->SetImage(L"Assets/img/plank.png");
+		else
+			Block->SetImage(L"Assets/img/plank_v.png");
+		break;
+	case EBlockType::Ice1 :
+		Block->SetImage(L"Assets/img/IceBlock.png");
+		break;
+	case EBlockType::Ice2 :
+		Block->SetImage(L"Assets/img/IceBlock2.png");
+		break;
+	case EBlockType::Rock1 :
+		Block->SetImage(L"Assets/img/Rock1.png");
+		break;
+	case EBlockType::Rock2 :
+		Block->SetImage(L"Assets/img/Rock2.png");
+		break;
+	default:
+		break;
+	}
+}
+
+ABlock *LoadManager::SpawnBlock(const FSpawnInfo& ObstacleInfo)
+{
+	float BlockHp = 3.0f;
+	if (ObstacleInfo.BlockType == EBlockType::Pannel)
+	{
+		BlockHp = 3.0f;
+	}
+	else if (ObstacleInfo.BlockType == EBlockType::Ice1 || ObstacleInfo.BlockType == EBlockType::Ice2)
+	{
+		BlockHp = 1.0f;
+	}
+	else if (ObstacleInfo.BlockType == EBlockType::Rock1 || ObstacleInfo.BlockType == EBlockType::Rock2)
+	{
+		BlockHp = 4.0f;
+	}
+	ABlock* Block = SpawnColider<ABlock>(ObstacleInfo.Location, ObstacleInfo.Primitive, true, ObstacleInfo.Scale, ObstacleInfo.Mass, BlockHp);
+	if (Block)
+	{
+		SetBlockImage(Block, ObstacleInfo);
+		Block->SetBlockType(ObstacleInfo.BlockType);
+	}
+
+	return Block;
 }
