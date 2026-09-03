@@ -283,7 +283,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (gameManager.GetGameState() == GameState::EndingCredit)
 				{
-					uiManager.ChangePage(EPageType::Starting);
+					if (uiManager.GetAnimatingButton())
+					{
+						uiManager.GetAnimatingButton()->SlideSpeed *= 5.0f;
+					}
 				}
 
 				if (!bFound)
@@ -301,6 +304,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				Global::MouseScreenY = static_cast<float>(MouseY);
 				WorldMouseXY = ScreenToWorld(hWnd, MouseX, MouseY);
 				Global::MouseWorldPos = WorldMouseXY;
+
+				if (gameManager.GetGameState() == GameState::EndingCredit)
+				{
+					if (uiManager.GetAnimatingButton())
+					{
+						uiManager.GetAnimatingButton()->SlideSpeed /= 5.0f;
+					}
+				}
+
 
 				if (PressedCollider)
 				{

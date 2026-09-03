@@ -27,9 +27,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 	if (FAILED(hr)) return false;
 
 	hr = DWriteFactory->CreateTextFormat(
-		L"Malgun Gothic",
+		L"Jalnan Gothic TTF",
 		nullptr,
-		DWRITE_FONT_WEIGHT_EXTRA_BOLD,
+		DWRITE_FONT_WEIGHT_BOLD,
 		DWRITE_FONT_STYLE_NORMAL,
 		DWRITE_FONT_STRETCH_NORMAL,
 		32.0f,

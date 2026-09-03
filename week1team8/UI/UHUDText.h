@@ -7,7 +7,7 @@
 class UUIHUDText : public UUIObject
 {
 public:
-	UUIHUDText(float x, float y, float width = 600.0f, float height = 80.0f);
+	UUIHUDText(float x, float y, float width = 800.0f, float height = 100.0f);
 	virtual ~UUIHUDText() override;
 
 	void SetData(float displayScore, int birdsLeft);
