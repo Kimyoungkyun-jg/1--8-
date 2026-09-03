@@ -223,7 +223,7 @@ void ASlingShot::SpawnBand()
 	BackBand->RestPoint = RestPoint;
 	FrontBand->RestPoint = RestPoint;
 }
-
+	
 void ASlingShot::Pressed(FVector _Location)
 {
 	/*if (EquippedBird)
