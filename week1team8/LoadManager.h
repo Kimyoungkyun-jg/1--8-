@@ -14,6 +14,8 @@ struct FSpawnInfo
 	EColliderId ColliderId;
 	EBlockType BlockType;
 
+	FSpawnInfo(){}
+
 	FSpawnInfo(FVector _Location,
 		EPrimitive _Primitive,
 		FVector _Scale,

@@ -150,10 +150,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	FVector WorldMouseXY;
 	ACollider* PressedCollider = nullptr;
 
-	float BlockWidth = 0.4;
-	float BlockHeight = 0.05;
-	float PigWidth = 0.15, PigHeight = 0.15;
-
 	// 물리 디버그
 	bool bPausePhysics = false;		// 켜면 물리가 멈춘다 (렌더와 UI는 계속 돈다)
 	bool bStepOnce = false;			// Step 버튼이 눌린 프레임에만 한 번 진행
@@ -195,10 +191,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
 	gameManager.Menu();
+
+	//ImGui용 변수들
+	float BlockWidth = 0.4;
+	float BlockHeight = 0.05;
+	float PigWidth = 0.15, PigHeight = 0.15;
 	int BirdCount = 3;
 	int current_item = 0;
 	const char* const items[5] = { "pannel", "ice1", "ice2", "rock1", "rock2" };
 	int itemscount = 5;
+	FSpawnInfo temp = { {0, 0, 0}, EPrimitive::Rectangle, {BlockWidth, BlockHeight, 0.f}, 70.f, EColliderId::BLOCK, EBlockType::Pannel };
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -649,10 +651,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			std::swap(BlockWidth, BlockHeight);
 		}
-		if (ImGui::Combo("Spawn Box", &current_item, items, itemscount))
+		if (ImGui::Combo("Select Box", &current_item, items, itemscount))
 		{
-			FSpawnInfo temp = { { 0, 0, 0 }, EPrimitive::Rectangle, { BlockWidth, BlockHeight, 0 }, 70, EColliderId::BLOCK, static_cast<EBlockType>(current_item) };
-			ABlock *Block = LoadManager.SpawnBlock(temp);
+			temp = { { 0, 0, 0 }, EPrimitive::Rectangle, { BlockWidth, BlockHeight, 0 }, 70, EColliderId::BLOCK, static_cast<EBlockType>(current_item) };
+		}
+		if (ImGui::Button("Spawn Box", ImVec2(100, 20)))
+		{
+			temp.Scale = { BlockWidth, BlockHeight, 0 };
+			ABlock* Block = LoadManager.SpawnBlock(temp);
 			Block->bEditing = true;
 		}
 		ImGui::InputFloat("PigWidth", &PigWidth);
@@ -665,6 +671,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (ImGui::Button("Clear Map", ImVec2(100, 20)))
 		{
 			LoadManager.ClearMap();
+			gameManager.SpawnBirdAndSlingShot();
 		}
 		ImGui::InputInt("Bird Count on This Level", &BirdCount);
 		if (ImGui::Button("Save Map", ImVec2(100, 20)))
