@@ -227,7 +227,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if (msg.message == WM_LBUTTONDOWN)
 			{
-				renderer.ShakeRandom(0.5f);
 				bPressed = true;
 				Global::bIsLButtonPressed = true;
 				MouseX = GET_X_LPARAM(msg.lParam);

@@ -59,8 +59,8 @@ public:
 
 	void UpdateShake(float deltaTime)
 	{
-		constexpr float Stiffness = 30.0f;	// 원위치로 당기는 힘
-		constexpr float Damping = 3.0f;		// 진동을 줄이는 힘
+		constexpr float Stiffness = 80.0f;	// 원위치로 당기는 힘
+		constexpr float Damping = 10.0f;		// 진동을 줄이는 힘
 
 		FVector accel = ShakeOffset * -Stiffness - ShakeVelocity * Damping;
 		ShakeVelocity = ShakeVelocity + accel * deltaTime;

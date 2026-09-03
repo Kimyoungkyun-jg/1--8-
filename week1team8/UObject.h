@@ -171,7 +171,7 @@ public:
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual void Tick(float deltaTime) override;
-	virtual float minusHp() override { return 1.0f; } 
+	virtual float minusHp() override { return 1.0f; }
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 0.8f); }
@@ -238,6 +238,8 @@ enum class EBlockType
 
 class ABlock : public ACollider
 {
+private:
+	EBlockType BlockType;
 public:
 	ABlock()
 	{
@@ -251,12 +253,24 @@ public:
 		return Mass * (Scale.x * Scale.x + Scale.y * Scale.y) / 12.0f;
 	}
 	virtual ~ABlock() {}
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_rock", 0.5f); }
+	virtual void PlaySFX() override
+	{
+		if (BlockType == EBlockType::Pannel)
+		{
+			SoundManager::GetInstance().PlaySFX("sfx_rock", 0.5f);
+		}
+		else if (BlockType == EBlockType::Ice1 || BlockType == EBlockType::Ice2)
+		{
+			SoundManager::GetInstance().PlaySFX("sfx_glass", 0.5f);
+		}
+		else if (BlockType == EBlockType::Rock1 || BlockType == EBlockType::Rock2)
+		{
+			SoundManager::GetInstance().PlaySFX("sfx_stone", 0.5f);
+		}
+	}
 	EBlockType GetBlockType() const { return BlockType; }
 	void SetBlockType(EBlockType _T) { BlockType = _T; }
 
-private:
-	EBlockType BlockType;
 };
 
 // 화면 경계 벽. 질량 0으로 생성해서 움직이지 않는다.
