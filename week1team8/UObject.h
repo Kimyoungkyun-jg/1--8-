@@ -188,7 +188,7 @@ class ABombBird : public ABird
 public:
 	ABombBird() {}
 	virtual ~ABombBird() {}
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bomb_hit", 1.0f); }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bomb_hit", 0.5f); }
 
 	virtual float minusHp();
 	virtual void Ability() override;
