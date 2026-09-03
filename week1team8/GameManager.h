@@ -4,6 +4,7 @@
 #include "Vector.h"
 class ABird;
 class ASlingShot;
+class ACollider;
 
 enum class GameState
 {
@@ -46,8 +47,13 @@ public:
 	void Menu();
 	void Exit();
 	void GameClear();
+	void Credit();
 
-	void Restart();
+	// 맵을 세우는 데 성공했을 때만 true. 실패하면 스스로 메뉴로 되돌린다
+	bool Restart();
+
+	// 게임이 실제로 굴러가는 상태인지. 물리와 Tick은 이때만 진행한다
+	bool IsSimulating() const { return state == GameState::Play; }
 	void SpawnBirdAndSlingShot();
 	void SpawnWalls();
 	ASlingShot* GetSlingShot() { return SlingShot; }
@@ -64,6 +70,9 @@ public:
 	}
 	int GetPigCount() const { return PigCount; }
 	int GetBirdCount() const { return Birds.size(); }
+
+	// 대기 중인 새 + 새총에 올라간 새. HUD와 GameOver 판정이 봐야 하는 값
+	int GetBirdsRemaining() const { return static_cast<int>(Birds.size()) + (ReloadedBird ? 1 : 0); }
 	GameState GetGameState() const { return state; }
 	void SetGameState(GameState gs) { state = gs; }
 	void PigDeath();
@@ -76,6 +85,12 @@ public:
 	void SetMaxLevel(int lvl) { Maxlevel = lvl; }
 
 	void ReloadBird();
+
+	// 콜라이더가 삭제되기 직전에 불린다. 매니저가 들고 있는 포인터를 끊는다
+	void OnColliderDestroyed(ACollider* Destroyed);
+
+	// 액터를 전부 지우기 전에 매니저 쪽 참조를 먼저 비운다
+	void ClearRuntimeRefs();
 
 private:
 	GameManager() = default;

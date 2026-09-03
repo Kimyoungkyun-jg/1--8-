@@ -175,6 +175,8 @@ bool LoadManager::LoadMap(int num)
 
 void LoadManager::ClearMap()
 {
+	// 액터를 지우기 전에 GameManager가 들고 있는 포인터부터 끊는다
+	GameManager::GetInstance().ClearRuntimeRefs();
 	UObjectManager::GetInstance().DistroyAllActors();
 	GameManager::GetInstance().SpawnWalls();
 }

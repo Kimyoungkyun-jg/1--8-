@@ -47,6 +47,11 @@ void ACollider::Move(float deltaTime)
 {
 	if (Mass <= 0.0f)
 	{
+		// 정적 물체는 속도를 가질 수 없다. 여기서 적분도 감쇠도 안 하므로 한 번 들어간 값은
+		// 영원히 남고, 솔버는 그걸 '움직이는 바닥'으로 읽어 마찰을 그 속도에 맞춘다.
+		// 그러면 바닥에 닿은 물체가 미끄러진 채로 멈추지 않는다
+		Velocity = FVector();
+		AngularVelocity = 0.0f;
 		return;
 	}
 
@@ -103,7 +108,8 @@ void UObject::Destroy()
 
 void ABird::Clicked()
 {
-	if (State == EBirdState::Waiting) return;
+	// 새총에 올라간 새(Idle)만 조준을 받는다. 언덕에서 대기 중이거나 이미 쏜 새는 무시
+	if (State != EBirdState::Idle) return;
 
 	if (SlingShot)
 	{
@@ -123,7 +129,7 @@ std::vector<FVector> Points;
 
 void ABird::Pressed(FVector _Location)
 {
-	if (State == EBirdState::Waiting) return;
+	if (State != EBirdState::Idle) return;
 	WakeUp();
 
 	Velocity = 0.f;
@@ -293,6 +299,14 @@ float ABombBird::minusHp()
 
 void ABombBird::Ability()
 {
+	// 한 프레임에 두 군데 닿으면 CheckCollisionAll이 접촉마다 한 번씩 부른다.
+	// 두 번 터지면 ReloadBird도 두 번 돌아 대기 중인 새를 한 마리 더 잃는다
+	if (bHasExploded)
+	{
+		return;
+	}
+	bHasExploded = true;
+
 	//원을 쿼리
 	std::vector<ACollider*> Result;
 
@@ -301,24 +315,37 @@ void ABombBird::Ability()
 	{
 		for (ACollider* Col : Result)
 		{
-			if (Col->GetColliderId() != EColliderId::BIRD)
+			// 새끼리는 안 밀친다
+			if (Col->GetColliderId() == EColliderId::BIRD)
 			{
-				FVector Direction = (Col->GetLocation() - Location);
-				Direction.Normalize();
-				Col->SetVelocity(Col->GetVelocity() + Direction * 0.4f);
-
-				std::pair<float, float> screenPt = UIManager::GetInstance().WorldToScreen(Col->GetLocation());
-				if (Col->GetColliderId() == EColliderId::PIG)
-				{
-					UIManager::GetInstance().SpawnFloatingText(2000.0f, screenPt.first, screenPt.second - 40.0f, D2D1::ColorF(D2D1::ColorF::Gold));
-				}
-				else if (Col->GetColliderId() == EColliderId::BLOCK)
-				{
-					UIManager::GetInstance().SpawnFloatingText(700.0f, screenPt.first, screenPt.second - 40.0f, D2D1::ColorF(D2D1::ColorF::Yellow));
-				}
-
-				CollisionManager::GetInstance().TryKill(Col);
+				continue;
 			}
+
+			// 벽과 바닥(질량 0)은 밀 수 없다. 화면 경계 벽은 중심이 화면 밖에 있어서
+			// 바닥 근처에서 터지면 이 범위에 들어온다
+			if (Col->GetMass() <= 0.0f)
+			{
+				continue;
+			}
+
+			FVector Direction = (Col->GetLocation() - Location);
+			Direction.Normalize();
+
+			// 잠든 물체는 Move가 통째로 건너뛰어서 속도만 넣으면 밀려나지 않는다
+			Col->WakeUp();
+			Col->SetVelocity(Col->GetVelocity() + Direction * 0.4f);
+
+			std::pair<float, float> screenPt = UIManager::GetInstance().WorldToScreen(Col->GetLocation());
+			if (Col->GetColliderId() == EColliderId::PIG)
+			{
+				UIManager::GetInstance().SpawnFloatingText(2000.0f, screenPt.first, screenPt.second - 40.0f, D2D1::ColorF(D2D1::ColorF::Gold));
+			}
+			else if (Col->GetColliderId() == EColliderId::BLOCK)
+			{
+				UIManager::GetInstance().SpawnFloatingText(700.0f, screenPt.first, screenPt.second - 40.0f, D2D1::ColorF(D2D1::ColorF::Yellow));
+			}
+
+			CollisionManager::GetInstance().TryKill(Col);
 		}
 	}
 

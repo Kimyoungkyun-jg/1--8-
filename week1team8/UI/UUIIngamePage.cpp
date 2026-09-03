@@ -51,7 +51,7 @@ void UUIIngamePage::ResetScore()
 {
 	TargetScore = 0;
 	DisplayScore = 0.0f;
-	BirdsLeft = GameManager::GetInstance().GetBirdCount() + (GameManager::GetInstance().GetReloadedBird() ? 1 : 0);
+	BirdsLeft = GameManager::GetInstance().GetBirdsRemaining();
 	if (InGameHUD)
 	{
 		InGameHUD->SetData(0.0f, BirdsLeft);

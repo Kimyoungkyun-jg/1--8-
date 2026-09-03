@@ -64,11 +64,10 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			500,
 			200
 		);
-		startbtn->SetOnClick([this]() {
-			// 페이지만 바꾸면 state가 Menu에 머물러 CheckGameState(맵 로드·클리어 판정)가 안 돈다
+		startbtn->SetOnClick([]() {
+			// 상태 전이와 페이지 전환은 Restart가 함께 처리한다.
+			// 맵 로드에 실패하면 인게임으로 넘어가지 않고 메뉴에 머문다
 			GameManager::GetInstance().Restart();
-			ResetScore();
-			ChangePage(EPageType::InGame);
 			});
 		startPage->AddChild(startbtn);
 
@@ -95,8 +94,8 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			500,
 			200
 		);
-		creditbtn->SetOnClick([this]() {
-			ChangePage(EPageType::EndingCredit);
+		creditbtn->SetOnClick([]() {
+			GameManager::GetInstance().Credit();
 			});
 		startPage->AddChild(creditbtn);
 
@@ -110,9 +109,8 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		inGamePage->Initialize(DWriteFactory, D2DRenderTarget, pauseBtnBmp, nullptr, screenWidth, screenHeight);
 		if (inGamePage->PauseBtn)
 		{
-			inGamePage->PauseBtn->SetOnClick([this]() {
+			inGamePage->PauseBtn->SetOnClick([]() {
 				GameManager::GetInstance().Pause();
-				ChangePage(EPageType::Pause);
 			});
 		}
 		Pages[EPageType::InGame] = inGamePage;
@@ -150,9 +148,8 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			300.0f,
 			110.0f
 		);
-		continueBtn->SetOnClick([this]() {
+		continueBtn->SetOnClick([]() {
 			GameManager::GetInstance().Resume();
-			ChangePage(EPageType::InGame);
 		});
 		pausePage->AddChild(continueBtn);
 
@@ -166,10 +163,12 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 
 		retryBtn->SetOnClick([this]() {
-			GameManager::GetInstance().Play();
-			LoadManager::Get().LoadMap(GameManager::GetInstance().GetCurlvl());
-			ResetScore();
-			ChangePage(EPageType::InGame);
+			// 맵을 먼저 세우고, 성공했을 때만 Play로 넘어간다
+			if (LoadManager::Get().LoadMap(GameManager::GetInstance().GetCurlvl()))
+			{
+				ResetScore();
+				GameManager::GetInstance().Play();
+			}
 		});
 		pausePage->AddChild(retryBtn);
 
@@ -181,9 +180,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			300.0f,
 			100.0f
 		);
-		finishbtn->SetOnClick([this]() {
-			ResetScore();
-			ChangePage(EPageType::Starting);
+		finishbtn->SetOnClick([]() {
+			// 페이지만 바꾸면 state가 Pause에 남는다
+			GameManager::GetInstance().Menu();
 			});
 
 		pausePage->AddChild(finishbtn);
@@ -255,12 +254,13 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			if (LoadManager::Get().LoadMap(nextLvl))
 			{
 				GameManager::GetInstance().SetCurlvl(nextLvl);
-				GameManager::GetInstance().Play();
+				// 남은 새 개수를 읽으므로 맵을 세운 뒤에 부른다
 				ResetScore();
-				ChangePage(EPageType::InGame);
+				GameManager::GetInstance().Play();
 			}
 			else
 			{
+				// 다음 맵이 없으면 마지막 판을 깬 것이다
 				GameManager::GetInstance().GameClear();
 			}
 		});
@@ -293,8 +293,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		);
 
 		Credit->SetTouch(false);
-		Credit->SetOnAnimationFinished([this]() {
-			ChangePage(EPageType::Starting);
+		Credit->SetOnAnimationFinished([]() {
+			// 페이지만 바꾸면 state가 EndingCredit에 남는다
+			GameManager::GetInstance().Menu();
 			});
 
 		creditPage->AddChild(Credit);
@@ -477,9 +478,7 @@ void UIManager::ChangePage(EPageType newPageType)
 		switch (newPageType)
 		{
 		case EPageType::Starting:
-			//GameManager::GetInstance().SetGameState(GameState::Menu);
-
-
+			// state 전이는 GameManager::Menu()가 한다. 여기서는 화면만 바꾼다
 			break;
 		case EPageType::InGame:
 			GameManager::GetInstance().IsClearLevel = false; //인겜들어가면 false
@@ -497,10 +496,9 @@ void UIManager::ChangePage(EPageType newPageType)
 			}
 			break;
 		case EPageType::EndingCredit:
+			// state 전이는 GameManager::Credit()이 한다. 여기서는 화면만 바꾼다
 			for (UUIObject* obj : CurrentPage->ChildUIObjects)
 			{
-				GameManager::GetInstance().SetGameState(GameState::EndingCredit);
-
 				if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
 				{
 					btn->ResetAnimation();

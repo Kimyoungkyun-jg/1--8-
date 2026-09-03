@@ -319,8 +319,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					if (PressedCollider->GetColliderId() == EColliderId::BIRD)
 					{
-						gameManager.GetSlingShot()->Released(WorldMouseXY);
-						SM.PlaySFX("sfx_bird");
+						// 새총에 올라간 새를 놓았을 때만 발사한다.
+						// 언덕에서 대기 중인 새를 눌렀다 떼도 발사되던 문제를 막는다
+						if (PressedCollider == gameManager.GetReloadedBird() && gameManager.GetSlingShot())
+						{
+							gameManager.GetSlingShot()->Released(WorldMouseXY);
+							SM.PlaySFX("sfx_bird");
+						}
 					}
 					else PressedCollider->Released(WorldMouseXY);
 				}
@@ -349,8 +354,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		deltaTime = static_cast<float>(elapsedTime * 0.001);
 
+		// 게임이 실제로 굴러가는 상태에서만 시뮬레이션한다.
+		// 일시정지·메뉴·스테이지클리어·엔딩에서는 화면과 UI만 갱신된다
+		const bool bSimulating = gameManager.IsSimulating();
+
+		// UI는 항상 돌아야 한다. 멈추면 버튼이 안 눌린다
 		uiManager.Update(deltaTime);
-		effectManager.Update(deltaTime);
+		if (bSimulating)
+		{
+			effectManager.Update(deltaTime);
+		}
 
 		// 물리 한 스텝. 항상 fixedDeltaTime만큼만 진행한다.
 		auto StepPhysics = [&]()
@@ -365,9 +378,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			};
 
 		// 흐른 시간을 쌓아두고 고정 크기로 꺼내 쓴다. 남은 건 다음 프레임으로 넘어간다.
-		if (bPausePhysics)
+		if (!bSimulating)
 		{
 			// 멈춘 동안 시간이 쌓이면 풀었을 때 한꺼번에 몰아서 돈다
+			accumulator = 0.0;
+		}
+		else if (bPausePhysics)
+		{
 			accumulator = 0.0;
 
 			if (bStepOnce)
@@ -388,10 +405,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		bStepOnce = false;
 
-		//매 프레임 UObject에 Tick 호출
-		for (int i = ObjectManager.AllObjects.size() - 1; i >= 0; --i)
+		//매 프레임 UObject에 Tick 호출 (멈춰 있을 때는 새 장전도 밴드도 진행되면 안 된다)
+		if (bSimulating)
 		{
-			ObjectManager.AllObjects[i]->Tick(deltaTime);
+			for (int i = ObjectManager.AllObjects.size() - 1; i >= 0; --i)
+			{
+				ObjectManager.AllObjects[i]->Tick(deltaTime);
+			}
 		}
 
 		// 렌더 준비
@@ -455,7 +475,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		// UI 그리기
-		uiManager.Render(gameManager.GetBirdCount() + 1);
+		uiManager.Render(gameManager.GetBirdsRemaining());
 
 		//// ImGui
 		//ImGui_ImplDX11_NewFrame();

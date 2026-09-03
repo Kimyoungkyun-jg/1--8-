@@ -45,19 +45,19 @@ void UUIPage::Show(bool IsClear)
 	{
 		if (UUIButton* bg = dynamic_cast<UUIButton*>(obj))
 		{
+			// 페이지만 바꾸면 state가 GameClear/GameOver에 남는다
 			if (IsClear)
 			{
 				bg->SetImagePath(L"Assets/img/GameClear.png");
 				bg->SetOnClick([]() {
-					UIManager::GetInstance().ChangePage(EPageType::EndingCredit);
+					GameManager::GetInstance().Credit();
 					});
 			}
 			else
 			{
 				bg->SetImagePath(L"Assets/img/GameOver.png");
 				bg->SetOnClick([]() {
-					UIManager::GetInstance().ResetScore();
-					UIManager::GetInstance().ChangePage(EPageType::Starting);
+					GameManager::GetInstance().Menu();
 					});
 			}
 		}

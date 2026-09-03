@@ -192,6 +192,9 @@ public:
 
 	virtual float minusHp();
 	virtual void Ability() override;
+
+	// 폭발은 한 번뿐. 접촉이 여러 개면 Ability가 여러 번 불린다
+	bool bHasExploded = false;
 };
 
 class AFastBird : public ABird

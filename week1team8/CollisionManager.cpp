@@ -630,6 +630,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 				EffectManager::GetInstance().SpawnBlockDebris(target->GetLocation(), 20, block->GetBlockType());
 			}
 
+			// 매니저가 이 콜라이더를 가리키고 있으면 먼저 끊는다
+			GameManager::GetInstance().OnColliderDestroyed(target);
 			UObjectManager::GetInstance().Destroy(target);
 		}
 	}

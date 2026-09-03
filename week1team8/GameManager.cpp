@@ -32,6 +32,11 @@ void GameManager::Resume()
 void GameManager::Menu()
 {
 	state = GameState::Menu;
+
+	// 이전 판의 오브젝트를 남겨두면 메뉴 뒤에 계속 살아 있다
+	LoadManager::Get().ClearMap();
+
+	UIManager::GetInstance().ResetScore();
 	UIManager::GetInstance().ChangePage(EPageType::Starting);
 }
 
@@ -46,25 +51,38 @@ void GameManager::GameClear()
 	UIManager::GetInstance().GotoEnding(state);
 }
 
-void GameManager::Restart()
+void GameManager::Credit()
 {
-	PigCount = 0;
-	Birds.clear();
-	BirdTypes.clear();
-	CurrentLevel = 0;
-	SlingShot = nullptr;
-	ReloadedBird = nullptr;
-	UIManager::GetInstance().ResetScore();
+	state = GameState::EndingCredit;
+	UIManager::GetInstance().ChangePage(EPageType::EndingCredit);
+}
 
-	if (LoadManager::Get().LoadMap(0))
+void GameManager::ClearRuntimeRefs()
+{
+	// 여기서 delete하지 않는다. 실제 삭제는 UObjectManager가 한다
+	Birds.clear();
+	WaitPoints.clear();
+	ReloadedBird = nullptr;
+	SlingShot = nullptr;
+	PigCount = 0;
+}
+
+bool GameManager::Restart()
+{
+	CurrentLevel = 0;
+
+	// LoadMap이 ClearMap부터 부르므로 이전 판 정리는 그쪽에서 끝난다
+	if (!LoadManager::Get().LoadMap(CurrentLevel))
 	{
-		state = GameState::Play;
-		return;
+		// 맵이 없으면 Play로 넘어가면 안 된다 (돼지 0마리 = 즉시 클리어)
+		Menu();
+		return false;
 	}
 
-	// 맵이 없어도 벽과 새총은 세운다. Play로는 안 넘어간다 (돼지 0마리 = 즉시 다음 레벨)
-	LoadManager::Get().ClearMap();
-	state = GameState::Menu;
+	// 남은 새 개수를 읽으므로 맵을 세운 뒤에 부른다
+	UIManager::GetInstance().ResetScore();
+	Play();
+	return true;
 }
 
 void GameManager::SpawnWalls()
@@ -94,23 +112,65 @@ void GameManager::SpawnWalls()
 //새의 속도가 일정 이하면 호출
 void GameManager::ReloadBird()
 {
-	if (Birds.size() > 0)
+	// 더 올릴 새가 없으면 손을 비운다. 이 상태라야 GameOver 판정이 성립한다
+	if (Birds.empty())
 	{
-		ReloadedBird = Birds.back();
-		ReloadedBird->SetLocation(ShotPoint);
-		ReloadedBird->SetVelocity(0.f);
-		ReloadedBird->SetState(EBirdState::Idle);
+		ReloadedBird = nullptr;
+		if (SlingShot)
+		{
+			SlingShot->EquippedBird = nullptr;
+		}
+		return;
+	}
 
-		Birds.pop_back();
+	ReloadedBird = Birds.back();
+	ReloadedBird->SetLocation(ShotPoint);
+	ReloadedBird->SetVelocity(0.f);
+	ReloadedBird->SetState(EBirdState::Idle);
+
+	Birds.pop_back();
+	if (SlingShot)
+	{
 		SlingShot->EquippedBird = ReloadedBird;
 		SlingShot->ShotPoint = ReloadedBird->GetLocation();
-		ReloadedBird->SlingShot = SlingShot;
+	}
+	ReloadedBird->SlingShot = SlingShot;
 
-		//웨이팅중인 새들을 한칸씩 땡긴다.
-		for (int i = 0; i < Birds.size(); ++i)
+	//웨이팅중인 새들을 한칸씩 땡긴다.
+	for (int i = 0; i < Birds.size(); ++i)
+	{
+		Birds[i]->SetLocation(WaitPoints[Birds.size() - i - 1]);
+	}
+}
+
+void GameManager::OnColliderDestroyed(ACollider* Destroyed)
+{
+	if (!Destroyed)
+	{
+		return;
+	}
+
+	// 대기열에 있던 새가 죽으면 목록에서 뺀다
+	for (auto it = Birds.begin(); it != Birds.end(); ++it)
+	{
+		if (*it == Destroyed)
 		{
-			Birds[i]->SetLocation(WaitPoints[Birds.size() - i - 1]);
+			Birds.erase(it);
+			break;
 		}
+	}
+
+	if (SlingShot && SlingShot->EquippedBird == Destroyed)
+	{
+		SlingShot->EquippedBird = nullptr;
+	}
+
+	// 장전된 새가 사라지면 다음 새를 올린다. 없으면 ReloadBird가 nullptr로 만든다.
+	// 이걸 안 하면 해제된 새를 계속 가리켜서 다음 클릭에 터진다
+	if (ReloadedBird == Destroyed)
+	{
+		ReloadedBird = nullptr;
+		ReloadBird();
 	}
 }
 
@@ -154,20 +214,29 @@ void GameManager::SpawnBirdAndSlingShot()
 	SlingShot->SetImage(L"Assets/img/slingshot.png");
 	SlingShot->SpawnBand();
 
+	// 맵의 새 개수가 0이면 아래 size() - 1이 size_t 언더플로를 일으킨다
+	if (BirdTypes.empty())
+	{
+		return;
+	}
+
+	// 새총에 올릴 한 마리를 뺀 나머지가 언덕에서 대기한다
+	const int WaitCount = static_cast<int>(BirdTypes.size()) - 1;
+
 	//대기하는 새들을 언덕에 스폰하여 배치한다. 언덕에 있는 새들은 클릭과 중력을 비활성화한다.
 	FVector WaitPoint = ShotPoint;
 	WaitPoint.y -= 0.1;
-	for (int i = 0; i < BirdTypes.size() - 1; ++i)
+	for (int i = 0; i < WaitCount; ++i)
 	{
 		WaitPoint.x -= 0.06;
 		WaitPoint.y -= 0.08;
 		WaitPoints.push_back(WaitPoint);
 	}
 
-	for (int i = 0; i < BirdTypes.size() - 1; ++i)
+	for (int i = 0; i < WaitCount; ++i)
 	{
 		EBirdType BirdType = static_cast<EBirdType>(BirdTypes[i]);
-		SpawnWaitingBird(WaitPoints[BirdTypes.size() - i - 2], BirdType);
+		SpawnWaitingBird(WaitPoints[WaitCount - i - 1], BirdType);
 	}
 
 
@@ -198,7 +267,8 @@ void GameManager::CheckGameState()
 			IsClearLevel = true;
 			UIManager::GetInstance().LevelChanged(CurrentLevel);
 		}
-		else if (PigCount > 0 && Birds.empty())
+		// 새총에 올라간 새는 Birds에 없다. ReloadedBird까지 비어야 진짜 다 쓴 것
+		else if (PigCount > 0 && Birds.empty() && ReloadedBird == nullptr)
 		{
 			state = GameState::GameOver;
 			UIManager::GetInstance().GotoEnding(state);
