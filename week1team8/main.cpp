@@ -542,6 +542,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				DynamicCount++;
 				if (c->IsSleeping()) SleepingCount++;
 			}
+			if (SleepingCount == DynamicCount) CM.bIsAllStop = true;
+			else CM.bIsAllStop = false;
 			ImGui::SameLine();
 			ImGui::Text("%d / %d", SleepingCount, DynamicCount);
 		}
