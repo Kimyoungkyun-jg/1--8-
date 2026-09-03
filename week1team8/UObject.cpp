@@ -32,7 +32,7 @@ void AActor::Draw(URenderer& renderer)
 	if (Bitmap)
 	{
 		//이미지가 있으면 텍스처
-		renderer.DrawWorldBitmap(Bitmap, Location, Rotation, Scale);
+		renderer.DrawWorldBitmap(Bitmap, Location + renderer.ShakeOffset, Rotation, Scale);
 	}
 	else
 	{
