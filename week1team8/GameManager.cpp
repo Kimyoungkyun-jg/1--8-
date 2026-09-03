@@ -130,7 +130,7 @@ ABird *GameManager::SpawnWaitingBird(FVector Location, EBirdType BirdType)
 	}
 	else if (BirdType == EBirdType::BombBird)
 	{
-		Bird = SpawnColider<ABombBird>(Location, EPrimitive::Circle, false, { 0.1, 0.1, 0 }, 50, -1);
+		Bird = SpawnColider<ABombBird>(Location, EPrimitive::Circle, false, { 0.1, 0.13, 0 }, 50, -1);
 		Bird->SetImage(L"Assets/img/bomb.png");
 		Birds.push_back(Bird);
 	}

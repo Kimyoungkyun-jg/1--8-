@@ -223,15 +223,15 @@ void ASlingShot::SpawnBand()
 	BackBand->RestPoint = RestPoint;
 	FrontBand->RestPoint = RestPoint;
 }
-
+	
 void ASlingShot::Pressed(FVector _Location)
 {
-	if (EquippedBird)
+	/*if (EquippedBird)
 	{
 		EquippedBird->SetLocation(_Location);
 		EquippedBird->SetVelocity(0.f);
 		EquippedBird->bUseGravity = false;
-	}
+	}*/
 }
 
 void ASlingShot::Released(FVector _Location)
@@ -324,13 +324,14 @@ void ABombBird::Ability()
 	EffectManager::GetInstance().PlayExpEffect(Location, { 1.0f,1.0f });
 
 	GameManager::GetInstance().ReloadBird();
-	Destroy();
+	CollisionManager::GetInstance().TryKill(this);
 }
 
 void AFastBird::Ability()
 {
 	if (!bHasBoosted)
 	{
+		SoundManager::GetInstance().PlaySFX("sfx_bird_speed");
 		Velocity = Velocity * 2.2f;
 		bHasBoosted = true;
 	}

@@ -186,13 +186,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SM.LoadSound("sfx_rock", L"Assets/sfx_rock.wav");
 	SM.LoadSound("sfx_bird_hit", L"Assets/sfx_bird_hit.wav");
 	SM.LoadSound("sfx_bomb_hit", L"Assets/sfx_bomb_hit.wav");
+	SM.LoadSound("sfx_bird_speed", L"Assets/sfx_bird_speed.wav");
+	SM.LoadSound("sfx_stone", L"Assets/sfx_stone.wav");
+	SM.LoadSound("sfx_glass", L"Assets/sfx_glass.wav");
 
-	SM.PlayBGM("bgm_main", true, 0.5f);
+	SM.PlayBGM("bgm_main", true, 0.1f);
 
 	ID2D1Bitmap* InGameBackgroundBitmap = renderer.LoadBitmapFromFile(L"Assets/img/ingamebackground.jpg");
 
 	gameManager.Menu();
 	int BirdCount = 3;
+	int current_item = 0;
+	const char* const items[5] = { "pannel", "ice1", "ice2", "rock1", "rock2" };
+	int itemscount = 5;
 
 	// Main Loop (Quit Message가 들어오기 전까지 아래 Loop를 무한히 실행하게 됨)
 	while (bIsExit == false)
@@ -272,6 +278,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 							}
 						}
 					}
+				}
+				else if (gameManager.GetGameState() == GameState::EndingCredit)
+				{
+					uiManager.ChangePage(EPageType::Starting);
 				}
 
 				if (!bFound)
@@ -362,8 +372,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		bStepOnce = false;
-
-		//
 
 		//매 프레임 UObject에 Tick 호출
 		for (int i = ObjectManager.AllObjects.size() - 1; i >= 0; --i)
@@ -645,16 +653,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			std::swap(BlockWidth, BlockHeight);
 		}
-		if (ImGui::Button("Spawn Box", ImVec2(100, 20)))
+		if (ImGui::Combo("Spawn Box", &current_item, items, itemscount))
 		{
-			ABlock* Block = SpawnColider<ABlock>({ 0, 0, 0 }, EPrimitive::Rectangle, true, { BlockWidth, BlockHeight, 0 }, 70);
+			FSpawnInfo temp = { { 0, 0, 0 }, EPrimitive::Rectangle, { BlockWidth, BlockHeight, 0 }, 70, EColliderId::BLOCK, static_cast<EBlockType>(current_item) };
+			ABlock *Block = LoadManager.SpawnBlock(temp);
 			Block->bEditing = true;
 		}
 		ImGui::InputFloat("PigWidth", &PigWidth);
 		ImGui::InputFloat("PigHeight", &PigHeight);
 		if (ImGui::Button("Spawn Pig", ImVec2(100, 20)))
 		{
-			APig* Pig = SpawnColider<APig>({ 0, 0, 0 }, EPrimitive::Circle, true, { PigWidth, PigHeight, 0 }, 30);
+			APig* Pig = SpawnColider<APig>({ 0, 0, 0 }, EPrimitive::Circle, true, { PigWidth, PigHeight, 0 }, 30, 100.0f);
 			Pig->bEditing = true;
 		}
 		if (ImGui::Button("Clear Map", ImVec2(100, 20)))

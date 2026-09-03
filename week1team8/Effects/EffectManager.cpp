@@ -1,4 +1,5 @@
 #include "EffectManager.h"
+#include "../UObject.h"
 #include <cstdlib>
 #include <cmath>
 
@@ -39,11 +40,23 @@ void EffectManager::Clear()
 	}
 	expEffects.clear();
 
-	for (auto* effect : particleEffects)
+	for (auto* effect : blockptrs)
 	{
 		delete effect;
 	}
-	particleEffects.clear();
+	blockptrs.clear();
+
+	for (auto* effect : iceptrs)
+	{
+		delete effect;
+	}
+	iceptrs.clear();
+
+	for (auto* effect : rockptrs)
+	{
+		delete effect;
+	}
+	rockptrs.clear();
 }
 
 void EffectManager::SpawnColEffect(int maxCount, const wchar_t* uri, int frameX, int frameY, int totalFrames, float frameRate)
@@ -99,42 +112,71 @@ void EffectManager::SpawnExpEffect(int maxCount, const wchar_t* uri, int frameX,
 
 void EffectManager::SpawnParticleEffect(int maxCount)
 {
-	for (auto* effect : particleEffects)
-	{
-		delete effect;
-	}
-	particleEffects.clear();
+	for (auto* effect : blockptrs) { delete effect; }
+	blockptrs.clear();
+	for (auto* effect : iceptrs) { delete effect; }
+	iceptrs.clear();
+	for (auto* effect : rockptrs) { delete effect; }
+	rockptrs.clear();
 
-	ID2D1Bitmap* ptcBitmaps[3] = {
+	ID2D1Bitmap* blockBitmaps[3] = {
 		URenderer::GetInstance().LoadBitmapFromFile(L"Assets/img/blockptc1.png"),
 		URenderer::GetInstance().LoadBitmapFromFile(L"Assets/img/blockptc2.png"),
 		URenderer::GetInstance().LoadBitmapFromFile(L"Assets/img/blockptc3.png")
 	};
 
+	ID2D1Bitmap* iceBitmaps[3] = {
+		URenderer::GetInstance().LoadBitmapFromFile(L"Assets/img/iceptc1.png"),
+		URenderer::GetInstance().LoadBitmapFromFile(L"Assets/img/iceptc2.png"),
+		URenderer::GetInstance().LoadBitmapFromFile(L"Assets/img/iceptc3.png")
+	};
+
+	ID2D1Bitmap* rockBitmaps[2] = {
+		URenderer::GetInstance().LoadBitmapFromFile(L"Assets/img/Rock1.png"),
+		URenderer::GetInstance().LoadBitmapFromFile(L"Assets/img/rock2.png")
+	};
+
 	for (int i = 0; i < maxCount; ++i)
 	{
 		UEffect* effect = new UEffect();
-		ID2D1Bitmap* bmp = ptcBitmaps[i % 3];
-		if (bmp)
-		{
-			effect->SetBitmap(bmp);
-		}
-		else
-		{
-			const wchar_t* fallbackFiles[3] = {
-				L"Assets/img/blockptc1.png",
-				L"Assets/img/blockptc2.png",
-				L"Assets/img/blockptc3.png"
-			};
-			effect->SetImage(fallbackFiles[i % 3]);
-		}
+		if (blockBitmaps[i % 3]) effect->SetBitmap(blockBitmaps[i % 3]);
+		else effect->SetImage(L"Assets/img/blockptc1.png");
 		effect->Deactivate();
-		particleEffects.push_back(effect);
+		blockptrs.push_back(effect);
+	}
+
+	for (int i = 0; i < maxCount; ++i)
+	{
+		UEffect* effect = new UEffect();
+		if (iceBitmaps[i % 3]) effect->SetBitmap(iceBitmaps[i % 3]);
+		else effect->SetImage(L"Assets/img/iceptc1.png");
+		effect->Deactivate();
+		iceptrs.push_back(effect);
+	}
+
+	for (int i = 0; i < maxCount; ++i)
+	{
+		UEffect* effect = new UEffect();
+		if (rockBitmaps[i % 2]) effect->SetBitmap(rockBitmaps[i % 2]);
+		else effect->SetImage(L"Assets/img/Rock1.png");
+		effect->Deactivate();
+		rockptrs.push_back(effect);
 	}
 }
 
-void EffectManager::SpawnBlockDebris(const FVector& worldPos, int count)
+void EffectManager::SpawnBlockDebris(const FVector& worldPos, int count, EBlockType blockType)
 {
+	if (blockType == EBlockType::Ice1 || blockType == EBlockType::Ice2)
+	{
+		SpawnIceDebris(worldPos, count);
+		return;
+	}
+	else if (blockType == EBlockType::Rock1 || blockType == EBlockType::Rock2)
+	{
+		SpawnRockDebris(worldPos, count);
+		return;
+	}
+
 	const wchar_t* ptcFiles[3] = {
 		L"Assets/img/blockptc1.png",
 		L"Assets/img/blockptc2.png",
@@ -144,7 +186,7 @@ void EffectManager::SpawnBlockDebris(const FVector& worldPos, int count)
 	for (int i = 0; i < count; ++i)
 	{
 		UEffect* p = nullptr;
-		for (auto* effect : particleEffects)
+		for (auto* effect : blockptrs)
 		{
 			if (effect && !effect->IsActive())
 			{
@@ -157,16 +199,98 @@ void EffectManager::SpawnBlockDebris(const FVector& worldPos, int count)
 		{
 			p = new UEffect();
 			p->SetImage(ptcFiles[rand() % 3]);
-			particleEffects.push_back(p);
+			blockptrs.push_back(p);
 		}
 
-		/* 사방으로 튀어나가는 랜덤 속도 및 위쪽 솟구침 */
 		float angle = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 6.2831853f;
 		float speed = 0.8f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 2.2f;
 
 		FVector vel(cosf(angle) * speed, sinf(angle) * speed + 0.6f, 0.0f);
 		float lifeTime = 0.35f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.35f;
 		float size = 0.025f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.025f;
+
+		p->Activate(worldPos, vel, FVector(size, size, 1.0f));
+		p->SetLifeTime(lifeTime);
+		p->SetColor(D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f));
+		p->Rotation = angle;
+		p->AngularVelocity = ((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) - 0.5f) * 14.0f;
+	}
+}
+
+void EffectManager::SpawnIceDebris(const FVector& worldPos, int count)
+{
+	const wchar_t* ptcFiles[3] = {
+		L"Assets/img/iceptc1.png",
+		L"Assets/img/iceptc2.png",
+		L"Assets/img/iceptc3.png"
+	};
+
+	for (int i = 0; i < count; ++i)
+	{
+		UEffect* p = nullptr;
+		for (auto* effect : iceptrs)
+		{
+			if (effect && !effect->IsActive())
+			{
+				p = effect;
+				break;
+			}
+		}
+
+		if (!p)
+		{
+			p = new UEffect();
+			p->SetImage(ptcFiles[rand() % 3]);
+			iceptrs.push_back(p);
+		}
+
+		float angle = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 6.2831853f;
+		float speed = 0.8f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 2.2f;
+
+		FVector vel(cosf(angle) * speed, sinf(angle) * speed + 0.6f, 0.0f);
+		float lifeTime = 0.35f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.35f;
+		float size = 0.025f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.025f;
+
+		p->Activate(worldPos, vel, FVector(size, size, 1.0f));
+		p->SetLifeTime(lifeTime);
+		p->SetColor(D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f));
+		p->Rotation = angle;
+		p->AngularVelocity = ((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) - 0.5f) * 14.0f;
+	}
+}
+
+void EffectManager::SpawnRockDebris(const FVector& worldPos, int count)
+{
+	const wchar_t* ptcFiles[2] = {
+		L"Assets/img/Rock1.png",
+		L"Assets/img/rock2.png"
+	};
+
+	for (int i = 0; i < count; ++i)
+	{
+		UEffect* p = nullptr;
+		for (auto* effect : rockptrs)
+		{
+			if (effect && !effect->IsActive())
+			{
+				p = effect;
+				break;
+			}
+		}
+
+		if (!p)
+		{
+			p = new UEffect();
+			p->SetImage(ptcFiles[rand() % 2]);
+			rockptrs.push_back(p);
+		}
+
+		float angle = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 6.2831853f;
+		float speed = 0.8f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 2.2f;
+
+		FVector vel(cosf(angle) * speed, sinf(angle) * speed + 0.6f, 0.0f);
+		float lifeTime = 0.35f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.35f;
+		float size = 0.02f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 0.02f;
 
 		p->Activate(worldPos, vel, FVector(size, size, 1.0f));
 		p->SetLifeTime(lifeTime);
@@ -260,7 +384,17 @@ void EffectManager::DeactivateAll()
 		if (effect) effect->Deactivate();
 	}
 
-	for (auto* effect : particleEffects)
+	for (auto* effect : blockptrs)
+	{
+		if (effect) effect->Deactivate();
+	}
+
+	for (auto* effect : iceptrs)
+	{
+		if (effect) effect->Deactivate();
+	}
+
+	for (auto* effect : rockptrs)
 	{
 		if (effect) effect->Deactivate();
 	}
@@ -292,7 +426,23 @@ void EffectManager::Update(float deltaTime)
 		}
 	}
 
-	for (auto* effect : particleEffects)
+	for (auto* effect : blockptrs)
+	{
+		if (effect && effect->IsActive())
+		{
+			effect->Tick(deltaTime);
+		}
+	}
+
+	for (auto* effect : iceptrs)
+	{
+		if (effect && effect->IsActive())
+		{
+			effect->Tick(deltaTime);
+		}
+	}
+
+	for (auto* effect : rockptrs)
 	{
 		if (effect && effect->IsActive())
 		{
@@ -327,7 +477,23 @@ void EffectManager::Render(URenderer& renderer)
 		}
 	}
 
-	for (auto* effect : particleEffects)
+	for (auto* effect : blockptrs)
+	{
+		if (effect && effect->IsActive())
+		{
+			effect->Draw(renderer);
+		}
+	}
+
+	for (auto* effect : iceptrs)
+	{
+		if (effect && effect->IsActive())
+		{
+			effect->Draw(renderer);
+		}
+	}
+
+	for (auto* effect : rockptrs)
 	{
 		if (effect && effect->IsActive())
 		{

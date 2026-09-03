@@ -85,6 +85,21 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			});
 		startPage->AddChild(finishbtn);
 
+
+		//크레딧 화면 버튼
+
+		UUIButton* creditbtn = new UUIButton(
+			L"Assets/img/Creditbtn.png",
+			screenWidth * 0.5f,
+			screenHeight * 0.81f,
+			500,
+			200
+		);
+		creditbtn->SetOnClick([this]() {
+			ChangePage(EPageType::EndingCredit);
+			});
+		startPage->AddChild(creditbtn);
+
 		Pages[EPageType::Starting] = startPage;
 	}
 
@@ -166,8 +181,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			300.0f,
 			100.0f
 		);
-		finishbtn->SetOnClick([]() {
-			PostQuitMessage(0);
+		finishbtn->SetOnClick([this]() {
+			ResetScore();
+			ChangePage(EPageType::Starting);
 			});
 
 		pausePage->AddChild(finishbtn);
@@ -181,19 +197,17 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 	{
 		UUIPage* endPage = new UUIPage(EPageType::Ending);
 
-		UUIButton* Resultbtn = new UUIButton(
-			L"Assets/img/GameClear.png",
+		UUIButton* Clearbtn = new UUIButton(
+			L"Assets/img/GameOver.png",
 			screenWidth * 0.5f, screenHeight * 0.5f, 450, 850,
 			true,
 			1200.0f
 		);
 
-		Resultbtn->SetOnClick([this]() {
-			ResetScore();
-			ChangePage(EPageType::Starting);
-			});
 
-		endPage->AddChild(Resultbtn);
+
+		endPage->AddChild(Clearbtn);
+
 
 		Pages[EPageType::Ending] = endPage;
 	}
@@ -253,6 +267,38 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 		stageClearPage->AddChild(nextBtn);
 
 		Pages[EPageType::StageClear] = stageClearPage;
+	}
+
+	//엔딩 크레딧 페이지
+	{
+		UUIPage* creditPage = new UUIPage(EPageType::EndingCredit);
+
+		//반투명 검은색 배경 생성
+		UUIBackground* creditBg = new UUIBackground(
+			1.0f,
+			screenWidth * 0.5f,
+			screenHeight * 0.5f,
+			static_cast<float>(screenWidth),
+			static_cast<float>(screenHeight)
+		);
+		creditPage->AddChild(creditBg);
+
+		UUIButton* Credit = new UUIButton(
+			L"Assets/img/credit.png",
+			screenWidth * 0.5f, -2000.0f, 1920.0f, 3000.0f,
+			true,
+			2700.0f,
+			EUIAnimType::Linear
+		);
+
+		Credit->SetTouch(false);
+		Credit->SetOnAnimationFinished([this]() {
+			ChangePage(EPageType::Starting);
+			});
+
+		creditPage->AddChild(Credit);
+
+		Pages[EPageType::EndingCredit] = creditPage;
 	}
 
 	return true;
@@ -430,6 +476,8 @@ void UIManager::ChangePage(EPageType newPageType)
 		switch (newPageType)
 		{
 		case EPageType::Starting:
+			//GameManager::GetInstance().SetGameState(GameState::Menu);
+
 
 			break;
 		case EPageType::InGame:
@@ -439,6 +487,24 @@ void UIManager::ChangePage(EPageType newPageType)
 		case EPageType::Pause:
 			break;
 		case EPageType::Ending:
+			for (UUIObject* obj : CurrentPage->ChildUIObjects)
+			{
+				if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
+				{
+					btn->ResetAnimation();
+				}
+			}
+			break;
+		case EPageType::EndingCredit:
+			for (UUIObject* obj : CurrentPage->ChildUIObjects)
+			{
+				GameManager::GetInstance().SetGameState(GameState::EndingCredit);
+
+				if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
+				{
+					btn->ResetAnimation();
+				}
+			}
 			break;
 		case EPageType::StageClear:
 			if (UUIIngamePage* inGame = dynamic_cast<UUIIngamePage*>(GetPage(EPageType::InGame)))
@@ -493,6 +559,13 @@ void UIManager::GotoEnding(GameState gs)
 			break;
 		}
 
+		for (UUIObject* obj : CurrentPage->ChildUIObjects)
+		{
+			if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
+			{
+				btn->ResetAnimation();
+			}
+		}
 	}
 }
 

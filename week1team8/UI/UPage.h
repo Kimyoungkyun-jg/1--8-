@@ -11,7 +11,8 @@ enum class EPageType
 	InGame,
 	Pause,
 	Ending,
-	StageClear
+	StageClear,
+	EndingCredit
 };
 
 class UUIPage : public UUIObject

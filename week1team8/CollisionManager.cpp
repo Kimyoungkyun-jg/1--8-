@@ -558,12 +558,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 	}
 
 	// infos 채우기
-	bool bCanDamage = false;
 	float MinDamageSpeed = 0.1f;
-	if (ABird* Bird = GameManager::GetInstance().GetReloadedBird())
-	{
-		bCanDamage = (Bird->State == EBirdState::Shooting);
-	}
 
 	for (auto& [ab, info] : abinfos)
 	{
@@ -601,8 +596,6 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 			}
 		}
 
-		if (!bCanDamage) continue;
-
 		TryKill(ab.first);
 		TryKill(ab.second);
 	}
@@ -630,7 +623,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 			else if (id == EColliderId::BLOCK)
 			{
 				EffectManager::GetInstance().PlayDisEffect(target->GetLocation());
-				EffectManager::GetInstance().SpawnBlockDebris(target->GetLocation(), 20);
+				ABlock* block = static_cast<ABlock*>(target);
+				EffectManager::GetInstance().SpawnBlockDebris(target->GetLocation(), 20, block->GetBlockType());
 			}
 
 			UObjectManager::GetInstance().Destroy(target);
