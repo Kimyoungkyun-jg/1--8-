@@ -226,12 +226,12 @@ void ASlingShot::SpawnBand()
 
 void ASlingShot::Pressed(FVector _Location)
 {
-	if (EquippedBird)
+	/*if (EquippedBird)
 	{
 		EquippedBird->SetLocation(_Location);
 		EquippedBird->SetVelocity(0.f);
 		EquippedBird->bUseGravity = false;
-	}
+	}*/
 }
 
 void ASlingShot::Released(FVector _Location)
