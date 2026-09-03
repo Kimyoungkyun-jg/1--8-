@@ -24,6 +24,7 @@ public:
 	float CurrentCenterY = 540.0f;
 	float TargetCenterY = 540.0f;
 	float SlideSpeed = 10.0f;
+	float InitialSlideSpeed = 10.0f;
 
 public:
 	UUIBackground();
