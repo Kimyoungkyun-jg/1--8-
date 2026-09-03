@@ -90,16 +90,6 @@ void UUIButton::SetLinearAnimation(float startY, float targetY, float speed)
 	bIsSlideAnimating = true;
 }
 
-void UUIButton::StartSlideUp(float startY, float targetY, float speed, EUIAnimType animType)
-{
-	bUseSlideAnimation = true;
-	SlideSpeed = speed;
-	TargetCenterY = targetY;
-	StartOffsetY = startY;
-	CurrentCenterY = startY;
-	AnimType = animType;
-	bIsSlideAnimating = true;
-}
 
 void UUIButton::ResetAnimation()
 {

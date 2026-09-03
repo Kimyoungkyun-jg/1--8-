@@ -279,6 +279,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						}
 					}
 				}
+				else if (gameManager.GetGameState() == GameState::EndingCredit)
+				{
+					uiManager.ChangePage(EPageType::Starting);
+				}
 
 				if (!bFound)
 				{

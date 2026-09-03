@@ -623,7 +623,8 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 			else if (id == EColliderId::BLOCK)
 			{
 				EffectManager::GetInstance().PlayDisEffect(target->GetLocation());
-				EffectManager::GetInstance().SpawnBlockDebris(target->GetLocation(), 20);
+				ABlock* block = static_cast<ABlock*>(target);
+				EffectManager::GetInstance().SpawnBlockDebris(target->GetLocation(), 20, block->GetBlockType());
 			}
 
 			UObjectManager::GetInstance().Destroy(target);

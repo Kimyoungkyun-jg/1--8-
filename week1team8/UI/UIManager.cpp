@@ -181,8 +181,9 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			300.0f,
 			100.0f
 		);
-		finishbtn->SetOnClick([]() {
-			PostQuitMessage(0);
+		finishbtn->SetOnClick([this]() {
+			ResetScore();
+			ChangePage(EPageType::Starting);
 			});
 
 		pausePage->AddChild(finishbtn);
@@ -475,6 +476,8 @@ void UIManager::ChangePage(EPageType newPageType)
 		switch (newPageType)
 		{
 		case EPageType::Starting:
+			//GameManager::GetInstance().SetGameState(GameState::Menu);
+
 
 			break;
 		case EPageType::InGame:
@@ -495,6 +498,8 @@ void UIManager::ChangePage(EPageType newPageType)
 		case EPageType::EndingCredit:
 			for (UUIObject* obj : CurrentPage->ChildUIObjects)
 			{
+				GameManager::GetInstance().SetGameState(GameState::EndingCredit);
+
 				if (UUIButton* btn = dynamic_cast<UUIButton*>(obj))
 				{
 					btn->ResetAnimation();
