@@ -639,14 +639,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		ImGui::End();
-
 		ImGui::Begin("Screen Info");
 		ImGui::Text("Mouse Coord : %d %d", MouseX, MouseY);
 		ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
 		ImGui::Text("PressedColliderID %s", s.c_str());
 		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
-		//FVector TipLoc = gameManager.GetSlingShot()->GetBackBand()->TipLocation;
-		//ImGui::Text("TipLoc : (%f %f %f)", TipLoc.x, TipLoc.y, TipLoc.z);
 		ImGui::Text("GameState : %d", static_cast<int>(gameManager.GetGameState()));
 		ImGui::Text("Bird %d, Pig %d", gameManager.GetBirdCount(), gameManager.GetPigCount());
 		ImGui::SetNextItemWidth(100);
@@ -654,6 +651,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ImGui::End();
 
 		ImGui::Begin("Castle Editor");
+		ImGui::Checkbox("Block inivisible", &gameManager.bIsEditorMode);
 		ImGui::InputFloat("CastleWidth", &BlockWidth);
 		ImGui::InputFloat("CastleHeight", &BlockHeight);
 		if (ImGui::Button("Rotate", ImVec2(100, 20)))
