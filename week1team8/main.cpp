@@ -157,6 +157,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bDrawColliders = true;		// 사각형 콜라이더의 OBB 외곽선 그리기
 	float NormalLength = 40.0f;		// 법선 표시 길이 (픽셀)
 
+
 	// 매니저 초기화
 	UIManager& uiManager = UIManager::GetInstance();
 	uiManager.Initialize(renderer, windowWidth, windowHeight);
@@ -242,7 +243,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				bool bFound = false;
 				if (gameManager.GetGameState() == GameState::Play)
 				{
-					if (gameManager.GetReloadedBird()->State == EBirdState::Shooting)
+					if (gameManager.GetReloadedBird() && gameManager.GetReloadedBird()->State == EBirdState::Shooting)
 					{
 						gameManager.GetReloadedBird()->Ability();
 					}
