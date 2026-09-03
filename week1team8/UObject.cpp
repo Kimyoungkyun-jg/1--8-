@@ -6,6 +6,7 @@
 #include "GameManager.h"
 #include "UI/UIManager.h"
 #include "Effects/EffectManager.h"
+#include "Renderer.h"
 
 void UObject::Pressed(FVector _Location)
 {
@@ -32,7 +33,7 @@ void AActor::Draw(URenderer& renderer)
 	if (Bitmap)
 	{
 		//이미지가 있으면 텍스처
-		renderer.DrawWorldBitmap(Bitmap, Location, Rotation, Scale);
+		renderer.DrawWorldBitmap(Bitmap, Location + renderer.ShakeOffset, Rotation, Scale);
 	}
 	else
 	{
@@ -323,6 +324,7 @@ void ABombBird::Ability()
 
 	EffectManager::GetInstance().PlayExpEffect(Location, { 1.0f,1.0f });
 
+	URenderer::GetInstance().ShakeRandom(0.7f);
 	GameManager::GetInstance().ReloadBird();
 	CollisionManager::GetInstance().TryKill(this);
 }

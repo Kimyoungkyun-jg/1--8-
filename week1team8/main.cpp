@@ -281,6 +281,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						}
 					}
 				}
+				else if (gameManager.GetGameState() == GameState::EndingCredit)
+				{
+					uiManager.ChangePage(EPageType::Starting);
+				}
 
 				if (!bFound)
 				{
@@ -379,18 +383,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		// 렌더 준비
 		renderer.Prepare();
+		renderer.UpdateShake(deltaTime);
 
 		// 배경화면 그리기 (모든 게임 객체 뒤에 먼저 렌더링)
 		if (InGameBackgroundBitmap)
 		{
-			renderer.DrawBitmap(InGameBackgroundBitmap, 0.0f, 0.0f, (float)windowWidth, (float)windowHeight);
+			// 월드 공간 ShakeOffset을 배경의 스크린 픽셀 오프셋으로 환산 (DrawWorldBitmap과 동일한 스케일)
+			float shakePixelX = renderer.ShakeOffset.x / renderer.wAspectRatio * 0.5f * (float)windowWidth;
+			float shakePixelY = -renderer.ShakeOffset.y * 0.5f * (float)windowHeight;
+			renderer.DrawBitmap(InGameBackgroundBitmap, shakePixelX, shakePixelY, (float)windowWidth, (float)windowHeight);
 		}
 
 		renderer.PrepareShader();
 
 		//이펙트 그리기
 		effectManager.Render(renderer);
-
 
 		// 그리기
 		for (int i = 0; i < ObjectManager.AllObjects.size(); i++)

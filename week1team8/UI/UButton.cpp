@@ -3,8 +3,8 @@
 #include "../Global.h"
 #include <cmath>
 
-UUIButton::UUIButton(const wchar_t* url, float centerX, float centerY, float sizeX, float sizeY, bool bAnimate, float startOffsetY)
-	: imagePath(url)
+UUIButton::UUIButton(const wchar_t* url, float centerX, float centerY, float sizeX, float sizeY, bool bAnimate, float startOffsetY, EUIAnimType animType)
+	: imagePath(url), AnimType(animType)
 {
 	SetTouch(true);
 	SetCenterPoisition(centerX, centerY, sizeX, sizeY);
@@ -14,7 +14,7 @@ UUIButton::UUIButton(const wchar_t* url, float centerX, float centerY, float siz
 	}
 	if (bAnimate)
 	{
-		SetSlideAnimation(true, startOffsetY);
+		SetSlideAnimation(true, startOffsetY, animType == EUIAnimType::Linear ? 150.0f : 10.0f, animType);
 	}
 }
 
@@ -66,10 +66,12 @@ void UUIButton::SetText(const std::wstring& text, float offsetX, float offsetY, 
 	}
 }
 
-void UUIButton::SetSlideAnimation(bool bEnable, float startOffsetY, float speed)
+void UUIButton::SetSlideAnimation(bool bEnable, float startOffsetY, float speed, EUIAnimType animType)
 {
 	bUseSlideAnimation = bEnable;
 	SlideSpeed = speed;
+	AnimType = animType;
+	StartOffsetY = startOffsetY;
 	if (bEnable)
 	{
 		CurrentCenterY = startOffsetY;
@@ -77,17 +79,30 @@ void UUIButton::SetSlideAnimation(bool bEnable, float startOffsetY, float speed)
 	}
 }
 
-void UUIButton::StartSlideUp(float startY, float targetY, float speed)
+void UUIButton::SetLinearAnimation(float startY, float targetY, float speed)
 {
 	bUseSlideAnimation = true;
+	AnimType = EUIAnimType::Linear;
 	SlideSpeed = speed;
-	TargetCenterY = targetY;
+	StartOffsetY = startY;
 	CurrentCenterY = startY;
+	TargetCenterY = targetY;
 	bIsSlideAnimating = true;
+}
+
+
+void UUIButton::ResetAnimation()
+{
+	if (bUseSlideAnimation)
+	{
+		CurrentCenterY = StartOffsetY;
+		bIsSlideAnimating = true;
+	}
 }
 
 void UUIButton::ResetAnimation(float startOffsetY)
 {
+	StartOffsetY = startOffsetY;
 	if (bUseSlideAnimation)
 	{
 		CurrentCenterY = startOffsetY;
@@ -145,14 +160,40 @@ void UUIButton::Update(float deltaTime, float mouseX, float mouseY)
 		return;
 	}
 
-	// 슬라이드 업 애니메이션 이동 (Lerp)
+	// 슬라이드 애니메이션 (Lerp vs Linear)
 	if (bIsSlideAnimating)
 	{
-		CurrentCenterY += (TargetCenterY - CurrentCenterY) * (SlideSpeed * deltaTime);
-		if (std::abs(TargetCenterY - CurrentCenterY) < 0.5f)
+		if (AnimType == EUIAnimType::Lerp)
 		{
-			CurrentCenterY = TargetCenterY;
-			bIsSlideAnimating = false;
+			CurrentCenterY += (TargetCenterY - CurrentCenterY) * (SlideSpeed * deltaTime);
+			if (std::abs(TargetCenterY - CurrentCenterY) < 0.5f)
+			{
+				CurrentCenterY = TargetCenterY;
+				bIsSlideAnimating = false;
+				if (OnAnimationFinished)
+				{
+					OnAnimationFinished();
+				}
+			}
+		}
+		else if (AnimType == EUIAnimType::Linear)
+		{
+			float dir = (TargetCenterY < CurrentCenterY) ? -1.0f : 1.0f;
+			float moveAmount = SlideSpeed * deltaTime;
+
+			if (std::abs(TargetCenterY - CurrentCenterY) <= moveAmount)
+			{
+				CurrentCenterY = TargetCenterY;
+				bIsSlideAnimating = false;
+				if (OnAnimationFinished)
+				{
+					OnAnimationFinished();
+				}
+			}
+			else
+			{
+				CurrentCenterY += dir * moveAmount;
+			}
 		}
 		CenterY = CurrentCenterY;
 	}

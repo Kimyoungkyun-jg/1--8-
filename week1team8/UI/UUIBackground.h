@@ -70,7 +70,6 @@ public:
 	}
 
 	void SetSlideAnimation(bool bEnable, float startOffsetY = 1200.0f, float speed = 10.0f);
-	void StartSlideUp(float startY, float targetY, float speed = 10.0f);
 	void ResetAnimation(float startOffsetY = 1200.0f);
 
 	virtual void Update(float deltaTime) override;

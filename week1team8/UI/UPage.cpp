@@ -3,6 +3,7 @@
 #include "UFloatingText.h"
 #include "UHUDText.h"
 #include "UButton.h"
+#include "UIManager.h"
 #include "../Global.h"
 
 UUIPage::UUIPage(EPageType type)
@@ -47,9 +48,18 @@ void UUIPage::Show(bool IsClear)
 			if (IsClear)
 			{
 				bg->SetImagePath(L"Assets/img/GameClear.png");
+				bg->SetOnClick([]() {
+					UIManager::GetInstance().ChangePage(EPageType::EndingCredit);
+					});
 			}
 			else
+			{
 				bg->SetImagePath(L"Assets/img/GameOver.png");
+				bg->SetOnClick([]() {
+					UIManager::GetInstance().ResetScore();
+					UIManager::GetInstance().ChangePage(EPageType::Starting);
+					});
+			}
 		}
 
 		if (obj) obj->SetVisible(true);

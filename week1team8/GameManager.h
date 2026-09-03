@@ -12,7 +12,8 @@ enum class GameState
 	Pause,
 	StageClear,
 	GameOver,
-	GameClear
+	GameClear,
+	EndingCredit
 };
 
 enum EBirdType
@@ -64,6 +65,7 @@ public:
 	int GetPigCount() const { return PigCount; }
 	int GetBirdCount() const { return Birds.size(); }
 	GameState GetGameState() const { return state; }
+	void SetGameState(GameState gs) { state = gs; }
 	void PigDeath();
 	void CheckGameState();
 

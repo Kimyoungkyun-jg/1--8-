@@ -13,6 +13,8 @@
 #include <dwrite.h>
 #include <wincodec.h>
 #include <vector>
+#include <cmath>
+#include <cstdlib>
 
 #include "VertexSimple.h"
 #include "Vector.h"
@@ -39,6 +41,36 @@ public:
 	{
 		static URenderer instance;
 		return instance;
+	}
+
+	FVector ShakeOffset;
+	FVector ShakeVelocity;
+
+	void Shake(FVector impulse)
+	{
+		ShakeVelocity = ShakeVelocity + impulse;
+	}
+
+	void ShakeRandom(float magnitude)
+	{
+		float radian = (float)rand() / RAND_MAX * acos(-1) * 2;
+		ShakeVelocity = ShakeVelocity + FVector(cos(radian), sin(radian), 0) * magnitude;
+	}
+
+	void UpdateShake(float deltaTime)
+	{
+		constexpr float Stiffness = 80.0f;	// 원위치로 당기는 힘
+		constexpr float Damping = 10.0f;		// 진동을 줄이는 힘
+
+		FVector accel = ShakeOffset * -Stiffness - ShakeVelocity * Damping;
+		ShakeVelocity = ShakeVelocity + accel * deltaTime;
+		ShakeOffset = ShakeOffset + ShakeVelocity * deltaTime;
+
+		if (ShakeOffset.LengthSquared() < 0.000001f && ShakeVelocity.LengthSquared() < 0.000001f)
+		{
+			ShakeOffset = FVector();
+			ShakeVelocity = FVector();
+		}
 	}
 
 public:
