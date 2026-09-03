@@ -49,7 +49,7 @@ void UUIButton::SetText(const std::wstring& text, float offsetX, float offsetY, 
 	if (dwriteFactory)
 	{
 		dwriteFactory->CreateTextFormat(
-			L"Malgun Gothic",
+			L"Jalnan Gothic TTF",
 			nullptr,
 			DWRITE_FONT_WEIGHT_BOLD,
 			DWRITE_FONT_STYLE_NORMAL,

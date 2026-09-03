@@ -30,18 +30,18 @@ bool UUIHUDText::Initialize(IDWriteFactory* dwriteFactory, ID2D1RenderTarget* re
 	if (!dwriteFactory || !renderTarget) return false;
 
 	HRESULT hr = dwriteFactory->CreateTextFormat(
-		L"맑은 고딕",
+		L"Jalnan Gothic TTF",
 		nullptr,
 		DWRITE_FONT_WEIGHT_BOLD,
-		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STYLE_ITALIC,
 		DWRITE_FONT_STRETCH_NORMAL,
-		26.0f,
+		36.0f,
 		L"ko-kr",
 		&HUDFont
 	);
 	if (FAILED(hr)) return false;
 
-	hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &HUDBrush);
+	hr = renderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow), &HUDBrush);
 	if (FAILED(hr)) return false;
 
 	return true;
@@ -59,7 +59,7 @@ void UUIHUDText::Render(ID2D1RenderTarget* renderTarget)
 		BirdsLeft
 	);
 
-	HUDBrush->SetColor(D2D1::ColorF(D2D1::ColorF::White));
+	HUDBrush->SetColor(D2D1::ColorF(D2D1::ColorF::Yellow));
 	D2D1_RECT_F hudRect = D2D1::RectF(X, Y, X + Width, Y + Height);
 
 	renderTarget->DrawText(
@@ -90,7 +90,7 @@ void UUIHUDText::Render(ID2D1RenderTarget* renderTarget, ID2D1SolidColorBrush* b
 		BirdsLeft
 	);
 
-	useBrush->SetColor(D2D1::ColorF(D2D1::ColorF::White));
+	useBrush->SetColor(D2D1::ColorF(D2D1::ColorF::Yellow));
 	D2D1_RECT_F hudRect = D2D1::RectF(X, Y, X + Width, Y + Height);
 
 	renderTarget->DrawText(

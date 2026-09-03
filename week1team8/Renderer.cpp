@@ -318,6 +318,8 @@ bool URenderer::CreateD2D()
 {
 	if (!SwapChain) return false;
 
+	AddFontResourceExW(L"Assets/Fonts/JalnanGothicTTF.ttf", FR_PRIVATE, 0);
+
 	HRESULT hr;
 	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &D2DFactory);
 	if (FAILED(hr)) return false;

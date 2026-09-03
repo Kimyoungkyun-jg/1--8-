@@ -36,7 +36,7 @@ bool UUIIngamePage::Initialize(IDWriteFactory* dwriteFactory, ID2D1RenderTarget*
 	PauseBtn = new UUIButton();
 	PauseBtn->ButtonBitmap = pauseBtnBitmap;
 	PauseBtn->SetTouch(true);
-	PauseBtn->SetPoisition(static_cast<float>(screenWidth) - 100.0f, 30.0f, 70.0f, 70.0f);
+	PauseBtn->SetPoisition(static_cast<float>(screenWidth) - 130.0f, 30.0f, 100.0f, 100.0f);
 	AddChild(PauseBtn);
 
 	return true;

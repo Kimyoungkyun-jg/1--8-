@@ -109,14 +109,20 @@ void GameManager::ReloadBird()
 		//웨이팅중인 새들을 한칸씩 땡긴다.
 		for (int i = 0; i < Birds.size(); ++i)
 		{
-			Birds[i]->SetLocation(WaitPoints[Birds.size()-i-1]);
+			Birds[i]->SetLocation(WaitPoints[Birds.size() - i - 1]);
 		}
 	}
-	else if(!IsClearLevel)
+	else if (!IsClearLevel && PigCount > 0)
 	{
 		state = GameState::GameOver;
 		UIManager::GetInstance().GotoEnding(state);
 	}
+	else
+	{
+		ReloadedBird = nullptr;
+
+	}
+
 }
 
 ABird *GameManager::SpawnWaitingBird(FVector Location, EBirdType BirdType)
