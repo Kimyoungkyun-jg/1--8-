@@ -173,6 +173,8 @@ public:
 	virtual void Tick(float deltaTime) override;
 	virtual float minusHp() override { return 1.0f; }
 	void SetWait();
+	// 새 하나를 다 쓴 시점. 남은 새 수를 줄이고 다음 새를 장전한다. 여러 번 불려도 한 번만 처리된다
+	void Finish();
 	void SetState(EBirdState NewState) { State = NewState; }
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 0.8f); }
 	virtual void Ability() {};

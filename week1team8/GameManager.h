@@ -64,6 +64,11 @@ public:
 	}
 	int GetPigCount() const { return PigCount; }
 	int GetBirdCount() const { return Birds.size(); }
+
+	// 아직 안 쓴 새 수. Birds는 장전되는 순간 빠져나가서 "마지막 새를 잡고만 있어도" 비어 보인다.
+	// 이 값은 새가 실제로 발사돼서 끝났을 때(ABird::Finish)만 줄어든다
+	int GetRemainingBirdCount() const { return RemainingBirdCount; }
+	void BirdUsed() { if (RemainingBirdCount > 0) --RemainingBirdCount; }
 	GameState GetGameState() const { return state; }
 	void SetGameState(GameState gs) { state = gs; }
 	void PigDeath();
@@ -86,6 +91,7 @@ private:
 	ABird* ReloadedBird = nullptr;
 	ASlingShot* SlingShot = nullptr;
 	int PigCount = 0;
+	int RemainingBirdCount = 0;
 	int CurrentLevel = 0;
 	int Maxlevel = 99;
 

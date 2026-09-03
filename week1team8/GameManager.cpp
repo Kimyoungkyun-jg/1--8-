@@ -49,6 +49,7 @@ void GameManager::GameClear()
 void GameManager::Restart()
 {
 	PigCount = 0;
+	RemainingBirdCount = 0;
 	Birds.clear();
 	BirdTypes.clear();
 	CurrentLevel = 0;
@@ -146,6 +147,7 @@ void GameManager::SpawnBirdAndSlingShot()
 	Birds.clear();
 	WaitPoints.clear();
 	ReloadedBird = nullptr;
+	RemainingBirdCount = (int)BirdTypes.size();
 
 	AActor* hill = SpawnActor<AActor>({ -1.2, -0.4, 0 }, EPrimitive::Rectangle, {1, 1.5, 1});
 	hill->SetImage(L"Assets/img/hill.png");
@@ -198,7 +200,7 @@ void GameManager::CheckGameState()
 			IsClearLevel = true;
 			UIManager::GetInstance().LevelChanged(CurrentLevel);
 		}
-		else if (PigCount > 0 && Birds.empty())
+		else if (PigCount > 0 && RemainingBirdCount <= 0)
 		{
 			state = GameState::GameOver;
 			UIManager::GetInstance().GotoEnding(state);

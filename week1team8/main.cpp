@@ -519,7 +519,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		for (ACollider* c : CM.colliders)
 		{
 			if (c->GetMass() <= 0.0f) continue;
-			if (c == gameManager.GetReloadedBird()) continue;	// 손으로 잡고 조준 중인 새는 판정에서 제외
+			// 새총에 올라가 있는(조준 중인) 새만 제외. 발사된 새는 ReloadedBird로 남아 있어도 멈출 때까지 기다린다
+			if (c->GetColliderId() == EColliderId::BIRD && static_cast<ABird*>(c)->State == EBirdState::Idle) continue;
 			DynamicCount++;
 			if (c->IsSleeping()) SleepingCount++;
 		}

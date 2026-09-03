@@ -194,9 +194,18 @@ void ABird::Tick(float deltaTime)
 {
 	if (State == EBirdState::Shooting && Velocity.LengthSquared() < 0.05f)
 	{
-		GameManager::GetInstance().ReloadBird();
-		State = EBirdState::Shooted;
+		Finish();
 	}
+}
+
+void ABird::Finish()
+{
+	// 폭탄은 접촉 여러 개 + 클릭으로 같은 프레임에 Ability가 여러 번 불릴 수 있다. 첫 호출만 센다
+	if (State != EBirdState::Shooting) return;
+
+	State = EBirdState::Shooted;
+	GameManager::GetInstance().BirdUsed();
+	GameManager::GetInstance().ReloadBird();
 }
 
 void ABird::SetWait()
@@ -301,11 +310,18 @@ void ABombBird::Ability()
 	{
 		for (ACollider* Col : Result)
 		{
+			// 정적 물체(바닥, 벽)는 제외. Move()가 질량 0을 건너뛰어 속도가 영원히 남고,
+			// 솔버는 그 속도를 상대속도에 넣어서 바닥 위 모든 물체를 계속 밀어낸다
+			if (Col->GetMass() <= 0.0f) continue;
+
 			if (Col->GetColliderId() != EColliderId::BIRD)
 			{
 				FVector Direction = (Col->GetLocation() - Location);
 				Direction.Normalize();
 				Col->SetVelocity(Col->GetVelocity() + Direction * 0.4f);
+				// SetVelocity는 슬립을 안 푼다. 안 깨우면 이 프레임엔 "전부 정지"로 잡혀서
+				// 돼지가 파편에 맞아 죽기도 전에 CheckGameState가 GameOver를 확정한다
+				Col->WakeUp();
 
 				std::pair<float, float> screenPt = UIManager::GetInstance().WorldToScreen(Col->GetLocation());
 				if (Col->GetColliderId() == EColliderId::PIG)
@@ -325,8 +341,8 @@ void ABombBird::Ability()
 	EffectManager::GetInstance().PlayExpEffect(Location, { 1.0f,1.0f });
 
 	URenderer::GetInstance().ShakeRandom(0.7f);
-	GameManager::GetInstance().ReloadBird();
 	CollisionManager::GetInstance().TryKill(this);
+	Finish();
 }
 
 void AFastBird::Ability()
