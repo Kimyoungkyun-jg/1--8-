@@ -558,12 +558,7 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 	}
 
 	// infos 채우기
-	bool bCanDamage = false;
 	float MinDamageSpeed = 0.1f;
-	if (ABird* Bird = GameManager::GetInstance().GetReloadedBird())
-	{
-		bCanDamage = (Bird->State == EBirdState::Shooting);
-	}
 
 	for (auto& [ab, info] : abinfos)
 	{
@@ -600,8 +595,6 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 				bomb->Ability();
 			}
 		}
-
-		if (!bCanDamage) continue;
 
 		TryKill(ab.first);
 		TryKill(ab.second);
