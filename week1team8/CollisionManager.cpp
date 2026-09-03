@@ -596,6 +596,9 @@ std::vector<CollisionInfo> CollisionManager::CheckCollisionAll(float t)
 			}
 		}
 
+		if (GameManager::GetInstance().bIsEditorMode)
+			continue;
+
 		TryKill(ab.first);
 		TryKill(ab.second);
 	}
