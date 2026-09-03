@@ -457,271 +457,272 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// UI 그리기
 		uiManager.Render(gameManager.GetBirdCount() + 1);
 
-		// ImGui
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
+		//// ImGui
+		//ImGui_ImplDX11_NewFrame();
+		//ImGui_ImplWin32_NewFrame();
+		//ImGui::NewFrame();
 
-		// 사각형 콜라이더의 OBB 외곽선. 스프라이트와 어긋나면 물리도 같이 어긋난 것
-		if (bDrawColliders)
-		{
-			ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
+		//// 사각형 콜라이더의 OBB 외곽선. 스프라이트와 어긋나면 물리도 같이 어긋난 것
+		//if (bDrawColliders)
+		//{
+		//	ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
 
-			for (ACollider* Collider : CM.colliders)
-			{
-				if (Collider->GetPrimitive() != EPrimitive::Rectangle)
-				{
-					continue;
-				}
+		//	for (ACollider* Collider : CM.colliders)
+		//	{
+		//		if (Collider->GetPrimitive() != EPrimitive::Rectangle)
+		//		{
+		//			continue;
+		//		}
 
-				OBB Box = MakeOBB(Collider);
+		//		OBB Box = MakeOBB(Collider);
 
-				// 잠든 물체는 회색 — 무리가 어떻게 잠드는지 눈으로 보려는 것
-				ImU32 Color = Collider->IsSleeping()
-					? IM_COL32(150, 150, 150, 255)
-					: IM_COL32(80, 200, 255, 255);
+		//		// 잠든 물체는 회색 — 무리가 어떻게 잠드는지 눈으로 보려는 것
+		//		ImU32 Color = Collider->IsSleeping()
+		//			? IM_COL32(150, 150, 150, 255)
+		//			: IM_COL32(80, 200, 255, 255);
 
-				for (int i = 0; i < 4; i++)
-				{
-					DrawList->AddLine(WorldToScreen(Box.vertex[i]),
-						WorldToScreen(Box.vertex[(i + 1) % 4]), Color, 2.0f);
-				}
+		//		for (int i = 0; i < 4; i++)
+		//		{
+		//			DrawList->AddLine(WorldToScreen(Box.vertex[i]),
+		//				WorldToScreen(Box.vertex[(i + 1) % 4]), Color, 2.0f);
+		//		}
 
-				// 꼭짓점 0. 블록을 돌리면 이 점도 같이 돌아야 한다
-				DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, Color);
-			}
-		}
+		//		// 꼭짓점 0. 블록을 돌리면 이 점도 같이 돌아야 한다
+		//		DrawList->AddCircleFilled(WorldToScreen(Box.vertex[0]), 4.0f, Color);
+		//	}
+		//}
 
-		// 접촉점과 법선. 배경 draw list라 게임 화면 위, ImGui 창 아래에 그려진다
-		if (bDrawContacts)
-		{
-			ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
+		//// 접촉점과 법선. 배경 draw list라 게임 화면 위, ImGui 창 아래에 그려진다
+		//if (bDrawContacts)
+		//{
+		//	ImDrawList* DrawList = ImGui::GetBackgroundDrawList();
 
-			for (const CollisionInfo& Contact : CM.debugContacts)
-			{
-				for (int i = 0; i < Contact.pointCount; i++)
-				{
-					ImVec2 Point = WorldToScreen(Contact.points[i].position);
+		//	for (const CollisionInfo& Contact : CM.debugContacts)
+		//	{
+		//		for (int i = 0; i < Contact.pointCount; i++)
+		//		{
+		//			ImVec2 Point = WorldToScreen(Contact.points[i].position);
 
-					// 법선은 방향 벡터라 y 부호만 뒤집으면 된다 (화면 y는 아래로 증가)
-					ImVec2 Tip = ImVec2(Point.x + Contact.normal.x * NormalLength,
-						Point.y - Contact.normal.y * NormalLength);
+		//			// 법선은 방향 벡터라 y 부호만 뒤집으면 된다 (화면 y는 아래로 증가)
+		//			ImVec2 Tip = ImVec2(Point.x + Contact.normal.x * NormalLength,
+		//				Point.y - Contact.normal.y * NormalLength);
 
-					// B -> A 방향, 즉 A를 밀어내는 쪽을 가리켜야 한다
-					DrawList->AddLine(Point, Tip, IM_COL32(255, 64, 64, 255), 2.0f);
-					DrawList->AddCircleFilled(Point, 4.0f, IM_COL32(255, 220, 0, 255));
-				}
-			}
-		}
+		//			// B -> A 방향, 즉 A를 밀어내는 쪽을 가리켜야 한다
+		//			DrawList->AddLine(Point, Tip, IM_COL32(255, 64, 64, 255), 2.0f);
+		//			DrawList->AddCircleFilled(Point, 4.0f, IM_COL32(255, 220, 0, 255));
+		//		}
+		//	}
+		//}
 
-		ImGui::Begin("Physics Debug");
-
-		RECT rc; GetClientRect(hWnd, &rc);
-		ImGui::Text("aspect %.4f  (화면 x 범위 = +-%.4f)",
-			(float)(rc.right - rc.left) / (rc.bottom - rc.top),
-			(float)(rc.right - rc.left) / (rc.bottom - rc.top));
-
-		ImGui::Checkbox("Pause", &bPausePhysics);
-		ImGui::SameLine();
-		if (ImGui::Button("Step"))
-		{
-			// 다음 프레임 물리 구간에서 소비된다
-			bStepOnce = true;
-		}
-		ImGui::SameLine();
-		ImGui::Checkbox("Draw Contacts", &bDrawContacts);
-		ImGui::SameLine();
-		ImGui::Checkbox("Draw Colliders", &bDrawColliders);
-		ImGui::SliderFloat("Normal Length", &NormalLength, 10.0f, 120.0f);
-		ImGui::Checkbox("Warm Starting", &CM.bWarmStarting);
-
-		ImGui::SeparatorText("Solver");
-		ImGui::SliderInt("Velocity Iter", &CM.velocityIterations, 1, 20);
-		ImGui::SliderInt("Position Iter", &CM.positionIterations, 1, 20);
-		ImGui::SliderFloat("Baumgarte", &CM.baumgarte, 0.05f, 1.0f);
-		ImGui::SliderFloat("Slop", &CM.slop, 0.0f, 0.02f, "%.4f");
-		ImGui::SliderFloat("Rolling", &CM.rollingResistance, 0.0f, 0.02f, "%.4f");
-
-		// slop 근처에서 평평하면 수렴한 것
-		ImGui::Text("max penetration %.5f  (slop %.5f)", CM.maxPenetration, CM.slop);
-		{
-			static float PenHistory[240] = {};
-			static int PenIndex = 0;
-			PenHistory[PenIndex] = CM.maxPenetration;
-			PenIndex = (PenIndex + 1) % 240;
-			ImGui::PlotLines("##pen", PenHistory, 240, PenIndex, nullptr, 0.0f, 0.02f, ImVec2(0, 60));
-		}
-
-		ImGui::SeparatorText("Sleep");
-		ImGui::Checkbox("Sleep Enabled", &CM.bSleepEnabled);
-		{
-			int SleepingCount = 0;
-			int DynamicCount = 0;
-			for (ACollider* c : CM.colliders)
-			{
-				if (c->GetMass() <= 0.0f) continue;
-				if (c == gameManager.GetReloadedBird()) continue;	// 손으로 잡고 조준 중인 새는 판정에서 제외
-				DynamicCount++;
-				if (c->IsSleeping()) SleepingCount++;
-			}
-			if (SleepingCount == DynamicCount) CM.bIsAllStop = true;
-			else CM.bIsAllStop = false;
-			ImGui::SameLine();
-			ImGui::Text("%d / %d", SleepingCount, DynamicCount);
-		}
-		ImGui::SliderFloat("Linear Tol", &CM.linearSleepTolerance, 0.0f, 0.1f, "%.4f");
-		ImGui::SliderFloat("Angular Tol", &CM.angularSleepTolerance, 0.0f, 0.3f, "%.4f");
-		ImGui::SliderFloat("Time To Sleep", &CM.timeToSleep, 0.05f, 2.0f);
-
-		// 안 잠들 때 누가 붙잡고 있는지. 임계값을 못 넘는 물체 하나가 무리 전체를 깨워둔다
+		int SleepingCount = 0;
+		int DynamicCount = 0;
 		for (ACollider* c : CM.colliders)
 		{
 			if (c->GetMass() <= 0.0f) continue;
-
-			FVector v = c->GetVelocity();
-			float speed = v.Length();
-
-			// 실제로 움직인 거리와, 속도가 설명하는 거리를 나란히 본다.
-			// 둘이 비슷하면 정상적인 이동. moved가 훨씬 크면 속도를 거치지 않고
-			// 좌표가 직접 옮겨졌다는 뜻이고, 그건 마찰이 손댈 수 없는 경로다.
-			static std::unordered_map<int, FVector> PrevLocations;
-
-			FVector cur = c->GetLocation();
-			auto found = PrevLocations.find(c->GetID());
-			FVector prev = (found != PrevLocations.end()) ? found->second : cur;
-			PrevLocations[c->GetID()] = cur;
-
-			float movedX = cur.x - prev.x;
-			float expectedX = v.x * (float)fixedDeltaTime;
-
-			ImGui::Text("ID %2d %s v=(%+.4f,%+.4f) %s w=%+.4f %s  movedX=%+.6f  vdt=%+.6f",
-				c->GetID(), c->IsSleeping() ? "zzz" : "   ",
-				v.x, v.y, speed < CM.linearSleepTolerance ? "ok" : "  ",
-				c->GetAngularVelocity(), fabsf(c->GetAngularVelocity()) < CM.angularSleepTolerance ? "ok" : "  ",
-				movedX, expectedX);
+			if (c == gameManager.GetReloadedBird()) continue;	// 손으로 잡고 조준 중인 새는 판정에서 제외
+			DynamicCount++;
+			if (c->IsSleeping()) SleepingCount++;
 		}
+		if (SleepingCount == DynamicCount) CM.bIsAllStop = true;
+		else CM.bIsAllStop = false;
 
-		ImGui::SeparatorText("Contacts");
-		ImGui::Text("count: %d", (int)CM.debugContacts.size());
-		for (int i = 0; i < (int)CM.debugContacts.size(); i++)
-		{
-			const CollisionInfo& Contact = CM.debugContacts[i];
+		//ImGui::Begin("Physics Debug");
 
-			for (int k = 0; k < Contact.pointCount; k++)
-			{
-				const ContactPoint& Point = Contact.points[k];
+		//RECT rc; GetClientRect(hWnd, &rc);
+		//ImGui::Text("aspect %.4f  (화면 x 범위 = +-%.4f)",
+		//	(float)(rc.right - rc.left) / (rc.bottom - rc.top),
+		//	(float)(rc.right - rc.left) / (rc.bottom - rc.top));
 
-				// 마찰이 한계까지 쓰고도 못 버티면 SLIP. 한계에 한참 못 미치는데
-				// 물체가 계속 미끄러진다면 마찰이 아니라 다른 게 밀고 있는 것이다.
-				float FrictionLimit = Point.normalImpulse * Contact.staticFriction;
-				bool bSlipping = fabsf(Point.tangentImpulse) >= FrictionLimit - 1e-6f;
+		//ImGui::Checkbox("Pause", &bPausePhysics);
+		//ImGui::SameLine();
+		//if (ImGui::Button("Step"))
+		//{
+		//	// 다음 프레임 물리 구간에서 소비된다
+		//	bStepOnce = true;
+		//}
+		//ImGui::SameLine();
+		//ImGui::Checkbox("Draw Contacts", &bDrawContacts);
+		//ImGui::SameLine();
+		//ImGui::Checkbox("Draw Colliders", &bDrawColliders);
+		//ImGui::SliderFloat("Normal Length", &NormalLength, 10.0f, 120.0f);
+		//ImGui::Checkbox("Warm Starting", &CM.bWarmStarting);
 
-				ImGui::Text("%3d-%3d.%d n=(%+.2f,%+.2f) pen=%.4f Pn=%.3f Pt=%+.3f/%.3f %s",
-					Contact.bodyA, Contact.bodyB, k,
-					Contact.normal.x, Contact.normal.y,
-					Point.penetration, Point.normalImpulse,
-					Point.tangentImpulse, FrictionLimit,
-					bSlipping ? "SLIP" : "hold");
-			}
-		}
+		//ImGui::SeparatorText("Solver");
+		//ImGui::SliderInt("Velocity Iter", &CM.velocityIterations, 1, 20);
+		//ImGui::SliderInt("Position Iter", &CM.positionIterations, 1, 20);
+		//ImGui::SliderFloat("Baumgarte", &CM.baumgarte, 0.05f, 1.0f);
+		//ImGui::SliderFloat("Slop", &CM.slop, 0.0f, 0.02f, "%.4f");
+		//ImGui::SliderFloat("Rolling", &CM.rollingResistance, 0.0f, 0.02f, "%.4f");
 
-		ImGui::SeparatorText("Bodies");
+		//// slop 근처에서 평평하면 수렴한 것
+		//ImGui::Text("max penetration %.5f  (slop %.5f)", CM.maxPenetration, CM.slop);
+		//{
+		//	static float PenHistory[240] = {};
+		//	static int PenIndex = 0;
+		//	PenHistory[PenIndex] = CM.maxPenetration;
+		//	PenIndex = (PenIndex + 1) % 240;
+		//	ImGui::PlotLines("##pen", PenHistory, 240, PenIndex, nullptr, 0.0f, 0.02f, ImVec2(0, 60));
+		//}
 
-		// slip = 접촉점에서 실제로 미끄러지는 속도. 0이면 구르는 중이라 마찰이 할 일이 없다
-		for (ACollider* c : CM.colliders)
-		{
-			if (c->GetMass() <= 0.0f) continue;                    // 정적 제외
-			ACircle* circle = dynamic_cast<ACircle*>(c);
-			if (!circle) continue;                                 // 원만
+		//ImGui::SeparatorText("Sleep");
+		//ImGui::Checkbox("Sleep Enabled", &CM.bSleepEnabled);
+		//{
+		//	ImGui::SameLine();
+		//	ImGui::Text("%d / %d", SleepingCount, DynamicCount);
+		//}
+		//ImGui::SliderFloat("Linear Tol", &CM.linearSleepTolerance, 0.0f, 0.1f, "%.4f");
+		//ImGui::SliderFloat("Angular Tol", &CM.angularSleepTolerance, 0.0f, 0.3f, "%.4f");
+		//ImGui::SliderFloat("Time To Sleep", &CM.timeToSleep, 0.05f, 2.0f);
 
-			ImGui::Text("ID %2d  v=(%+.3f, %+.3f)  w=%+8.3f  slip=%+.5f",
-				c->GetID(), c->GetVelocity().x, c->GetVelocity().y,
-				c->GetAngularVelocity(),
-				c->GetVelocity().x + c->GetAngularVelocity() * circle->GetRadius());
-		}
+		//// 안 잠들 때 누가 붙잡고 있는지. 임계값을 못 넘는 물체 하나가 무리 전체를 깨워둔다
+		//for (ACollider* c : CM.colliders)
+		//{
+		//	if (c->GetMass() <= 0.0f) continue;
 
-		// 전체 운동에너지. 잦아들면 수렴, 평평하면 진동, 오르면 발산이다.
-		{
-			float energy = 0.0f;
-			for (ACollider* c : CM.colliders)
-			{
-				if (c->GetMass() <= 0.0f) continue;
+		//	FVector v = c->GetVelocity();
+		//	float speed = v.Length();
 
-				energy += 0.5f * c->GetMass() * c->GetVelocity().LengthSquared()
-					+ 0.5f * c->GetInertia() * c->GetAngularVelocity() * c->GetAngularVelocity();
-			}
+		//	// 실제로 움직인 거리와, 속도가 설명하는 거리를 나란히 본다.
+		//	// 둘이 비슷하면 정상적인 이동. moved가 훨씬 크면 속도를 거치지 않고
+		//	// 좌표가 직접 옮겨졌다는 뜻이고, 그건 마찰이 손댈 수 없는 경로다.
+		//	static std::unordered_map<int, FVector> PrevLocations;
 
-			static float EnergyHistory[240] = {};
-			static int EnergyIndex = 0;
-			EnergyHistory[EnergyIndex] = energy;
-			EnergyIndex = (EnergyIndex + 1) % 240;
+		//	FVector cur = c->GetLocation();
+		//	auto found = PrevLocations.find(c->GetID());
+		//	FVector prev = (found != PrevLocations.end()) ? found->second : cur;
+		//	PrevLocations[c->GetID()] = cur;
 
-			ImGui::Text("kinetic energy %.5f", energy);
-			ImGui::PlotLines("##energy", EnergyHistory, 240, EnergyIndex, nullptr, 0.0f, FLT_MAX, ImVec2(0, 60));
-		}
+		//	float movedX = cur.x - prev.x;
+		//	float expectedX = v.x * (float)fixedDeltaTime;
 
-		ImGui::End();
-		ImGui::Begin("Screen Info");
-		ImGui::Text("Mouse Coord : %d %d", MouseX, MouseY);
-		ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
-		ImGui::Text("PressedColliderID %s", s.c_str());
-		ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
-		ImGui::Text("GameState : %d", static_cast<int>(gameManager.GetGameState()));
-		ImGui::Text("Bird %d, Pig %d", gameManager.GetBirdCount(), gameManager.GetPigCount());
-		ImGui::SetNextItemWidth(100);
-		ImGui::SetNextItemWidth(100);
-		ImGui::End();
+		//	ImGui::Text("ID %2d %s v=(%+.4f,%+.4f) %s w=%+.4f %s  movedX=%+.6f  vdt=%+.6f",
+		//		c->GetID(), c->IsSleeping() ? "zzz" : "   ",
+		//		v.x, v.y, speed < CM.linearSleepTolerance ? "ok" : "  ",
+		//		c->GetAngularVelocity(), fabsf(c->GetAngularVelocity()) < CM.angularSleepTolerance ? "ok" : "  ",
+		//		movedX, expectedX);
+		//}
 
-		ImGui::Begin("Castle Editor");
-		ImGui::Checkbox("Block inivisible", &gameManager.bIsEditorMode);
-		ImGui::InputFloat("CastleWidth", &BlockWidth);
-		ImGui::InputFloat("CastleHeight", &BlockHeight);
-		if (ImGui::Button("Rotate", ImVec2(100, 20)))
-		{
-			std::swap(BlockWidth, BlockHeight);
-		}
-		if (ImGui::Combo("Select Box", &current_item, items, itemscount))
-		{
-			temp = { { 0, 0, 0 }, EPrimitive::Rectangle, { BlockWidth, BlockHeight, 0 }, 70, EColliderId::BLOCK, static_cast<EBlockType>(current_item) };
-		}
-		if (ImGui::Button("Spawn Box", ImVec2(100, 20)))
-		{
-			temp.Scale = { BlockWidth, BlockHeight, 0 };
-			ABlock* Block = LoadManager.SpawnBlock(temp);
-			Block->bEditing = true;
-		}
-		ImGui::InputFloat("PigWidth", &PigWidth);
-		ImGui::InputFloat("PigHeight", &PigHeight);
-		if (ImGui::Button("Spawn Pig", ImVec2(100, 20)))
-		{
-			APig* Pig = SpawnColider<APig>({ 0, 0, 0 }, EPrimitive::Circle, true, { PigWidth, PigHeight, 0 }, 30, 100.0f);
-			Pig->bEditing = true;
-		}
-		if (ImGui::Button("Clear Map", ImVec2(100, 20)))
-		{
-			LoadManager.ClearMap();
-			gameManager.SpawnBirdAndSlingShot();
-		}
-		ImGui::InputInt("Bird Count on This Level", &BirdCount);
-		if (ImGui::Button("Save Map", ImVec2(100, 20)))
-		{
-			LoadManager.SaveMap(BirdCount);
-		}
-		if (ImGui::Button("Delete Select Object", ImVec2(100, 20)))
-		{
-			PressedCollider->Destroy();
-		}
-		if (ImGui::Button("Restart", ImVec2(100, 20)))
-		{
-			gameManager.Restart();
-		}
+		//ImGui::SeparatorText("Contacts");
+		//ImGui::Text("count: %d", (int)CM.debugContacts.size());
+		//for (int i = 0; i < (int)CM.debugContacts.size(); i++)
+		//{
+		//	const CollisionInfo& Contact = CM.debugContacts[i];
 
-		ImGui::SetNextItemWidth(200);
-		ImGui::SetNextItemWidth(300);
-		ImGui::End();
+		//	for (int k = 0; k < Contact.pointCount; k++)
+		//	{
+		//		const ContactPoint& Point = Contact.points[k];
 
-		ImGui::Render();										// 그리기 명령 준비	
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());	// 그리기 명령 실행
+		//		// 마찰이 한계까지 쓰고도 못 버티면 SLIP. 한계에 한참 못 미치는데
+		//		// 물체가 계속 미끄러진다면 마찰이 아니라 다른 게 밀고 있는 것이다.
+		//		float FrictionLimit = Point.normalImpulse * Contact.staticFriction;
+		//		bool bSlipping = fabsf(Point.tangentImpulse) >= FrictionLimit - 1e-6f;
+
+		//		ImGui::Text("%3d-%3d.%d n=(%+.2f,%+.2f) pen=%.4f Pn=%.3f Pt=%+.3f/%.3f %s",
+		//			Contact.bodyA, Contact.bodyB, k,
+		//			Contact.normal.x, Contact.normal.y,
+		//			Point.penetration, Point.normalImpulse,
+		//			Point.tangentImpulse, FrictionLimit,
+		//			bSlipping ? "SLIP" : "hold");
+		//	}
+		//}
+
+		//ImGui::SeparatorText("Bodies");
+
+		//// slip = 접촉점에서 실제로 미끄러지는 속도. 0이면 구르는 중이라 마찰이 할 일이 없다
+		//for (ACollider* c : CM.colliders)
+		//{
+		//	if (c->GetMass() <= 0.0f) continue;                    // 정적 제외
+		//	ACircle* circle = dynamic_cast<ACircle*>(c);
+		//	if (!circle) continue;                                 // 원만
+
+		//	ImGui::Text("ID %2d  v=(%+.3f, %+.3f)  w=%+8.3f  slip=%+.5f",
+		//		c->GetID(), c->GetVelocity().x, c->GetVelocity().y,
+		//		c->GetAngularVelocity(),
+		//		c->GetVelocity().x + c->GetAngularVelocity() * circle->GetRadius());
+		//}
+
+		//// 전체 운동에너지. 잦아들면 수렴, 평평하면 진동, 오르면 발산이다.
+		//{
+		//	float energy = 0.0f;
+		//	for (ACollider* c : CM.colliders)
+		//	{
+		//		if (c->GetMass() <= 0.0f) continue;
+
+		//		energy += 0.5f * c->GetMass() * c->GetVelocity().LengthSquared()
+		//			+ 0.5f * c->GetInertia() * c->GetAngularVelocity() * c->GetAngularVelocity();
+		//	}
+
+		//	static float EnergyHistory[240] = {};
+		//	static int EnergyIndex = 0;
+		//	EnergyHistory[EnergyIndex] = energy;
+		//	EnergyIndex = (EnergyIndex + 1) % 240;
+
+		//	ImGui::Text("kinetic energy %.5f", energy);
+		//	ImGui::PlotLines("##energy", EnergyHistory, 240, EnergyIndex, nullptr, 0.0f, FLT_MAX, ImVec2(0, 60));
+		//}
+
+		//ImGui::End();
+		//ImGui::Begin("Screen Info");
+		//ImGui::Text("Mouse Coord : %d %d", MouseX, MouseY);
+		//ImGui::Text("Mouse Loc : {%f, %f, %f}", WorldMouseXY.x, WorldMouseXY.y, WorldMouseXY.z);
+		//ImGui::Text("PressedColliderID %s", s.c_str());
+		//ImGui::Text("ID %d", PressedCollider ? PressedCollider->GetID() : -1);
+		//ImGui::Text("GameState : %d", static_cast<int>(gameManager.GetGameState()));
+		//ImGui::Text("Bird %d, Pig %d", gameManager.GetBirdCount(), gameManager.GetPigCount());
+		//ImGui::SetNextItemWidth(100);
+		//ImGui::SetNextItemWidth(100);
+		//ImGui::End();
+
+		//ImGui::Begin("Castle Editor");
+		//ImGui::Checkbox("Block inivisible", &gameManager.bIsEditorMode);
+		//ImGui::InputFloat("CastleWidth", &BlockWidth);
+		//ImGui::InputFloat("CastleHeight", &BlockHeight);
+		//if (ImGui::Button("Rotate", ImVec2(100, 20)))
+		//{
+		//	std::swap(BlockWidth, BlockHeight);
+		//}
+		//if (ImGui::Combo("Select Box", &current_item, items, itemscount))
+		//{
+		//	temp = { { 0, 0, 0 }, EPrimitive::Rectangle, { BlockWidth, BlockHeight, 0 }, 70, EColliderId::BLOCK, static_cast<EBlockType>(current_item) };
+		//}
+		//if (ImGui::Button("Spawn Box", ImVec2(100, 20)))
+		//{
+		//	temp.Scale = { BlockWidth, BlockHeight, 0 };
+		//	ABlock* Block = LoadManager.SpawnBlock(temp);
+		//	Block->bEditing = true;
+		//}
+		//ImGui::InputFloat("PigWidth", &PigWidth);
+		//ImGui::InputFloat("PigHeight", &PigHeight);
+		//if (ImGui::Button("Spawn Pig", ImVec2(100, 20)))
+		//{
+		//	APig* Pig = SpawnColider<APig>({ 0, 0, 0 }, EPrimitive::Circle, true, { PigWidth, PigHeight, 0 }, 30, 100.0f);
+		//	Pig->bEditing = true;
+		//}
+		//if (ImGui::Button("Clear Map", ImVec2(100, 20)))
+		//{
+		//	LoadManager.ClearMap();
+		//	gameManager.SpawnBirdAndSlingShot();
+		//}
+		//ImGui::InputInt("Bird Count on This Level", &BirdCount);
+		//if (ImGui::Button("Save Map", ImVec2(100, 20)))
+		//{
+		//	LoadManager.SaveMap(BirdCount);
+		//}
+		//if (ImGui::Button("Delete Select Object", ImVec2(100, 20)))
+		//{
+		//	PressedCollider->Destroy();
+		//}
+		//if (ImGui::Button("Restart", ImVec2(100, 20)))
+		//{
+		//	gameManager.Restart();
+		//}
+
+		//ImGui::SetNextItemWidth(200);
+		//ImGui::SetNextItemWidth(300);
+		//ImGui::End();
+
+		//ImGui::Render();										// 그리기 명령 준비	
+		//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());	// 그리기 명령 실행
 
 		// 프레임 교체
 		renderer.SwapBuffer();
