@@ -68,8 +68,13 @@ public:
 		return (it != Pages.end()) ? it->second : nullptr;
 	}
 
+	void SetAnimatingButton(class UUIButton* btn) { AnimatingButton = btn; }
+	class UUIButton* GetAnimatingButton() const { return AnimatingButton; }
+	bool IsAnyButtonAnimating() const { return AnimatingButton != nullptr; }
+
 public:
 	UUIPage* CurrentPage = nullptr;
+	class UUIButton* AnimatingButton = nullptr;
 	unordered_map<EPageType, UUIPage*> Pages;
 	vector<UUIObject*> AllUIObjects;
 

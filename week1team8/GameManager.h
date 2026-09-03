@@ -101,5 +101,6 @@ private:
 public:
 	bool IsClearLevel = false;
 	bool bIsEditorMode = false;
+	
 };
 

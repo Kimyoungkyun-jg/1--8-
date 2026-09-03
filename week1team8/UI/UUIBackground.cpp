@@ -57,6 +57,7 @@ void UUIBackground::SetSlideAnimation(bool bEnable, float startOffsetY, float sp
 {
 	bUseSlideAnimation = bEnable;
 	SlideSpeed = speed;
+	InitialSlideSpeed = speed;
 	if (bEnable)
 	{
 		CurrentCenterY = startOffsetY;
@@ -73,12 +74,11 @@ void UUIBackground::SetSlideAnimation(bool bEnable, float startOffsetY, float sp
 	}
 }
 
-
-
 void UUIBackground::ResetAnimation(float startOffsetY)
 {
 	if (bUseSlideAnimation)
 	{
+		SlideSpeed = InitialSlideSpeed;
 		CurrentCenterY = startOffsetY;
 		bIsSlideAnimating = true;
 

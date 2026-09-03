@@ -49,7 +49,7 @@ void UUIButton::SetText(const std::wstring& text, float offsetX, float offsetY, 
 	if (dwriteFactory)
 	{
 		dwriteFactory->CreateTextFormat(
-			L"Malgun Gothic",
+			L"Jalnan Gothic TTF",
 			nullptr,
 			DWRITE_FONT_WEIGHT_BOLD,
 			DWRITE_FONT_STYLE_NORMAL,
@@ -70,33 +70,42 @@ void UUIButton::SetSlideAnimation(bool bEnable, float startOffsetY, float speed,
 {
 	bUseSlideAnimation = bEnable;
 	SlideSpeed = speed;
+	InitialSlideSpeed = speed;
 	AnimType = animType;
 	StartOffsetY = startOffsetY;
 	if (bEnable)
 	{
 		CurrentCenterY = startOffsetY;
 		bIsSlideAnimating = true;
+		UIManager::GetInstance().SetAnimatingButton(this);
+	}
+	else
+	{
+		bIsSlideAnimating = false;
 	}
 }
 
-void UUIButton::SetLinearAnimation(float startY, float targetY, float speed)
+void UUIButton::SetSlideAnimation(float startY, float targetY, float speed, EUIAnimType animType)
 {
 	bUseSlideAnimation = true;
-	AnimType = EUIAnimType::Linear;
+	AnimType = animType;
 	SlideSpeed = speed;
+	InitialSlideSpeed = speed;
 	StartOffsetY = startY;
 	CurrentCenterY = startY;
 	TargetCenterY = targetY;
 	bIsSlideAnimating = true;
+	UIManager::GetInstance().SetAnimatingButton(this);
 }
-
 
 void UUIButton::ResetAnimation()
 {
 	if (bUseSlideAnimation)
 	{
+		SlideSpeed = InitialSlideSpeed;
 		CurrentCenterY = StartOffsetY;
 		bIsSlideAnimating = true;
+		UIManager::GetInstance().SetAnimatingButton(this);
 	}
 }
 
@@ -105,8 +114,10 @@ void UUIButton::ResetAnimation(float startOffsetY)
 	StartOffsetY = startOffsetY;
 	if (bUseSlideAnimation)
 	{
+		SlideSpeed = InitialSlideSpeed;
 		CurrentCenterY = startOffsetY;
 		bIsSlideAnimating = true;
+		UIManager::GetInstance().SetAnimatingButton(this);
 	}
 }
 
@@ -170,6 +181,10 @@ void UUIButton::Update(float deltaTime, float mouseX, float mouseY)
 			{
 				CurrentCenterY = TargetCenterY;
 				bIsSlideAnimating = false;
+				if (UIManager::GetInstance().GetAnimatingButton() == this)
+				{
+					UIManager::GetInstance().SetAnimatingButton(nullptr);
+				}
 				if (OnAnimationFinished)
 				{
 					OnAnimationFinished();
@@ -185,6 +200,10 @@ void UUIButton::Update(float deltaTime, float mouseX, float mouseY)
 			{
 				CurrentCenterY = TargetCenterY;
 				bIsSlideAnimating = false;
+				if (UIManager::GetInstance().GetAnimatingButton() == this)
+				{
+					UIManager::GetInstance().SetAnimatingButton(nullptr);
+				}
 				if (OnAnimationFinished)
 				{
 					OnAnimationFinished();

@@ -38,6 +38,7 @@ public:
 	float TargetCenterY = 0.0f;
 	float StartOffsetY = 1200.0f;
 	float SlideSpeed = 10.0f;
+	float InitialSlideSpeed = 10.0f;
 
 	// Button Text properties
 	std::wstring Text = L"";
@@ -88,7 +89,7 @@ public:
 	bool IsPointInside(float x, float y) const;
 
 	void SetSlideAnimation(bool bEnable, float startOffsetY = 1200.0f, float speed = 10.0f, EUIAnimType animType = EUIAnimType::Lerp);
-	void SetLinearAnimation(float startY, float targetY, float speed = 150.0f);
+	void SetSlideAnimation(float startY, float targetY, float speed = 10.0f, EUIAnimType animType = EUIAnimType::Lerp);
 	void ResetAnimation();
 	void ResetAnimation(float startOffsetY);
 
