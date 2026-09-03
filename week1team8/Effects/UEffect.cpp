@@ -100,7 +100,7 @@ void UEffect::Tick(float deltaTime)
 
 			if (CurrentFrame >= TotalFrames)
 			{
-				if (bLoop)
+				if (bLoop) /*반복 재생될때*/
 				{
 					CurrentFrame = 0;
 				}
