@@ -171,11 +171,12 @@ public:
 	virtual void Pressed(FVector _Location) override;
 	virtual void Released(FVector _Location) override;
 	virtual void Tick(float deltaTime) override;
-	virtual float minusHp() override { return 1.0f; }
-	virtual void Ability() {}
+	virtual float minusHp() override { return 1.0f; } 
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 1.0f); }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 0.8f); }
+	virtual void Ability() {};
+
 
 	EBirdState State = EBirdState::Idle;
 	ASlingShot* SlingShot = nullptr;
@@ -187,7 +188,7 @@ class ABombBird : public ABird
 public:
 	ABombBird() {}
 	virtual ~ABombBird() {}
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bomb_hit", 1.0f); }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bomb_hit", 0.5f); }
 
 	virtual float minusHp();
 	virtual void Ability() override;
@@ -221,9 +222,18 @@ public:
 		Restitution = 0.2f;
 	}
 	virtual ~APig() {}
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_pig", 2.0f); }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_pig", 1.5f); }
 
 	virtual float minusHp() override;
+};
+
+enum class EBlockType
+{
+	Pannel,
+	Ice1,
+	Ice2,
+	Rock1,
+	Rock2,
 };
 
 class ABlock : public ACollider
@@ -242,6 +252,11 @@ public:
 	}
 	virtual ~ABlock() {}
 	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_rock", 0.5f); }
+	EBlockType GetBlockType() const { return BlockType; }
+	void SetBlockType(EBlockType _T) { BlockType = _T; }
+
+private:
+	EBlockType BlockType;
 };
 
 // 화면 경계 벽. 질량 0으로 생성해서 움직이지 않는다.
