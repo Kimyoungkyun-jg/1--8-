@@ -256,6 +256,7 @@ bool UIManager::Initialize(int nWidth, int nHeight)
 			{
 				GameManager::GetInstance().SetCurlvl(nextLvl);
 				GameManager::GetInstance().Play();
+				ResetScore();
 				ChangePage(EPageType::InGame);
 			}
 			else
