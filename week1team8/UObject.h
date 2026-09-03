@@ -174,7 +174,7 @@ public:
 	virtual float minusHp() override { return 1.0f; } 
 	void SetWait();
 	void SetState(EBirdState NewState) { State = NewState; }
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 1.0f); }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_bird_hit", 0.8f); }
 	virtual void Ability() {};
 
 
@@ -222,7 +222,7 @@ public:
 		Restitution = 0.2f;
 	}
 	virtual ~APig() {}
-	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_pig", 2.0f); }
+	virtual void PlaySFX() override { SoundManager::GetInstance().PlaySFX("sfx_pig", 1.5f); }
 
 	virtual float minusHp() override;
 };
